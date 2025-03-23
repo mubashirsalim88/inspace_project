@@ -1,0 +1,13 @@
+<!-- app/modules/module_2/templates/module_2/fill_step.html -->
+{% extends "base.html" %}
+{% block content %}
+<h1>Module 2 - {{ step.replace('_', ' ').title() }}</h1>
+<form method="POST">
+    {% if step == "applicant_details" %}
+        <label>Organization:</label><input type="text" name="org"><br>
+    {% elif step == "technical_details" %}
+        <label>Satellite Type:</label><input type="text" name="sat_type"><br>
+    {% endif %}
+    <input type="submit" value="Save">
+</form>
+{% endblock %}

@@ -1,0 +1,75 @@
+<!-- app/templates/auth/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - IN-SPACe</title>
+    <script src="{{ url_for('static', filename='js/tailwind.js') }}"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="m-0 p-0 overflow-hidden bg-black text-white font-poppins">
+    <canvas id="bgCanvas"></canvas>
+
+    <div class="container flex justify-center items-center h-screen">
+        <div class="login-box animate__animated animate__fadeInUp bg-white bg-opacity-10 p-8 rounded-xl max-w-md w-full text-center shadow-lg shadow-white/30">
+            <h2 class="text-3xl mb-6 animate__animated animate__fadeInDown">Login</h2>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="input-group mb-4 text-left animate__animated animate__fadeInLeft">
+                    <label for="username" class="block text-base mb-1">Username</label>
+                    {{ form.username(class="w-full p-3 border-none rounded-md bg-white bg-opacity-20 text-white outline-none") }}
+                </div>
+                <div class="input-group mb-4 text-left animate__animated animate__fadeInLeft">
+                    <label for="password" class="block text-base mb-1">Password</label>
+                    {{ form.password(class="w-full p-3 border-none rounded-md bg-white bg-opacity-20 text-white outline-none") }}
+                </div>
+                <button type="submit" class="login-button w-full p-3 text-lg bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white border-none rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300 animate__animated animate__zoomIn">Login</button>
+            </form>
+            <p class="signup-link mt-4 text-sm animate__animated animate__fadeInUp">
+                Don't have an account? <a href="{{ url_for('auth.signup') }}" class="text-[#ff416c] hover:underline">Sign up here</a>
+            </p>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="flash mt-2">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <script>
+        // Three.js Starfield Animation
+        document.addEventListener("DOMContentLoaded", function () {
+            let scene = new THREE.Scene();
+            let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            let renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("bgCanvas"), alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            let starsGeometry = new THREE.BufferGeometry();
+            let starsMaterial = new THREE.PointsMaterial({ color: 0xffffff });
+            let starsVertices = [];
+            for (let i = 0; i < 1000; i++) {
+                let x = (Math.random() - 0.5) * 2000;
+                let y = (Math.random() - 0.5) * 2000;
+                let z = (Math.random() - 0.5) * 2000;
+                starsVertices.push(x, y, z);
+            }
+            starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+            let stars = new THREE.Points(starsGeometry, starsMaterial);
+            scene.add(stars);
+            camera.position.z = 500;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                stars.rotation.y += 0.0005;
+                renderer.render(scene, camera);
+            }
+            animate();
+        });
+    </script>
+</body>
+</html>

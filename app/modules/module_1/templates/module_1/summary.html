@@ -1,0 +1,41 @@
+<!-- app/modules/module_1/templates/module_1/summary.html -->
+{% extends "module_1/forms_base.html" %}
+{% block title %}Module 1 - Summary{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-4xl mx-auto">
+    <h3 class="text-xl font-semibold mb-4 text-gray-800">Application Summary</h3>
+    <div class="space-y-6">
+        {% for md in all_module_data %}
+        <div class="border-b pb-4">
+            <h4 class="text-lg font-medium text-gray-800">{{ md.step.replace('_', ' ').title() }}</h4>
+            <div class="grid grid-cols-2 gap-4 mt-2">
+                {% for key, value in md.data.items() %}
+                {% if key not in ['documents', 'document_names'] and value %}
+                <div>
+                    <span class="text-gray-700 font-medium">{{ key.replace('_', ' ').title() }}:</span>
+                    <span class="text-gray-600">{{ value }}</span>
+                </div>
+                {% elif key == 'document_names' and value %}
+                <div>
+                    <span class="text-gray-700 font-medium">Uploaded Documents:</span>
+                    <span class="text-gray-600">{{ value|join(', ') }}</span>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="flex justify-between mt-6">
+        <a href="{{ url_for('module_1.fill_step', step='declarations_submission', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+        <form method="POST" action="{{ url_for('module_1.submit_application', application_id=application_id) }}">
+            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Submit Application</button>
+        </form>
+    </div>
+    {% if application.status == 'Submitted' %}
+    <div class="mt-4">
+        <a href="{{ url_for('module_1.download_pdf', application_id=application_id) }}" class="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Download PDF</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,112 @@
+/* app/static/css/style.css */
+@font-face {
+    font-family: 'Poppins';
+    src: url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Navbar */
+.navbar {
+    background-color: #ffffff; /* White */
+    border-bottom: 1px solid #e5e7eb; /* Light gray border for definition */
+}
+.navbar a, .navbar button {
+    color: #1f2937; /* Dark gray for links/buttons to contrast with white */
+}
+.navbar .text-gray-800 {
+    color: #1f2937; /* Dark gray for welcome text */
+}
+.navbar .bg-gray-500 {
+    background-color: #6b7280; /* Keep avatar background gray */
+}
+.navbar .bg-red-500 {
+    background-color: #ef4444; /* Red for logout button */
+}
+.navbar .bg-blue-600 {
+    background-color: #2563eb; /* Blue for login button */
+}
+
+/* Login/Signup and Forms */
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.login-box {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+.login-box h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+.input-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+.input-group label {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 5px;
+    color: white;
+}
+.input-group input {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    outline: none;
+}
+.login-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.2rem;
+    background: linear-gradient(45deg, #ff416c, #ff4b2b);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+.login-button:hover {
+    transform: scale(1.05);
+}
+.signup-link {
+    margin-top: 15px;
+    font-size: 0.9rem;
+}
+.signup-link a {
+    color: #ff416c;
+    text-decoration: none;
+}
+.signup-link a:hover {
+    text-decoration: underline;
+}
+.flash {
+    background: #ff416c;
+    padding: 0.5rem;
+    border-radius: 5px;
+    margin: 0.5rem 0;
+}
+
+/* Dashboard */
+.font-poppins { font-family: 'Poppins', sans-serif; }

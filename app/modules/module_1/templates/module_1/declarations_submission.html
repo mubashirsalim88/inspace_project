@@ -1,0 +1,85 @@
+<!-- app/modules/module_1/templates/module_1/declarations_submission.html -->
+{% extends "module_1/forms_base.html" %}
+{% block title %}Module 1 - Declarations{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Security Clearance Proforma (if requested)</label>
+            <input type="file" name="security_clearance_doc" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded Files:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}
+                        {% if file.field_name == "security_clearance_doc" %}
+                        <li>
+                            <a href="{{ url_for('module_1.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Authorization of Submission <span class="text-red-500">*</span></label>
+            <input type="file" name="authorization_submission_doc" multiple {% if not existing_files|selectattr('field_name', 'equalto', 'authorization_submission_doc')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded Files:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}
+                        {% if file.field_name == "authorization_submission_doc" %}
+                        <li>
+                            <a href="{{ url_for('module_1.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Undertaking/Declaration <span class="text-red-500">*</span></label>
+            <div class="space-y-4">
+                {% for decl in ['compliance_laws', 'accuracy_info', 'criminal_declaration', 'financial_stability', 'change_notification'] %}
+                <div class="flex items-start">
+                    <input type="checkbox" name="{{ decl }}" required class="mt-1 mr-2" {% if form_data[decl] %}checked{% endif %}>
+                    <p class="text-gray-700 text-sm">{{ { 'compliance_laws': 'A. Compliance with Laws', 'accuracy_info': 'B. Accuracy of Information', 'criminal_declaration': 'C. Criminal Declaration', 'financial_stability': 'D. Financial Stability', 'change_notification': 'E. Change Notification' }[decl] }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Signature Block <span class="text-red-500">*</span></label>
+            <input type="text" name="signature_name" value="{{ form_data.signature_name or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name in Block Letters">
+            <textarea name="signature_address" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Full Address">{{ form_data.signature_address or '' }}</textarea>
+            <input type="file" name="official_seal" multiple {% if not existing_files|selectattr('field_name', 'equalto', 'official_seal')|list %}required{% endif %} class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Official Seal/Stamp">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded Files:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}
+                        {% if file.field_name == "official_seal" %}
+                        <li>
+                            <a href="{{ url_for('module_1.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            <input type="text" name="signature_place" value="{{ form_data.signature_place or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Place">
+            <input type="text" name="signature_phone" value="{{ form_data.signature_phone or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Tel No">
+            <input type="date" name="signature_date" value="{{ form_data.signature_date or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            <input type="email" name="signature_email" value="{{ form_data.signature_email or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="E-mail">
+            <input type="text" name="signature_website" value="{{ form_data.signature_website or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Website">
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_1.fill_step', step='operational_contact', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

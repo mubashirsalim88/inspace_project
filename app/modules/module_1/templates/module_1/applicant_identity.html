@@ -1,0 +1,60 @@
+<!-- app/modules/module_1/templates/module_1/applicant_identity.html -->
+{% extends "module_1/forms_base.html" %}
+{% block title %}Module 1 - Applicant Identity{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Legal Name <span class="text-red-500">*</span></label>
+            <input type="text" name="legal_name" value="{{ form_data.legal_name or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Trade/Brand Name (if any)</label>
+            <input type="text" name="trade_name" value="{{ form_data.trade_name or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Brief Profile <span class="text-red-500">*</span></label>
+            <textarea name="brief_profile" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.brief_profile or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Previous Rejection by IN-SPACe? <span class="text-red-500">*</span></label>
+            <select name="previous_rejection" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="previous_rejection">
+                <option value="No" {% if form_data.previous_rejection == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.previous_rejection == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="rejection_details" class="{% if form_data.previous_rejection != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="rejection_details" {% if form_data.previous_rejection == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.rejection_details or '' }}</textarea>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Amendment/Extension of Previous Authorization? <span class="text-red-500">*</span></label>
+            <select name="amendment_extension" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="amendment_extension">
+                <option value="No" {% if form_data.amendment_extension == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.amendment_extension == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="amendment_details" class="{% if form_data.amendment_extension != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="amendment_details" {% if form_data.amendment_extension == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Details of previous authorization">{{ form_data.amendment_details or '' }}</textarea>
+                <textarea name="amendment_ground" {% if form_data.amendment_extension == 'Yes' %}required{% endif %} class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ground for amendment/extension">{{ form_data.amendment_ground or '' }}</textarea>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of Previous IN-SPACe Authorization</label>
+            <textarea name="previous_authorization" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.previous_authorization or '' }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('dashboard.home') }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Back to Dashboard</a>
+            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("previous_rejection").addEventListener("change", function() {
+        document.getElementById("rejection_details").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#rejection_details textarea").required = this.value === "Yes";
+    });
+    document.getElementById("amendment_extension").addEventListener("change", function() {
+        document.getElementById("amendment_details").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelectorAll("#amendment_details textarea").forEach(el => el.required = this.value === "Yes");
+    });
+</script>
+{% endblock %}

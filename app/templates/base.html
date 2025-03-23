@@ -1,0 +1,52 @@
+<!-- app/templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IN-SPACe Portal{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/tailwind.js') }}"></script>
+</head>
+<body class="flex h-screen bg-gray-100 m-0 p-0">
+    <div class="flex w-full">
+        <!-- Main Content (No Sidebar) -->
+        <div id="main-content" class="flex-1 bg-white">
+            <div class="navbar shadow-md p-4 flex justify-between items-center w-full bg-white border-b">
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('dashboard.home') if current_user.is_authenticated else url_for('auth.login') }}">
+                        <img src="{{ url_for('static', filename='images/IN-SPACe_Logo.png') }}" alt="Logo" class="h-8">
+                    </a>
+                </div>
+                <div class="flex-1 text-center text-gray-800 font-medium text-xl">
+                    Welcome to IN-SPACe Portal
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if current_user.is_authenticated %}
+                    <div class="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center bg-gray-500 text-white text-lg font-bold">
+                        {{ current_user.name[0]|upper }}
+                    </div>
+                    <a href="{{ url_for('auth.logout') }}">
+                        <button class="py-2 px-4 rounded bg-red-500 text-white hover:bg-red-700 transition-all duration-300">
+                            Logout
+                        </button>
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}">
+                        <button class="py-2 px-4 rounded bg-blue-600 text-white hover:bg-blue-700 transition-all duration-300">
+                            Login
+                        </button>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="main p-6">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

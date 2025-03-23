@@ -1,0 +1,90 @@
+<!-- app/modules/module_1/templates/module_1/operational_contact.html -->
+{% extends "module_1/forms_base.html" %}
+{% block title %}Module 1 - Operational & Contact Info{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Operational, Infrastructural, and Technical Capabilities <span class="text-red-500">*</span></label>
+            <textarea name="capabilities" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.capabilities or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Special Approvals? <span class="text-red-500">*</span></label>
+            <select name="special_approvals" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="special_approvals">
+                <option value="No" {% if form_data.special_approvals == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.special_approvals == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="special_approvals_docs" class="{% if form_data.special_approvals != 'Yes' %}hidden{% endif %} mt-2">
+                <input type="file" name="special_approvals_docs" multiple {% if form_data.special_approvals == 'Yes' and not existing_files|selectattr('field_name', 'equalto', 'special_approvals_docs')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                {% if existing_files %}
+                <div class="mt-2">
+                    <p class="text-sm text-gray-600">Previously Uploaded Files:</p>
+                    <ul class="list-disc pl-5">
+                        {% for file in existing_files %}
+                            {% if file.field_name == "special_approvals_docs" %}
+                            <li>
+                                <a href="{{ url_for('module_1.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Registered Office Address <span class="text-red-500">*</span></label>
+            <textarea name="registered_address" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.registered_address or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Corporate Office Address (if different)</label>
+            <textarea name="corporate_address" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.corporate_address or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Address for Correspondence <span class="text-red-500">*</span></label>
+            <textarea name="correspondence_address" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.correspondence_address or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Phone <span class="text-red-500">*</span></label>
+            <input type="text" name="phone" value="{{ form_data.phone or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Email <span class="text-red-500">*</span></label>
+            <input type="email" name="email" value="{{ form_data.email or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Website</label>
+            <input type="text" name="website" value="{{ form_data.website or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">1st Contact Person (Authorized Signatory) <span class="text-red-500">*</span></label>
+            <input type="text" name="contact1_name" value="{{ form_data.contact1_name or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name">
+            <input type="text" name="contact1_designation" value="{{ form_data.contact1_designation or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Designation">
+            <input type="text" name="contact1_mobile" value="{{ form_data.contact1_mobile or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Mobile">
+            <input type="email" name="contact1_email" value="{{ form_data.contact1_email or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Email">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">2nd Contact Person <span class="text-red-500">*</span></label>
+            <input type="text" name="contact2_name" value="{{ form_data.contact2_name or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name">
+            <input type="text" name="contact2_designation" value="{{ form_data.contact2_designation or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Designation">
+            <input type="text" name="contact2_mobile" value="{{ form_data.contact2_mobile or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Mobile">
+            <input type="email" name="contact2_email" value="{{ form_data.contact2_email or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Email">
+        </div>
+        <div id="additional_contacts" class="mb-4">
+            {% for i in range(3, (form_data|length)//4 + 3) if form_data.get('contact' + i|string + '_name') %}
+            <div class="contact-group mb-4" data-index="{{ i }}">
+                <label class="block text-base mb-1 text-gray-800">{{ i }}th Contact Person</label>
+                <input type="text" name="contact{{ i }}_name" value="{{ form_data['contact' + i|string + '_name'] or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name">
+                <input type="text" name="contact{{ i }}_designation" value="{{ form_data['contact' + i|string + '_designation'] or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Designation">
+                <input type="text" name="contact{{ i }}_mobile" value="{{ form_data['contact' + i|string + '_mobile'] or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Mobile">
+                <input type="email" name="contact{{ i }}_email" value="{{ form_data['contact' + i|string + '_email'] or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Email">
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_1.fill_step', step='financial_credentials', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

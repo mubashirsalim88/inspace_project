@@ -1,0 +1,107 @@
+<!-- app/modules/module_1/templates/module_1/entity_details.html -->
+{% extends "module_1/forms_base.html" %}
+{% block title %}Module 1 - Entity Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Applicable Category <span class="text-red-500">*</span></label>
+            <select name="entity_category" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Company" {% if form_data.entity_category == 'Company' %}selected{% endif %}>Company (Companies Act, 2013)</option>
+                <option value="Partnership" {% if form_data.entity_category == 'Partnership' %}selected{% endif %}>Partnership Firm</option>
+                <option value="Trust" {% if form_data.entity_category == 'Trust' %}selected{% endif %}>Trust</option>
+                <option value="Association" {% if form_data.entity_category == 'Association' %}selected{% endif %}>Association of Persons</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Constitution of the Entity <span class="text-red-500">*</span></label>
+            <select name="constitution" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="constitution">
+                <option value="LLP" {% if form_data.constitution == 'LLP' %}selected{% endif %}>LLP</option>
+                <option value="Public Ltd" {% if form_data.constitution == 'Public Ltd' %}selected{% endif %}>Public Ltd</option>
+                <option value="Pvt Ltd" {% if form_data.constitution == 'Pvt Ltd' %}selected{% endif %}>Pvt Ltd</option>
+                <option value="Trust" {% if form_data.constitution == 'Trust' %}selected{% endif %}>Trust</option>
+                <option value="PSU" {% if form_data.constitution == 'PSU' %}selected{% endif %}>PSU</option>
+                <option value="CPSE" {% if form_data.constitution == 'CPSE' %}selected{% endif %}>CPSE</option>
+                <option value="Other" {% if form_data.constitution == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+            <div id="constitution_other" class="{% if form_data.constitution != 'Other' %}hidden{% endif %} mt-2">
+                <input type="text" name="constitution_other" {% if form_data.constitution == 'Other' %}required{% endif %} value="{{ form_data.constitution_other or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Specify">
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Date of Incorporation <span class="text-red-500">*</span></label>
+            <input type="date" name="date_incorporation" value="{{ form_data.date_incorporation or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Registration Number <span class="text-red-500">*</span></label>
+            <input type="text" name="registration_number" value="{{ form_data.registration_number or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">PAN/TAN Number <span class="text-red-500">*</span></label>
+            <input type="text" name="pan_tan" value="{{ form_data.pan_tan or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">GSTIN Number <span class="text-red-500">*</span></label>
+            <input type="text" name="gstin" value="{{ form_data.gstin or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Recognition Status <span class="text-red-500">*</span></label>
+            <select name="recognition_status" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="recognition_status">
+                <option value="None" {% if form_data.recognition_status == 'None' %}selected{% endif %}>None</option>
+                <option value="Start-up" {% if form_data.recognition_status == 'Start-up' %}selected{% endif %}>Start-up</option>
+                <option value="Small" {% if form_data.recognition_status == 'Small' %}selected{% endif %}>Small Enterprise</option>
+                <option value="Micro" {% if form_data.recognition_status == 'Micro' %}selected{% endif %}>Micro Enterprise</option>
+                <option value="Medium" {% if form_data.recognition_status == 'Medium' %}selected{% endif %}>Medium Enterprise</option>
+            </select>
+            <div id="recognition_details" class="{% if form_data.recognition_status == 'None' %}hidden{% endif %} mt-2">
+                <input type="text" name="recognition_reg_number" {% if form_data.recognition_status != 'None' %}required{% endif %} value="{{ form_data.recognition_reg_number or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Registration Number">
+                <input type="date" name="recognition_date" {% if form_data.recognition_status != 'None' %}required{% endif %} value="{{ form_data.recognition_date or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="file" name="recognition_certificate" multiple {% if form_data.recognition_status != 'None' and not existing_files|selectattr('field_name', 'equalto', 'recognition_certificate')|list %}required{% endif %} class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                {% if existing_files %}
+                <div class="mt-2">
+                    <p class="text-sm text-gray-600">Previously Uploaded Files:</p>
+                    <ul class="list-disc pl-5">
+                        {% for file in existing_files %}
+                            {% if file.field_name == "recognition_certificate" %}
+                            <li>
+                                <a href="{{ url_for('module_1.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Joint Venture? <span class="text-red-500">*</span></label>
+            <select name="joint_venture" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="joint_venture">
+                <option value="No" {% if form_data.joint_venture == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.joint_venture == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="joint_venture_details" class="{% if form_data.joint_venture != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="jv_partners" {% if form_data.joint_venture == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Details of Other Partners">{{ form_data.jv_partners or '' }}</textarea>
+                <input type="text" name="jv_share" {% if form_data.joint_venture == 'Yes' %}required{% endif %} value="{{ form_data.jv_share or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Share in the Business">
+            </div>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_1.fill_step', step='applicant_identity', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("constitution").addEventListener("change", function() {
+        document.getElementById("constitution_other").classList.toggle("hidden", this.value !== "Other");
+        document.querySelector("#constitution_other input").required = this.value === "Other";
+    });
+    document.getElementById("recognition_status").addEventListener("change", function() {
+        document.getElementById("recognition_details").classList.toggle("hidden", this.value === "None");
+        document.querySelectorAll("#recognition_details input").forEach(el => el.required = this.value !== "None");
+    });
+    document.getElementById("joint_venture").addEventListener("change", function() {
+        document.getElementById("joint_venture_details").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelectorAll("#joint_venture_details input, #joint_venture_details textarea").forEach(el => el.required = this.value === "Yes");
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,73 @@
+<!-- app/modules/module_1/templates/module_1/management_ownership.html -->
+{% extends "module_1/forms_base.html" %}
+{% block title %}Module 1 - Management & Ownership{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Charter Document <span class="text-red-500">*</span></label>
+            <input type="file" name="charter_document" multiple {% if not existing_files|selectattr('field_name', 'equalto', 'charter_document')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded Files:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}
+                        {% if file.field_name == "charter_document" %}
+                        <li>
+                            <a href="{{ url_for('module_1.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Directors/Key Personnel (Name, Address Proof, ID Proof, Contact, Nationality, Residence, Other Directorships, Shareholding) <span class="text-red-500">*</span></label>
+            <textarea name="directors_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.directors_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Foreign National in Management? <span class="text-red-500">*</span></label>
+            <select name="foreign_national" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="foreign_national">
+                <option value="No" {% if form_data.foreign_national == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.foreign_national == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="foreign_national_details" class="{% if form_data.foreign_national != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="foreign_national_details" {% if form_data.foreign_national == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.foreign_national_details or '' }}</textarea>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Shareholders/Partners (10%+) <span class="text-red-500">*</span></label>
+            <textarea name="shareholders_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.shareholders_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Indian Management and Control? <span class="text-red-500">*</span></label>
+            <select name="indian_management" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="indian_management">
+                <option value="Yes" {% if form_data.indian_management == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.indian_management == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="non_indian_management_details" class="{% if form_data.indian_management != 'No' %}hidden{% endif %} mt-2">
+                <textarea name="non_indian_management_details" {% if form_data.indian_management == 'No' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.non_indian_management_details or '' }}</textarea>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Criminal History <span class="text-red-500">*</span></label>
+            <textarea name="criminal_history" required class="w-full p-3 borderulous rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.criminal_history or '' }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_1.fill_step', step='entity_details', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("foreign_national").addEventListener("change", function() {
+        document.getElementById("foreign_national_details").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#foreign_national_details textarea").required = this.value === "Yes";
+    });
+    document.getElementById("indian_management").addEventListener("change", function() {
+        document.getElementById("non_indian_management_details").classList.toggle("hidden", this.value !== "No");
+        document.querySelector("#non_indian_management_details textarea").required = this.value === "No";
+    });
+</script>
+{% endblock %}
