@@ -1,0 +1,71 @@
+<!-- app/modules/module_2/templates/module_2/satellite_overview.html -->
+{% extends "module_2/forms_base.html" %}
+{% block title %}Module 2 - Satellite Overview{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Extension of Operational Life? <span class="text-red-500">*</span></label>
+            <select name="extend_life" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="extend_life">
+                <option value="No" {% if form_data.extend_life == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.extend_life == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="extend_life_details" class="{% if form_data.extend_life != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="extend_life_details" {% if form_data.extend_life == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Details of previous authorization">{{ form_data.extend_life_details or '' }}</textarea>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Orbit Type <span class="text-red-500">*</span></label>
+            <select name="orbit_type" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="GSO" {% if form_data.orbit_type == 'GSO' %}selected{% endif %}>GSO</option>
+                <option value="MEO" {% if form_data.orbit_type == 'MEO' %}selected{% endif %}>MEO</option>
+                <option value="LEO" {% if form_data.orbit_type == 'LEO' %}selected{% endif %}>LEO</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Multiple or Standalone Satellite <span class="text-red-500">*</span></label>
+            <select name="satellite_type" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="satellite_type">
+                <option value="Standalone" {% if form_data.satellite_type == 'Standalone' %}selected{% endif %}>Standalone Satellite</option>
+                <option value="Multiple" {% if form_data.satellite_type == 'Multiple' %}selected{% endif %}>Multiple Satellites</option>
+            </select>
+            <div id="multiple_details" class="{% if form_data.satellite_type != 'Multiple' %}hidden{% endif %} mt-2">
+                <input type="number" name="number_of_satellites" {% if form_data.satellite_type == 'Multiple' %}required{% endif %} value="{{ form_data.number_of_satellites or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Total number of satellites">
+            </div>
+        </div>
+        <div class="mb-4 {% if form_data.orbit_type not in ['MEO', 'LEO'] %}hidden{% endif %}" id="ngso_details_container">
+            <label class="block text-base mb-1 text-gray-800">NGSO Constellation Details</label>
+            <textarea name="ngso_constellation_details" {% if form_data.orbit_type in ['MEO', 'LEO'] %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Number of satellites (active & backup), phases">{{ form_data.ngso_constellation_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Name of Satellite(s)/Constellation <span class="text-red-500">*</span></label>
+            <input type="text" name="satellite_name" value="{{ form_data.satellite_name or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Number of Satellites for Authorization <span class="text-red-500">*</span></label>
+            <input type="number" name="satellites_for_auth" value="{{ form_data.satellites_for_auth or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Mission Objective <span class="text-red-500">*</span></label>
+            <textarea name="mission_objective" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.mission_objective or '' }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('dashboard.home') }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Back to Dashboard</a>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("extend_life").addEventListener("change", function() {
+        document.getElementById("extend_life_details").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#extend_life_details textarea").required = this.value === "Yes";
+    });
+    document.getElementById("satellite_type").addEventListener("change", function() {
+        document.getElementById("multiple_details").classList.toggle("hidden", this.value !== "Multiple");
+        document.querySelector("#multiple_details input").required = this.value === "Multiple";
+    });
+    document.querySelector("[name='orbit_type']").addEventListener("change", function() {
+        document.getElementById("ngso_details_container").classList.toggle("hidden", !["MEO", "LEO"].includes(this.value));
+        document.querySelector("#ngso_details_container textarea").required = ["MEO", "LEO"].includes(this.value);
+    });
+</script>
+{% endblock %}

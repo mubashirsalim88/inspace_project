@@ -1,0 +1,50 @@
+<!-- app/modules/module_2/templates/module_2/summary.html -->
+{% extends "module_2/forms_base.html" %}
+{% block title %}Module 2 - Summary{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-4xl mx-auto">
+    <h3 class="text-xl font-semibold mb-4 text-gray-800">Module 2 Summary</h3>
+    <div class="space-y-6">
+        {% for md in all_module_data %}
+        <div class="border-b pb-4">
+            <h4 class="text-lg font-medium text-gray-800">{{ md.step.replace('_', ' ').title() }}</h4>
+            <div class="grid grid-cols-2 gap-4 mt-2">
+                {% for key, value in md.data.items() %}
+                {% if value %}
+                <div>
+                    <span class="text-gray-700 font-medium">{{ key.replace('_', ' ').title() }}:</span>
+                    <span class="text-gray-600">
+                        {% if value is iterable and value is not string %}
+                            {% for item in value %}
+                                {% if item.startswith('uploads/') %}
+                                    <a href="{{ url_for('module_2.download_file', file_id=(existing_files|selectattr('filepath', 'equalto', item)|first).id) }}" class="text-blue-600 hover:underline" target="_blank">{{ item|basename }}</a>{% if not loop.last %}, {% endif %}
+                                {% else %}
+                                    {{ item }}{% if not loop.last %}, {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="flex justify-between mt-6">
+        <a href="{{ url_for('module_2.fill_step', step='misc_and_declarations', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+        <div class="space-x-4">
+            {% if application.status == "Pending" %}
+            <form method="POST" action="{{ url_for('module_2.submit_application', application_id=application_id) }}" style="display:inline;">
+                <button type="submit" class="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700" onclick="return confirm('Are you sure you want to submit the application?');">Submit Application</button>
+            </form>
+            {% endif %}
+            {% if application.status == "Submitted" %}
+            <a href="{{ url_for('module_2.download_pdf', application_id=application_id) }}" class="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Download PDF</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

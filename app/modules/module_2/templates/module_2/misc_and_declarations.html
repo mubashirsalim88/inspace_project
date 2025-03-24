@@ -1,0 +1,122 @@
+<!-- app/modules/module_2/templates/module_2/misc_and_declarations.html -->
+{% extends "module_2/forms_base.html" %}
+{% block title %}Module 2 - Miscellaneous & Declarations{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-4xl mx-auto">
+    <h3 class="text-xl font-semibold mb-4 text-gray-800">Miscellaneous & Declarations</h3>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mt-6">
+            <h4 class="text-lg font-semibold mb-2 text-gray-800">Miscellaneous</h4>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Indigenous Elements</label>
+                <textarea name="indigenous_elements" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Details of indigenous components">{{ form_data.indigenous_elements or '' }}</textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Proposed Timeframe <span class="text-red-500">*</span></label>
+                <textarea name="proposed_timeframe" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Timeline with milestones">{{ form_data.proposed_timeframe or '' }}</textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Collaborations</label>
+                <textarea name="collaborations" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Details of collaborations">{{ form_data.collaborations or '' }}</textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Intellectual Property Rights</label>
+                <textarea name="ipr" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="IPR held by applicant">{{ form_data.ipr or '' }}</textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Estimated Cost (INR) <span class="text-red-500">*</span></label>
+                <input type="number" name="estimated_cost" value="{{ form_data.estimated_cost or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Total estimated cost">
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Source of Funding <span class="text-red-500">*</span></label>
+                <textarea name="funding_source" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Funding sources">{{ form_data.funding_source or '' }}</textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Other Clearances</label>
+                <textarea name="other_clearances" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Details of other clearances">{{ form_data.other_clearances or '' }}</textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Additional Information</label>
+                <textarea name="additional_info" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Any additional details">{{ form_data.additional_info or '' }}</textarea>
+            </div>
+        </div>
+        <div class="mb-4">
+            <h4 class="text-lg font-semibold mb-2 text-gray-800">Undertaking/Declaration</h4>
+            {% for decl in ['coord_agreement', 'cease_emission', 'change_notification', 'govt_control', 'app_submission', 'compliance_affirmation'] %}
+            <div class="flex items-start mb-2">
+                <input type="checkbox" name="{{ decl }}" value="true" required class="mt-1 mr-2" {% if form_data[decl] == 'true' %}checked{% endif %}>
+                <p class="text-gray-700 text-sm">
+                    {{ { 
+                        'coord_agreement': 'F. Agreement to coordinate with other operators for interference-free services', 
+                        'cease_emission': 'G. Agreement to cease emissions if directed by IN-SPACe due to interference', 
+                        'change_notification': 'H. Commitment to notify IN-SPACe of satellite/constellation changes', 
+                        'govt_control': 'I. Acknowledgment of potential government control in emergencies', 
+                        'app_submission': 'J. Affirmation of application submission', 
+                        'compliance_affirmation': 'K. Confirmation of compliance with laws and IN-SPACe conditions' 
+                    }[decl] }}
+                </p>
+            </div>
+            {% endfor %}
+            <div class="flex items-start mb-2 {% if not all_module_data|selectattr('step', 'equalto', 'payload_details')|map(attribute='data')|map(attribute='hosted_payloads')|first == 'Yes' %}hidden{% endif %}" id="hosted_payload_undertaking_container">
+                <input type="checkbox" name="hosted_payload_undertaking" value="true" {% if all_module_data|selectattr('step', 'equalto', 'payload_details')|map(attribute='data')|map(attribute='hosted_payloads')|first == 'Yes' %}required{% endif %} class="mt-1 mr-2" {% if form_data.hosted_payload_undertaking == 'true' %}checked{% endif %}>
+                <p class="text-gray-700 text-sm">Hosted Payload Undertaking: Affirmation to obtain requisite authorizations for hosted payloads before operation</p>
+            </div>
+        </div>
+        <div class="mb-4">
+            <h4 class="text-lg font-semibold mb-2 text-gray-800">Signature Block</h4>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Signature Name <span class="text-red-500">*</span></label>
+                <input type="text" name="signature_name" value="{{ form_data.signature_name or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name in Block Letters">
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Full Address <span class="text-red-500">*</span></label>
+                <textarea name="signature_address" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Full Address">{{ form_data.signature_address or '' }}</textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Official Seal/Stamp <span class="text-red-500">*</span></label>
+                <input type="file" name="official_seal" multiple {% if not existing_files|selectattr('field_name', 'equalto', 'official_seal')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                {% if existing_files %}
+                <div class="mt-2">
+                    <p class="text-sm text-gray-600">Previously Uploaded:</p>
+                    <ul class="list-disc pl-5">
+                        {% for file in existing_files %}{% if file.field_name == "official_seal" %}
+                        <li><a href="{{ url_for('module_2.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                        {% endif %}{% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Place <span class="text-red-500">*</span></label>
+                <input type="text" name="signature_place" value="{{ form_data.signature_place or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Place">
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Telephone Number <span class="text-red-500">*</span></label>
+                <input type="text" name="signature_tel" value="{{ form_data.signature_tel or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Tel No">
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Date <span class="text-red-500">*</span></label>
+                <input type="date" name="signature_date" value="{{ form_data.signature_date or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Email <span class="text-red-500">*</span></label>
+                <input type="email" name="signature_email" value="{{ form_data.signature_email or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Email">
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Website</label>
+                <input type="text" name="signature_website" value="{{ form_data.signature_website or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Website (optional)">
+            </div>
+        </div>
+        <div class="flex justify-between mt-6">
+            <a href="{{ url_for('module_2.fill_step', step='itu_and_regulatory', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    const hostedPayloads = "{{ all_module_data|selectattr('step', 'equalto', 'payload_details')|map(attribute='data')|map(attribute='hosted_payloads')|first or 'No' }}";
+    if (hostedPayloads === "Yes") {
+        document.getElementById("hosted_payload_undertaking_container").classList.remove("hidden");
+    }
+</script>
+{% endblock %}

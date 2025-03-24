@@ -1,0 +1,79 @@
+<!-- app/modules/module_2/templates/module_2/safety_and_manufacturing.html -->
+{% extends "module_2/forms_base.html" %}
+{% block title %}Module 2 - Safety & Manufacturing{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Safety Assessment Report <span class="text-red-500">*</span></label>
+            <input type="file" name="safety_assessment_report" multiple {% if not existing_files|selectattr('field_name', 'equalto', 'safety_assessment_report')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}{% if file.field_name == "safety_assessment_report" %}
+                    <li><a href="{{ url_for('module_2.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                    {% endif %}{% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite Manufacturing Details <span class="text-red-500">*</span></label>
+            <select name="manufacturing_source" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Own" {% if form_data.manufacturing_source == 'Own' %}selected{% endif %}>Own Manufacturing</option>
+                <option value="Imported" {% if form_data.manufacturing_source == 'Imported' %}selected{% endif %}>Procured (Imported)</option>
+                <option value="Indigenous" {% if form_data.manufacturing_source == 'Indigenous' %}selected{% endif %}>Procured (Indigenous)</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Procurement/Acquisition/Transfer of Ownership? <span class="text-red-500">*</span></label>
+            <select name="procurement" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="procurement">
+                <option value="No" {% if form_data.procurement == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.procurement == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="procurement_details" class="{% if form_data.procurement != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="procurement_details" {% if form_data.procurement == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Previous ownership, orbital slot">{{ form_data.procurement_details or '' }}</textarea>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Subsidiary/Joint Venture with Non-Indian Entity? <span class="text-red-500">*</span></label>
+            <select name="non_indian_entity" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="non_indian_entity">
+                <option value="No" {% if form_data.non_indian_entity == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.non_indian_entity == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="non_indian_consent" class="{% if form_data.non_indian_entity != 'Yes' %}hidden{% endif %} mt-2">
+                <input type="file" name="consent_document" multiple {% if form_data.non_indian_entity == 'Yes' and not existing_files|selectattr('field_name', 'equalto', 'consent_document')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                {% if existing_files %}
+                <div class="mt-2">
+                    <p class="text-sm text-gray-600">Previously Uploaded:</p>
+                    <ul class="list-disc pl-5">
+                        {% for file in existing_files %}{% if file.field_name == "consent_document" %}
+                        <li><a href="{{ url_for('module_2.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                        {% endif %}{% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Tentative Schedule <span class="text-red-500">*</span></label>
+            <textarea name="tentative_schedule" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Timeline with milestones">{{ form_data.tentative_schedule or '' }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_2.fill_step', step='satellite_configuration', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("procurement").addEventListener("change", function() {
+        document.getElementById("procurement_details").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#procurement_details textarea").required = this.value === "Yes";
+    });
+    document.getElementById("non_indian_entity").addEventListener("change", function() {
+        document.getElementById("non_indian_consent").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#non_indian_consent input").required = this.value === "Yes";
+    });
+</script>
+{% endblock %}

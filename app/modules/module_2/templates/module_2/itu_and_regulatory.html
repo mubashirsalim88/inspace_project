@@ -1,0 +1,339 @@
+<!-- app/modules/module_2/templates/module_2/itu_and_regulatory.html -->
+{% extends "module_2/forms_base.html" %}
+{% block title %}Module 2 - ITU & Regulatory{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Existing or New ITU Filing (Indian) <span
+                    class="text-red-500">*</span></label>
+            <select name="itu_filing_type" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Existing" {% if form_data.itu_filing_type=='Existing' %}selected{% endif %}>Existing
+                    Indian ITU Filing</option>
+                <option value="New" {% if form_data.itu_filing_type=='New' %}selected{% endif %}>New ITU Filing</option>
+            </select>
+            <textarea name="itu_filing_details" required
+                class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Details of filing choice">{{ form_data.itu_filing_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Name of ITU Filing (Indian)</label>
+            <input type="text" name="itu_filing_name_indian" value="{{ form_data.itu_filing_name_indian or '' }}"
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">ITU Filing Status for Payload (Indian) <span
+                    class="text-red-500">*</span></label>
+            <textarea name="itu_payload_status_indian" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Filing/coordination status">{{ form_data.itu_payload_status_indian or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">ITU Filing Status for TT&C (Indian) <span
+                    class="text-red-500">*</span></label>
+            <textarea name="itu_ttc_status_indian" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Filing/coordination status">{{ form_data.itu_ttc_status_indian or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Payload Frequency Details (Indian) <span
+                    class="text-red-500">*</span></label>
+            <input type="text" name="payload_freq_indian" value="{{ form_data.payload_freq_indian or '' }}" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Coverage Details (Indian) <span
+                    class="text-red-500">*</span></label>
+            <textarea name="coverage_indian" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Latitude-longitude coordinates">{{ form_data.coverage_indian or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">TT&C Frequency Details (Indian) <span
+                    class="text-red-500">*</span></label>
+            <textarea name="ttc_freq_indian" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Carrier frequency, bandwidth">{{ form_data.ttc_freq_indian or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Orbital Slot/Orbit Parameters (Indian) <span
+                    class="text-red-500">*</span></label>
+            <input type="text" name="orbital_slot_indian" value="{{ form_data.orbital_slot_indian or '' }}" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Interference Analysis (Indian)</label>
+            <input type="file" name="interference_analysis_indian" multiple
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}{% if file.field_name == "interference_analysis_indian" %}
+                    <li><a href="{{ url_for('module_2.download_file', file_id=file.id) }}"
+                            class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                    {% endif %}{% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Name of ITU Filing (Non-Indian)</label>
+            <input type="text" name="itu_filing_name_non_indian"
+                value="{{ form_data.itu_filing_name_non_indian or '' }}"
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">ITU Filing Status for Payload (Non-Indian)</label>
+            <textarea name="itu_payload_status_non_indian"
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Filing/coordination status">{{ form_data.itu_payload_status_non_indian or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">ITU Filing Status for TT&C (Non-Indian)</label>
+            <textarea name="itu_ttc_status_non_indian"
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Filing/coordination status">{{ form_data.itu_ttc_status_non_indian or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Frequency Coordination Agreements (Non-Indian)</label>
+            <textarea name="freq_coordination_non_indian"
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Details of agreements">{{ form_data.freq_coordination_non_indian or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Payload Frequency Details (Non-Indian)</label>
+            <input type="text" name="payload_freq_non_indian" value="{{ form_data.payload_freq_non_indian or '' }}"
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Coverage Details (Non-Indian)</label>
+            <textarea name="coverage_non_indian"
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Latitude-longitude coordinates">{{ form_data.coverage_non_indian or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">TT&C Frequencies (Non-Indian)</label>
+            <textarea name="ttc_freq_non_indian"
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Frequencies, modulation">{{ form_data.ttc_freq_non_indian or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Orbital Slot/Orbit Parameters (Non-Indian)</label>
+            <input type="text" name="orbital_slot_non_indian" value="{{ form_data.orbital_slot_non_indian or '' }}"
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Arrangements with Foreign Administration</label>
+            <input type="file" name="foreign_arrangements" multiple
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}{% if file.field_name == "foreign_arrangements" %}
+                    <li><a href="{{ url_for('module_2.download_file', file_id=file.id) }}"
+                            class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                    {% endif %}{% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Willingness to Operate Under Indian ITU Filing</label>
+            <select name="indian_itu_willingness"
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="No" {% if form_data.indian_itu_willingness=='No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.indian_itu_willingness=='Yes' %}selected{% endif %}>Yes</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Interference Analysis (Non-Indian)</label>
+            <input type="file" name="interference_analysis_non_indian" multiple
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}{% if file.field_name == "interference_analysis_non_indian" %}
+                    <li><a href="{{ url_for('module_2.download_file', file_id=file.id) }}"
+                            class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                    {% endif %}{% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Space Object Registration - UN Debris Mitigation <span
+                    class="text-red-500">*</span></label>
+            <select name="un_debris_compliance" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Complied" {% if form_data.un_debris_compliance=='Complied' %}selected{% endif %}>Complied
+                </option>
+                <option value="Not Complied" {% if form_data.un_debris_compliance=='Not Complied' %}selected{% endif %}>
+                    Not Complied</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Space Object Registration - DOS Framework <span
+                    class="text-red-500">*</span></label>
+            <select name="dos_framework_compliance" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Complied" {% if form_data.dos_framework_compliance=='Complied' %}selected{% endif %}>
+                    Complied</option>
+                <option value="Not Complied" {% if form_data.dos_framework_compliance=='Not Complied' %}selected{% endif
+                    %}>Not Complied</option>
+                <option value="Not Applicable" {% if form_data.dos_framework_compliance=='Not Applicable' %}selected{%
+                    endif %}>Not Applicable</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Annexure-2 (Space Object Registration) <span
+                    class="text-red-500">*</span></label>
+            <input type="file" name=" voltou_2" multiple {% if not existing_files|selectattr('field_name', 'equalto'
+                , 'annexure_2' )|list %}required{% endif %}
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}{% if file.field_name == "annexure_2" %}
+                    <li><a href="{{ url_for('module_2.download_file', file_id=file.id) }}"
+                            class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                    {% endif %}{% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Space Object Registration Details</label>
+            <textarea name="space_object_details"
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Launching state, registration number">{{ form_data.space_object_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Launcher Details <span
+                    class="text-red-500">*</span></label>
+            <textarea name="launcher_details" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Launcher type, provider">{{ form_data.launcher_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Launch Service Agreement <span
+                    class="text-red-500">*</span></label>
+            <input type="file" name="launch_service_agreement" multiple {% if not
+                existing_files|selectattr('field_name', 'equalto' , 'launch_service_agreement' )|list %}required{% endif
+                %}
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}{% if file.field_name == "launch_service_agreement" %}
+                    <li><a href="{{ url_for('module_2.download_file', file_id=file.id) }}"
+                            class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                    {% endif %}{% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb- Foreign Key('users.id') mb-1 text-gray-800">Tentative Launch Timeframe
+                <span class="text-red-500">*</span></label>
+            <input type="text" name="launch_timeframe" value="{{ form_data.launch_timeframe or '' }}" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Insurance Details</label>
+            <input type="file" name="insurance_details" multiple
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}{% if file.field_name == "insurance_details" %}
+                    <li><a href="{{ url_for('module_2.download_file', file_id=file.id) }}"
+                            class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                    {% endif %}{% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite Launch Status <span
+                    class="text-red-500">*</span></label>
+            <select name="launch_status" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                id="launch_status">
+                <option value="No" {% if form_data.launch_status=='No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.launch_status=='Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="launch_status_details" class="{% if form_data.launch_status != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="launch_status_details" {% if form_data.launch_status=='Yes' %}required{% endif %}
+                    class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Launch date, launcher">{{ form_data.launch_status_details or '' }}</textarea>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">DoT Licenses <span class="text-red-500">*</span></label>
+            <select name="dot_licenses" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                id="dot_licenses">
+                <option value="Obtained" {% if form_data.dot_licenses=='Obtained' %}selected{% endif %}>Obtained
+                </option>
+                <option value="In-process" {% if form_data.dot_licenses=='In-process' %}selected{% endif %}>In-process
+                </option>
+                <option value="Yet to apply" {% if form_data.dot_licenses=='Yet to apply' %}selected{% endif %}>Yet to
+                    apply</option>
+            </select>
+            <div id="dot_licenses_copies" class="{% if form_data.dot_licenses != 'Obtained' %}hidden{% endif %} mt-2">
+                <input type="file" name="dot_license_copies" multiple {% if form_data.dot_licenses=='Obtained' and not
+                    existing_files|selectattr('field_name', 'equalto' , 'dot_license_copies' )|list %}required{% endif
+                    %}
+                    class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                {% if existing_files %}
+                <div class="mt-2">
+                    <p class="text-sm text-gray-600">Previously Uploaded:</p>
+                    <ul class="list-disc pl-5">
+                        {% for file in existing_files %}{% if file.field_name == "dot_license_copies" %}
+                        <li><a href="{{ url_for('module_2.download_file', file_id=file.id) }}"
+                                class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                        {% endif %}{% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Intended Users and Services <span
+                    class="text-red-500">*</span></label>
+            <textarea name="intended_services" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Users, applications/services">{{ form_data.intended_services or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Service Area <span class="text-red-500">*</span></label>
+            <textarea name="service_area" required
+                class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Geographic service area">{{ form_data.service_area or '' }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_2.fill_step', step='ground_segment', application_id=application_id) }}"
+                class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="next"
+                class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("launch_status").addEventListener("change", function () {
+        document.getElementById("launch_status_details").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#launch_status_details textarea").required = this.value === "Yes";
+    });
+    document.getElementById("dot_licenses").addEventListener("change", function () {
+        document.getElementById("dot_licenses_copies").classList.toggle("hidden", this.value !== "Obtained");
+        document.querySelector("#dot_licenses_copies input").required = this.value === "Obtained";
+    });
+</script>
+{% endblock %}
