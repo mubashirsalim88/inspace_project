@@ -1,5 +1,5 @@
 # app/dashboard/routes.py
-from flask import Blueprint, render_template, jsonify, request, url_for
+from flask import Blueprint, render_template, jsonify, request, url_for, flash
 from flask_login import login_required, current_user
 from app.models import Application, ModuleData
 from app import db
@@ -65,9 +65,12 @@ def start_application():
     db.session.add(new_app)
     db.session.flush()
 
+    # Define steps based on module
+    steps = MODULE_1_STEPS if module == "module_1" else MODULE_2_STEPS
+
     if module == "module_1":
-        steps = MODULE_1_STEPS
         redirect_url = url_for("module_1.fill_step", step=steps[0], application_id=new_app.id)
+        success = True
     elif module == "module_2":
         # Check Module 1 completion before starting Module 2
         all_user_apps = Application.query.filter_by(user_id=current_user.id).all()
@@ -77,16 +80,27 @@ def start_application():
             for app in all_user_apps
         )
         if not module_1_complete:
-            redirect_url = url_for("module_1.fill_step", step="applicant_identity", application_id=new_app.id)
+            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 2.", "error")
+            redirect_url = url_for("dashboard.home", module="module_1")  # Redirect to dashboard with Module 1 tab
+            success = False
         else:
-            steps = MODULE_2_STEPS
             redirect_url = url_for("module_2.fill_step", step=steps[0], application_id=new_app.id)
+            success = True
     else:
         steps = ["step_1"]
         redirect_url = url_for("dashboard.home")
+        success = False
 
-    module_data = ModuleData(application_id=new_app.id, module_name=module, step=steps[0], data={}, completed=False)
-    db.session.add(module_data)
+    # Only create ModuleData if starting the intended module
+    if success:
+        module_data = ModuleData(application_id=new_app.id, module_name=module, step=steps[0], data={}, completed=False)
+        db.session.add(module_data)
+
     db.session.commit()
     
-    return jsonify({"success": True, "application_id": new_app.id, "redirect_url": redirect_url})
+    return jsonify({
+        "success": success,
+        "application_id": new_app.id,
+        "redirect_url": redirect_url,
+        "message": "Please complete Module 1 (Basic Details) for at least one application before starting Module 2." if not success else None
+    })

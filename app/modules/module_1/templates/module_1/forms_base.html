@@ -177,6 +177,18 @@
             <div class="progress-container">
                 <div class="progress-fill"></div>
             </div>
+            <!-- Flash Messages -->
+            <div class="p-6">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message mb-4 p-4 rounded-lg text-white {% if category == 'error' %}bg-red-500{% elif category == 'success' %}bg-green-500{% else %}bg-blue-500{% endif %} animate__animated animate__fadeIn">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
             <div class="p-6 form-container relative z-10">
                 {% block form_content %}{% endblock %}
             </div>

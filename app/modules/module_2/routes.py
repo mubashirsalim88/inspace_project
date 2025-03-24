@@ -61,6 +61,7 @@ def fill_step(step):
 
     if not module_1_complete:
         flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 2.", "error")
+        logger.info(f"User {current_user.id} redirected to Module 1 due to incomplete Module 1 data")
         # Redirect to Module 1 without creating Module 2 data
         existing_module_2_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_2").first()
         if existing_module_2_data and not existing_module_2_data.completed:
@@ -188,7 +189,7 @@ def submit_application(application_id):
     application.status = "Submitted"
     db.session.commit()
     flash("Application submitted successfully!", "success")
-    return redirect(url_for("dashboard.home", module="module_2"))  # Pass module parameter
+    return redirect(url_for("dashboard.home", module="module_2"))
 
 @module_2.route("/download_pdf/<int:application_id>")
 @login_required

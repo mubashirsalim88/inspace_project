@@ -39,10 +39,11 @@
             <p class="signup-link mt-4 text-sm animate__animated animate__fadeInUp">
                 Already have an account? <a href="{{ url_for('auth.login') }}" class="text-[#ff416c] hover:underline">Login here</a>
             </p>
-            {% with messages = get_flashed_messages() %}
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
-                    {% for message in messages %}
-                        <p class="flash mt-2">{{ message }}</p>
+                    {% for category, message in messages %}
+                        <p class="flash mt-2 p-2 rounded text-white {% if category == 'error' %}bg-red-500{% elif category == 'success' %}bg-green-500{% else %}bg-blue-500{% endif %} animate__animated animate__fadeIn">{{ message }}</p>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
