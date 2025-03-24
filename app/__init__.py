@@ -28,20 +28,24 @@ def create_app():
     from app.dashboard import dashboard as dashboard_bp
     from app.modules.module_1 import module_1 as module_1_bp
     from app.modules.module_2 import module_2 as module_2_bp
+    from app.modules.module_3 import module_3 as module_3_bp
+    from app.modules.module_4 import module_4 as module_4_bp  
     from app.chat import chat as chat_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(module_1_bp)
     app.register_blueprint(module_2_bp)
+    app.register_blueprint(module_3_bp)
+    app.register_blueprint(module_4_bp) 
     app.register_blueprint(chat_bp)
 
     # Add homepage route
     @app.route('/')
     def index():
         if current_user.is_authenticated:
-            return redirect(url_for('dashboard.home'))  # Changed to 'dashboard.home'
-        return redirect(url_for('auth.login'))  # Redirect to login for guests
+            return redirect(url_for('dashboard.home'))
+        return redirect(url_for('auth.login'))
 
     return app
 

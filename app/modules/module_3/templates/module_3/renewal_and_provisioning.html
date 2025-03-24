@@ -1,0 +1,42 @@
+{% extends "module_3/forms_base.html" %}
+{% block title %}Module 3 - Renewal & Provisioning{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Renewal/Extension/Amendment? <span class="text-red-500">*</span></label>
+            <select name="renewal" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="renewal">
+                <option value="No" {% if form_data.renewal == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.renewal == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="renewal_details" class="{% if form_data.renewal != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="renewal_details" {% if form_data.renewal == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Authorization number, date, changes">{{ form_data.renewal_details or '' }}</textarea>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Current Provisioning in India? <span class="text-red-500">*</span></label>
+            <select name="current_provisioning" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="current_provisioning">
+                <option value="No" {% if form_data.current_provisioning == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.current_provisioning == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="provisioning_details" class="{% if form_data.current_provisioning != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="provisioning_details" {% if form_data.current_provisioning == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Bandwidth (MHz), frequencies, service type">{{ form_data.provisioning_details or '' }}</textarea>
+            </div>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('dashboard.home') }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Back to Dashboard</a>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("renewal").addEventListener("change", function() {
+        document.getElementById("renewal_details").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#renewal_details textarea").required = this.value === "Yes";
+    });
+    document.getElementById("current_provisioning").addEventListener("change", function() {
+        document.getElementById("provisioning_details").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#provisioning_details textarea").required = this.value === "Yes";
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "module_3/forms_base.html" %}
+{% block title %}Module 3 - ITU & Regulatory{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Name of ITU Filing <span class="text-red-500">*</span></label>
+            <input type="text" name="itu_filing_name" required value="{{ form_data.itu_filing_name or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">ITU Filing Status <span class="text-red-500">*</span></label>
+            <textarea name="itu_filing_status" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Payload and TT&C status">{{ form_data.itu_filing_status or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Orbit Parameters & Coverage <span class="text-red-500">*</span></label>
+            <input type="text" name="orbit_coverage" required value="{{ form_data.orbit_coverage or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Per ITU Filing">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Frequency Coordination Completed? <span class="text-red-500">*</span></label>
+            <select name="freq_coordination" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="freq_coordination">
+                <option value="Yes" {% if form_data.freq_coordination == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.freq_coordination == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="coord_details" class="{% if form_data.freq_coordination != 'No' %}hidden{% endif %} mt-2">
+                <textarea name="coord_pending_details" {% if form_data.freq_coordination == 'No' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Pending coordination networks">{{ form_data.coord_pending_details or '' }}</textarea>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Foreign Administration Approval <span class="text-red-500">*</span></label>
+            <input type="file" name="foreign_admin_approval" multiple {% if not existing_files|selectattr('field_name', 'equalto', 'foreign_admin_approval')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if existing_files|selectattr('field_name', 'equalto', 'foreign_admin_approval')|list %}
+                <div class="mt-2"><p class="text-sm text-gray-600">Previously Uploaded:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}{% if file.field_name == "foreign_admin_approval" %}
+                    <li><a href="{{ url_for('module_3.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                    {% endif %}{% endfor %}
+                </ul></div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Willingness to Operate Under Indian ITU Filing <span class="text-red-500">*</span></label>
+            <select name="indian_itu_willingness" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                <option value="No" {% if form_data.indian_itu_willingness == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.indian_itu_willingness == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Interference Analysis</label>
+            <input type="file" name="interference_analysis" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if existing_files|selectattr('field_name', 'equalto', 'interference_analysis')|list %}
+                <div class="mt-2"><p class="text-sm text-gray-600">Previously Uploaded:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}{% if file.field_name == "interference_analysis" %}
+                    <li><a href="{{ url_for('module_3.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                    {% endif %}{% endfor %}
+                </ul></div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Space Object Registration Details <span class="text-red-500">*</span></label>
+            <textarea name="registration_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Launching state, registration number">{{ form_data.registration_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">License/Authorization Copy <span class="text-red-500">*</span></label>
+            <input type="file" name="license_copy" multiple {% if not existing_files|selectattr('field_name', 'equalto', 'license_copy')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if existing_files|selectattr('field_name', 'equalto', 'license_copy')|list %}
+                <div class="mt-2"><p class="text-sm text-gray-600">Previously Uploaded:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}{% if file.field_name == "license_copy" %}
+                    <li><a href="{{ url_for('module_3.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                    {% endif %}{% endfor %}
+                </ul></div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">UN Space Debris Mitigation Compliance <span class="text-red-500">*</span></label>
+            <select name="debris_compliance" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                <option value="Complied" {% if form_data.debris_compliance == 'Complied' %}selected{% endif %}>Complied</option>
+                <option value="Not Complied" {% if form_data.debris_compliance == 'Not Complied' %}selected{% endif %}>Not Complied</option>
+            </select>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_3.fill_step', step='ground_segment', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("freq_coordination").addEventListener("change", function() {
+        document.getElementById("coord_details").classList.toggle("hidden", this.value !== "No");
+        document.querySelector("#coord_details textarea").required = this.value === "No";
+    });
+</script>
+{% endblock %}

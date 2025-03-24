@@ -1,0 +1,108 @@
+{% extends "module_3/forms_base.html" %}
+{% block title %}Module 3 - Satellite/Constellation Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Orbit Type <span class="text-red-500">*</span></label>
+            <select name="orbit_type" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                <option value="GSO" {% if form_data.orbit_type == 'GSO' %}selected{% endif %}>GSO</option>
+                <option value="MEO" {% if form_data.orbit_type == 'MEO' %}selected{% endif %}>MEO</option>
+                <option value="LEO" {% if form_data.orbit_type == 'LEO' %}selected{% endif %}>LEO</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Relationship with Operator <span class="text-red-500">*</span></label>
+            <select name="relationship_type" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                <option value="Indian Subsidiary" {% if form_data.relationship_type == 'Indian Subsidiary' %}selected{% endif %}>Indian Subsidiary</option>
+                <option value="Joint Venture" {% if form_data.relationship_type == 'Joint Venture' %}selected{% endif %}>Joint Venture</option>
+                <option value="Collaboration" {% if form_data.relationship_type == 'Collaboration' %}selected{% endif %}>Collaboration</option>
+                <option value="Authorized Dealer" {% if form_data.relationship_type == 'Authorized Dealer' %}selected{% endif %}>Authorized Dealer/Representative</option>
+            </select>
+            <input type="text" name="relationship_specify" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800" value="{{ form_data.relationship_specify or '' }}" placeholder="Specify nature of relationship">
+            <input type="file" name="relationship_evidence" multiple class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800">
+            {% if existing_files|selectattr('field_name', 'equalto', 'relationship_evidence')|list %}
+                <div class="mt-2"><p class="text-sm text-gray-600">Previously Uploaded:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}{% if file.field_name == "relationship_evidence" %}
+                    <li><a href="{{ url_for('module_3.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                    {% endif %}{% endfor %}
+                </ul></div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Existing Use in India? <span class="text-red-500">*</span></label>
+            <select name="existing_use" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="existing_use">
+                <option value="No" {% if form_data.existing_use == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.existing_use == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="existing_use_details" class="{% if form_data.existing_use != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="existing_use_details" {% if form_data.existing_use == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Lease contract details">{{ form_data.existing_use_details or '' }}</textarea>
+                <input type="file" name="lease_contract" multiple {% if form_data.existing_use == 'Yes' and not existing_files|selectattr('field_name', 'equalto', 'lease_contract')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                {% if existing_files|selectattr('field_name', 'equalto', 'lease_contract')|list %}
+                    <div class="mt-2"><p class="text-sm text-gray-600">Previously Uploaded:</p>
+                    <ul class="list-disc pl-5">
+                        {% for file in existing_files %}{% if file.field_name == "lease_contract" %}
+                        <li><a href="{{ url_for('module_3.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                        {% endif %}{% endfor %}
+                    </ul></div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite/Constellation Name <span class="text-red-500">*</span></label>
+            <input type="text" name="satellite_name" value="{{ form_data.satellite_name or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+        </div>
+        <div class="mb-4 {% if form_data.orbit_type not in ['MEO', 'LEO'] %}hidden{% endif %}" id="ngso_numbers">
+            <label class="block text-base mb-1 text-gray-800">NGSO Satellite Numbers</label>
+            <input type="number" name="number_planned" {% if form_data.orbit_type in ['MEO', 'LEO'] %}required{% endif %} value="{{ form_data.number_planned or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Total planned">
+            <input type="number" name="number_for_auth" {% if form_data.orbit_type in ['MEO', 'LEO'] %}required{% endif %} value="{{ form_data.number_for_auth or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800" placeholder="For authorization">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite Operator Details <span class="text-red-500">*</span></label>
+            <textarea name="operator_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Name, address, contact">{{ form_data.operator_details or '' }}</textarea>
+            <textarea name="shareholders" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800" placeholder="Shareholders with ≥10% ownership">{{ form_data.shareholders or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Leased Space Asset? <span class="text-red-500">*</span></label>
+            <select name="leased_asset" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="leased_asset">
+                <option value="No" {% if form_data.leased_asset == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.leased_asset == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="lease_details" class="{% if form_data.leased_asset != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="lease_details" {% if form_data.leased_asset == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Lease agreement details">{{ form_data.lease_details or '' }}</textarea>
+                <input type="file" name="lease_contract" multiple {% if form_data.leased_asset == 'Yes' and not existing_files|selectattr('field_name', 'equalto', 'lease_contract')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite Details <span class="text-red-500">*</span></label>
+            <textarea name="satellite_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Manufacturer, mass, orbit parameters">{{ form_data.satellite_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Operational Life & Authorization Duration <span class="text-red-500">*</span></label>
+            <input type="number" name="operational_life" required value="{{ form_data.operational_life or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Life in years">
+            <input type="number" name="auth_duration" required value="{{ form_data.auth_duration or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800" placeholder="Duration in years">
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_3.fill_step', step='renewal_and_provisioning', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("existing_use").addEventListener("change", function() {
+        document.getElementById("existing_use_details").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#existing_use_details textarea").required = this.value === "Yes";
+        document.querySelector("#existing_use_details input").required = this.value === "Yes";
+    });
+    document.getElementById("leased_asset").addEventListener("change", function() {
+        document.getElementById("lease_details").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#lease_details textarea").required = this.value === "Yes";
+        document.querySelector("#lease_details input").required = this.value === "Yes";
+    });
+    document.querySelector("[name='orbit_type']").addEventListener("change", function() {
+        document.getElementById("ngso_numbers").classList.toggle("hidden", !["MEO", "LEO"].includes(this.value));
+        document.querySelectorAll("#ngso_numbers input").forEach(input => input.required = ["MEO", "LEO"].includes(this.value));
+    });
+</script>
+{% endblock %}

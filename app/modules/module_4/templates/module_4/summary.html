@@ -1,0 +1,29 @@
+{% extends "module_4/forms_base.html" %}
+{% block title %}Module 4 - Summary{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <h2 class="text-xl font-semibold mb-4 text-gray-800">Application Summary</h2>
+    {% for md in all_module_data %}
+        <div class="mb-4">
+            <h3 class="text-lg font-medium text-gray-800">{{ md.step.replace('_', ' ').title() }}</h3>
+            {% for key, value in md.data.items() %}
+                <p class="text-gray-600">{{ key.replace('_', ' ').title() }}: {{ value }}</p>
+            {% endfor %}
+            {% set files = existing_files|selectattr('step', 'equalto', md.step)|list %}
+            {% if files %}
+                <p class="text-gray-600">Uploaded Files:</p>
+                {% for file in files %}
+                    <p><a href="{{ url_for('module_4.download_file', file_id=file.id) }}" class="text-indigo-600 hover:underline">{{ file.filename }}</a></p>
+                {% endfor %}
+            {% endif %}
+        </div>
+    {% endfor %}
+    <form method="POST" action="{{ url_for('module_4.submit_application', application_id=application_id) }}">
+        <div class="flex justify-between">
+            <button type="submit" name="previous" formmethod="POST" formaction="{{ url_for('module_4.fill_step', step='miscellaneous_and_declarations', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Submit Application</button>
+        </div>
+    </form>
+    <a href="{{ url_for('module_4.download_pdf', application_id=application_id) }}" class="block mt-4 text-center text-indigo-600 hover:underline">Download PDF</a>
+</div>
+{% endblock %}

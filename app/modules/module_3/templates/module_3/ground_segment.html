@@ -1,0 +1,24 @@
+{% extends "module_3/forms_base.html" %}
+{% block title %}Module 3 - Ground Segment{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite TT&C Stations <span class="text-red-500">*</span></label>
+            <textarea name="ttc_stations" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Locations, service provider">{{ form_data.ttc_stations or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Mission Control Centre (MCC) <span class="text-red-500">*</span></label>
+            <textarea name="mcc_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Locations, addresses">{{ form_data.mcc_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite Hubs/Gateways <span class="text-red-500">*</span></label>
+            <textarea name="hubs_gateways" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Locations, configuration, user terminals">{{ form_data.hubs_gateways or '' }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_3.fill_step', step='payload_details', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

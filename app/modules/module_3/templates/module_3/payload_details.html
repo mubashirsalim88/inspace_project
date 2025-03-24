@@ -1,0 +1,67 @@
+{% extends "module_3/forms_base.html" %}
+{% block title %}Module 3 - Payload Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Number of Payloads <span class="text-red-500">*</span></label>
+            <input type="number" name="payload_count" required value="{{ form_data.payload_count or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            <textarea name="payload_description" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800" placeholder="Frequencies, coverage, channels">{{ form_data.payload_description or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Payloads for Authorization <span class="text-red-500">*</span></label>
+            <textarea name="payloads_for_auth" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Configuration, frequencies, coverage">{{ form_data.payloads_for_auth or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Payload Capacity <span class="text-red-500">*</span></label>
+            <select name="payload_capacity" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                <option value="Partial" {% if form_data.payload_capacity == 'Partial' %}selected{% endif %}>Partial</option>
+                <option value="Full" {% if form_data.payload_capacity == 'Full' %}selected{% endif %}>Full</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Hosted Payloads? <span class="text-red-500">*</span></label>
+            <select name="hosted_payloads" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="hosted_payloads">
+                <option value="No" {% if form_data.hosted_payloads == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.hosted_payloads == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="hosted_details" class="{% if form_data.hosted_payloads != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="hosted_ownership" {% if form_data.hosted_payloads == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Ownership details">{{ form_data.hosted_ownership or '' }}</textarea>
+                <input type="file" name="hosted_payload_agreement" multiple {% if form_data.hosted_payloads == 'Yes' and not existing_files|selectattr('field_name', 'equalto', 'hosted_payload_agreement')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                {% if existing_files|selectattr('field_name', 'equalto', 'hosted_payload_agreement')|list %}
+                    <div class="mt-2"><p class="text-sm text-gray-600">Previously Uploaded:</p>
+                    <ul class="list-disc pl-5">
+                        {% for file in existing_files %}{% if file.field_name == "hosted_payload_agreement" %}
+                        <li><a href="{{ url_for('module_3.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                        {% endif %}{% endfor %}
+                    </ul></div>
+                {% endif %}
+                <input type="file" name="hosted_payload_authorization" multiple class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800">
+                {% if existing_files|selectattr('field_name', 'equalto', 'hosted_payload_authorization')|list %}
+                    <div class="mt-2"><p class="text-sm text-gray-600">Previously Uploaded:</p>
+                    <ul class="list-disc pl-5">
+                        {% for file in existing_files %}{% if file.field_name == "hosted_payload_authorization" %}
+                        <li><a href="{{ url_for('module_3.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                        {% endif %}{% endfor %}
+                    </ul></div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">TT&C Frequencies/Band <span class="text-red-500">*</span></label>
+            <textarea name="ttc_frequencies" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Telemetry, tracking, command frequencies">{{ form_data.ttc_frequencies or '' }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_3.fill_step', step='satellite_constellation_details', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("hosted_payloads").addEventListener("change", function() {
+        document.getElementById("hosted_details").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#hosted_details textarea").required = this.value === "Yes";
+        document.querySelector("#hosted_details input[name='hosted_payload_agreement']").required = this.value === "Yes";
+    });
+</script>
+{% endblock %}

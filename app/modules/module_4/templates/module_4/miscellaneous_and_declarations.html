@@ -1,0 +1,65 @@
+{% extends "module_4/forms_base.html" %}
+{% block title %}Module 4 - Miscellaneous and Declarations{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Intended Services & Applications <span class="text-red-500">*</span></label>
+            <textarea name="services_applications" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Intended services and applications">{{ form_data.services_applications or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Target Users and Service Area <span class="text-red-500">*</span></label>
+            <textarea name="target_users" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Target users and geographic service area">{{ form_data.target_users or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Indigenous Elements</label>
+            <textarea name="indigenous_elements" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Details of indigenous components">{{ form_data.indigenous_elements or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Proposed Timeframe <span class="text-red-500">*</span></label>
+            <textarea name="proposed_timeframe" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Desired timeframe with milestones">{{ form_data.proposed_timeframe or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Planned Deployment Schedule <span class="text-red-500">*</span></label>
+            <textarea name="deployment_schedule" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Schedule for satellite/constellation deployment">{{ form_data.deployment_schedule or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Collaborations</label>
+            <textarea name="collaborations" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Details of collaborations">{{ form_data.collaborations or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Intellectual Property Rights</label>
+            <textarea name="ipr" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="IPR held by the applicant">{{ form_data.ipr or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Estimated Cost (INR) <span class="text-red-500">*</span></label>
+            <input type="number" name="estimated_cost" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ form_data.estimated_cost or '' }}">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Source of Funding <span class="text-red-500">*</span></label>
+            <textarea name="funding_source" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Funding sources">{{ form_data.funding_source or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Other Clearances</label>
+            <textarea name="other_clearances" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Details of other clearances">{{ form_data.other_clearances or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Additional Information</label>
+            <textarea name="additional_info" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Any other relevant details">{{ form_data.additional_info or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Undertaking/Declarations <span class="text-red-500">*</span></label>
+            {% for decl in ['coord_agreement', 'cease_emission', 'dst_compliance', 'change_notification', 'gov_control', 'app_submission', 'compliance_affirmation'] %}
+            <div class="flex items-center mb-2">
+                <input type="checkbox" name="{{ decl }}" value="Yes" {% if form_data[decl] == 'Yes' %}checked{% endif %} required class="mr-2">
+                <span>{{ decl.replace('_', ' ').title() }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

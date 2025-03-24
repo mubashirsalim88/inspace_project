@@ -1,0 +1,49 @@
+{% extends "module_3/forms_base.html" %}
+{% block title %}Module 3 - Launch & Regulatory{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Launch Date and Launcher <span class="text-red-500">*</span></label>
+            <textarea name="launch_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Date, launcher, facility">{{ form_data.launch_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">DoT Licenses <span class="text-red-500">*</span></label>
+            <select name="dot_licenses" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="dot_licenses">
+                <option value="Obtained" {% if form_data.dot_licenses == 'Obtained' %}selected{% endif %}>Obtained</option>
+                <option value="In-process" {% if form_data.dot_licenses == 'In-process' %}selected{% endif %}>In-process</option>
+                <option value="Yet to Apply" {% if form_data.dot_licenses == 'Yet to Apply' %}selected{% endif %}>Yet to Apply</option>
+            </select>
+            <div id="dot_copies" class="{% if form_data.dot_licenses != 'Obtained' %}hidden{% endif %} mt-2">
+                <input type="file" name="dot_license_copies" multiple {% if form_data.dot_licenses == 'Obtained' and not existing_files|selectattr('field_name', 'equalto', 'dot_license_copies')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                {% if existing_files|selectattr('field_name', 'equalto', 'dot_license_copies')|list %}
+                    <div class="mt-2"><p class="text-sm text-gray-600">Previously Uploaded:</p>
+                    <ul class="list-disc pl-5">
+                        {% for file in existing_files %}{% if file.field_name == "dot_license_copies" %}
+                        <li><a href="{{ url_for('module_3.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                        {% endif %}{% endfor %}
+                    </ul></div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Intended Users and Services <span class="text-red-500">*</span></label>
+            <textarea name="intended_services" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Users, applications (e.g., mobile, fixed)">{{ form_data.intended_services or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Service Area <span class="text-red-500">*</span></label>
+            <textarea name="service_area" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Geographic service area">{{ form_data.service_area or '' }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_3.fill_step', step='itu_and_regulatory', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("dot_licenses").addEventListener("change", function() {
+        document.getElementById("dot_copies").classList.toggle("hidden", this.value !== "Obtained");
+        document.querySelector("#dot_copies input").required = this.value === "Obtained";
+    });
+</script>
+{% endblock %}

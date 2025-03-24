@@ -1,0 +1,41 @@
+{% extends "module_3/forms_base.html" %}
+{% block title %}Module 3 - Summary{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-4xl mx-auto">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">Application Summary</h2>
+    <div class="grid grid-cols-1 gap-6">
+        {% for step_data in all_module_data %}
+            <div class="border p-4 rounded-md bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ step_data.step.replace('_', ' ').title() }}</h3>
+                {% for key, value in step_data.data.items() %}
+                    <p class="text-gray-700"><strong>{{ key.replace('_', ' ').title() }}:</strong>
+                        {% if value is iterable and value is not string %}
+                            <ul class="list-disc pl-5">
+                                {% for item in value %}
+                                    <li>{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    </p>
+                {% endfor %}
+                <p class="text-gray-700"><strong>Completed:</strong> {{ 'Yes' if step_data.completed else 'No' }}</p>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="flex justify-between mt-6">
+        <a href="{{ url_for('module_3.fill_step', step='misc_and_declarations', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+        <div>
+            {% if application.status == "Pending" %}
+                <form method="POST" action="{{ url_for('module_3.submit_application', application_id=application_id) }}" class="inline">
+                    <button type="submit" class="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700">Submit Application</button>
+                </form>
+            {% endif %}
+            {% if application.status == "Submitted" %}
+                <a href="{{ url_for('module_3.download_pdf', application_id=application_id) }}" class="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Download PDF</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
