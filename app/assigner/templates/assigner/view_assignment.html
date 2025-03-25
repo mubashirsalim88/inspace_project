@@ -1,0 +1,26 @@
+<!-- app/assigner/templates/assigner/view_assignment.html -->
+{% extends "base.html" %}
+{% block title %}View Assignment - IN-SPACe{% endblock %}
+{% block content %}
+<div class="p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4 animate__animated animate__fadeInDown">Assignment Details for Application #{{ application.id }}</h2>
+    <div class="bg-white shadow-lg rounded-lg p-6 max-w-xl mx-auto">
+        <div class="mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Applicant</h3>
+            <p class="text-gray-600">{{ application.user.name }} ({{ application.user.username }})</p>
+        </div>
+        <div class="mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Module</h3>
+            <p class="text-gray-600">{% for md in application.module_data %}{% if loop.first %}{{ md.module_name|replace('_', ' ')|title }}{% endif %}{% endfor %}</p>
+        </div>
+        <div class="mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Assigned To</h3>
+            <p class="text-gray-600">Primary Verifier: {{ primary_verifier.name }} ({{ primary_verifier.username }})</p>
+            <p class="text-gray-600">Secondary Verifier: {{ secondary_verifier.name }} ({{ secondary_verifier.username }})</p>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('assigner.home') }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+# app/assigner/routes.py
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user
+from app import db
+from app.models import Application, ApplicationAssignment, User
+from app.utils import role_required
+
+assigner = Blueprint("assigner", __name__, url_prefix="/assigner", template_folder="templates")
+
+@assigner.route("/home")
+@login_required
+@role_required("Assigner")
+def home():
+    # Fetch all submitted applications
+    applications = Application.query.filter_by(status="Submitted").all()
+    assigned_applications = Application.query.filter_by(status="Under Review").join(ApplicationAssignment).filter(ApplicationAssignment.assigner_id == current_user.id).all()
+    
+    # Group applications by module
+    module_apps = {"module_1": [], "module_2": [], "module_3": [], "module_4": []}
+    assigned_module_apps = {"module_1": [], "module_2": [], "module_3": [], "module_4": []}
+    
+    for app in applications:
+        # Get the first module_name (assuming one primary module per app)
+        module_name = next((md.module_name for md in app.module_data if md.module_name in module_apps), None)
+        if module_name:
+            module_apps[module_name].append(app)
+    
+    for app in assigned_applications:
+        module_name = next((md.module_name for md in app.module_data if md.module_name in assigned_module_apps), None)
+        if module_name:
+            assigned_module_apps[module_name].append(app)
+
+    return render_template(
+        "assigner/home.html",
+        module_apps=module_apps,
+        assigned_module_apps=assigned_module_apps
+    )
+
+@assigner.route("/assign/<int:application_id>", methods=["GET", "POST"])
+@login_required
+@role_required("Assigner")
+def assign(application_id):
+    application = Application.query.get_or_404(application_id)
+    if application.status != "Submitted":
+        flash("Application not ready for assignment.", "error")
+        return redirect(url_for("assigner.home"))
+
+    if request.method == "POST":
+        primary_id = request.form.get("primary_verifier_id")
+        secondary_id = request.form.get("secondary_verifier_id")
+        if not primary_id or not secondary_id:
+            flash("Please select both verifiers.", "error")
+            return redirect(url_for("assigner.assign", application_id=application_id))
+        
+        assignment = ApplicationAssignment(
+            application_id=application_id,
+            assigner_id=current_user.id,
+            primary_verifier_id=primary_id,
+            secondary_verifier_id=secondary_id
+        )
+        db.session.add(assignment)
+        application.status = "Under Review"
+        db.session.commit()
+        flash("Application assigned successfully!", "success")
+        return redirect(url_for("assigner.home"))
+
+    verifiers = User.query.filter(User.role.in_(["Primary Verifier", "Secondary Verifier"])).all()
+    return render_template("assigner/assign.html", application=application, verifiers=verifiers)
+
+@assigner.route("/view_assignment/<int:application_id>")
+@login_required
+@role_required("Assigner")
+def view_assignment(application_id):
+    assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first_or_404()
+    application = Application.query.get(application_id)  # Fetch the Application directly
+    primary_verifier = User.query.get(assignment.primary_verifier_id)
+    secondary_verifier = User.query.get(assignment.secondary_verifier_id)
+    return render_template(
+        "assigner/view_assignment.html",
+        application=application,  # Pass the Application object
+        primary_verifier=primary_verifier,
+        secondary_verifier=secondary_verifier
+    )

@@ -41,7 +41,7 @@ def fill_step(step):
     app_id = request.args.get("application_id")
     if not app_id:
         logger.warning("No application_id provided, redirecting to dashboard")
-        return redirect(url_for("dashboard.home"))
+        return redirect(url_for("applicant.home"))
 
     application = Application.query.get_or_404(app_id)
     if application.user_id != current_user.id or (application.status != "Pending" and step != "summary"):
@@ -151,7 +151,7 @@ def submit_application(application_id):
     application = Application.query.get_or_404(application_id)
     if application.user_id != current_user.id or application.status != "Pending":
         flash("Unauthorized or already submitted.", "error")
-        return redirect(url_for("dashboard.home"))
+        return redirect(url_for("applicant.home"))
 
     all_module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_3").all()
     required_steps = [s for s in STEPS if s != "summary"]
@@ -163,7 +163,7 @@ def submit_application(application_id):
     application.status = "Submitted"
     db.session.commit()
     flash("Application submitted successfully!", "success")
-    return redirect(url_for("dashboard.home", module="module_3"))
+    return redirect(url_for("applicant.home", module="module_3"))
 
 @module_3.route("/download_pdf/<int:application_id>")
 @login_required

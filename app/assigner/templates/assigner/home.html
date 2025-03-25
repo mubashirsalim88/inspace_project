@@ -1,0 +1,81 @@
+<!-- app/assigner/templates/assigner/home.html -->
+{% extends "base.html" %}
+{% block title %}Assigner Dashboard - IN-SPACe{% endblock %}
+{% block content %}
+<div class="p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4 animate__animated animate__fadeInDown">Assigner Dashboard</h2>
+    <p class="text-gray-600 mb-6">Assign submitted applications to verifiers.</p>
+
+    <!-- Navigation Tabs for Modules -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex space-x-8">
+            {% for module in ['module_1', 'module_2', 'module_3', 'module_4'] %}
+            <button class="tab-link px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 border-b-2 {% if loop.first %}text-blue-600 bg-blue-100 border-blue-600 font-bold{% else %}border-transparent{% endif %} focus:outline-none transition-all duration-200" data-tab="{{ module }}">{{ module|replace('_', ' ')|title }}</button>
+            {% endfor %}
+        </nav>
+    </div>
+
+    <!-- Module Sections -->
+    {% for module in ['module_1', 'module_2', 'module_3', 'module_4'] %}
+    <div id="{{ module }}" class="tab-content {% if not loop.first %}hidden{% endif %}">
+        <div class="bg-gray-50 border border-gray-200 shadow-lg rounded-lg p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">{{ module|replace('_', ' ')|title }} Applications</h3>
+            {% if module_apps[module] or assigned_module_apps[module] %}
+            <ul class="space-y-4">
+                <!-- Submitted Applications -->
+                {% for app in module_apps[module] %}
+                <li class="p-4 bg-white rounded-lg shadow flex justify-between items-center transition-all duration-300 hover:bg-gray-100">
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-900">{{ app.user.name }}</h4>
+                        <p class="text-sm text-gray-600">Module: {{ module|replace('_', ' ')|title }}</p>
+                        <p class="text-sm text-gray-500">Submitted on {{ app.updated_at.strftime('%B %d, %Y') }}</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-blue-100 text-blue-700 text-xs font-medium px-3 py-1 rounded-lg">Submitted</span>
+                        <a href="{{ url_for('assigner.assign', application_id=app.id) }}" class="text-blue-600 hover:underline text-sm font-semibold">Assign Verifiers</a>
+                    </div>
+                </li>
+                {% endfor %}
+                <!-- Assigned Applications -->
+                {% for app in assigned_module_apps[module] %}
+                <li class="p-4 bg-white rounded-lg shadow flex justify-between items-center transition-all duration-300 hover:bg-gray-100">
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-900">{{ app.user.name }}</h4>
+                        <p class="text-sm text-gray-600">Module: {{ module|replace('_', ' ')|title }}</p>
+                        <p class="text-sm text-gray-500">Assigned on {{ app.updated_at.strftime('%B %d, %Y') }}</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-green-100 text-green-700 text-xs font-medium px-3 py-1 rounded-lg">Assigned</span>
+                        <a href="{{ url_for('assigner.view_assignment', application_id=app.id) }}" class="text-blue-600 hover:underline text-sm font-semibold">View</a>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-gray-500 text-center">No {{ module|replace('_', ' ')|title }} applications awaiting assignment or assigned by you.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tabLinks = document.querySelectorAll(".tab-link");
+        const tabContents = document.querySelectorAll(".tab-content");
+
+        tabLinks.forEach(button => {
+            button.addEventListener("click", () => {
+                const tabId = button.getAttribute("data-tab");
+                tabLinks.forEach(btn => {
+                    btn.classList.remove("text-blue-600", "bg-blue-100", "border-blue-600", "font-bold");
+                    btn.classList.add("border-transparent");
+                });
+                tabContents.forEach(content => content.classList.add("hidden"));
+                button.classList.add("text-blue-600", "bg-blue-100", "border-blue-600", "font-bold");
+                document.getElementById(tabId).classList.remove("hidden");
+            });
+        });
+    });
+</script>
+{% endblock %}

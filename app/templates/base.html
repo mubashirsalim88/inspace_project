@@ -17,7 +17,7 @@
         <div id="main-content" class="flex-1 bg-white">
             <div class="navbar shadow-md p-4 flex justify-between items-center w-full bg-white border-b">
                 <div class="flex items-center space-x-4">
-                    <a href="{{ url_for('dashboard.home') if current_user.is_authenticated else url_for('auth.login') }}">
+                    <a href="{{ url_for('applicant.home') if current_user.is_authenticated else url_for('auth.login') }}">
                         <img src="{{ url_for('static', filename='images/IN-SPACe_Logo.png') }}" alt="Logo" class="h-8">
                     </a>
                 </div>

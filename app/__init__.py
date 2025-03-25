@@ -25,7 +25,10 @@ def create_app():
 
     # Register blueprints
     from app.auth import auth as auth_bp
-    from app.dashboard import dashboard as dashboard_bp
+    from app.applicant import applicant as applicant_bp
+    from app.assigner import assigner as assigner_bp
+    from app.verifier import verifier as verifier_bp
+    from app.director import director as director_bp
     from app.modules.module_1 import module_1 as module_1_bp
     from app.modules.module_2 import module_2 as module_2_bp
     from app.modules.module_3 import module_3 as module_3_bp
@@ -33,18 +36,28 @@ def create_app():
     from app.chat import chat as chat_bp
 
     app.register_blueprint(auth_bp)
-    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(applicant_bp)
+    app.register_blueprint(assigner_bp)
+    app.register_blueprint(verifier_bp)
+    app.register_blueprint(director_bp)
     app.register_blueprint(module_1_bp)
     app.register_blueprint(module_2_bp)
     app.register_blueprint(module_3_bp)
     app.register_blueprint(module_4_bp) 
     app.register_blueprint(chat_bp)
 
-    # Add homepage route
+    # Add homepage route with role-based redirection
     @app.route('/')
     def index():
         if current_user.is_authenticated:
-            return redirect(url_for('dashboard.home'))
+            if current_user.role == "user":
+                return redirect(url_for('applicant.home'))
+            elif current_user.role == "Assigner":
+                return redirect(url_for('assigner.home'))
+            elif current_user.role in ["Primary Verifier", "Secondary Verifier"]:
+                return redirect(url_for('verifier.home'))
+            else:
+                return "Role not implemented yet", 501
         return redirect(url_for('auth.login'))
 
     return app

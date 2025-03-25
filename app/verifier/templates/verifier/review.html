@@ -1,0 +1,50 @@
+<!-- app/verifier/templates/verifier/review.html -->
+{% extends "base.html" %}
+{% block title %}Review Application - IN-SPACe{% endblock %}
+{% block content %}
+<div class="p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4 animate__animated animate__fadeInDown">Review Application #{{ application.id }} ({{ role }})</h2>
+    <div class="bg-white shadow-lg rounded-lg p-6 max-w-xl mx-auto">
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">Applicant</h3>
+            <p class="text-gray-600">{{ application.user.name }} ({{ application.user.username }})</p>
+        </div>
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">Module</h3>
+            <p class="text-gray-600">{% for md in application.module_data %}{% if loop.first %}{{ md.module_name|replace('_', ' ')|title }}{% endif %}{% endfor %}</p>
+        </div>
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">Assigned Verifiers</h3>
+            <p class="text-gray-600">Primary: {{ primary_verifier.name }} ({{ primary_verifier.username }})</p>
+            <p class="text-gray-600">Secondary: {{ secondary_verifier.name }} ({{ secondary_verifier.username }})</p>
+        </div>
+
+        <!-- Placeholder for PDF (to be added later) -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">Application PDF</h3>
+            <p class="text-gray-500">PDF generation and review will be integrated later.</p>
+            <!-- Example for later: <a href="{{ url_for('static', filename='pdfs/application_' + application.id|string + '.pdf') }}" target="_blank" class="text-blue-600 hover:underline">View PDF</a> -->
+        </div>
+
+        <!-- Review Form -->
+        <form method="POST" class="space-y-4">
+            <div>
+                <label class="block text-gray-800 font-medium mb-2">Decision</label>
+                <select name="decision" class="w-full p-3 border rounded-md bg-gray-100" required>
+                    <option value="">Select Decision</option>
+                    <option value="approve">Approve</option>
+                    <option value="reject">Reject</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-gray-800 font-medium mb-2">Comments</label>
+                <textarea name="comments" class="w-full p-3 border rounded-md bg-gray-100" rows="4" placeholder="Required if rejecting, optional if approving"></textarea>
+            </div>
+            <div class="flex justify-between">
+                <a href="{{ url_for('verifier.home') }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Back</a>
+                <button type="submit" class="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Submit Review</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

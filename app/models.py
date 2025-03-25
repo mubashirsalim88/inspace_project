@@ -11,7 +11,13 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), default="user", nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    applications = db.relationship("Application", backref="user", lazy=True)
+    # Relationships
+    applications = db.relationship("Application", backref="user", lazy=True)  # Applicant’s applications
+    assigned_applications = db.relationship("ApplicationAssignment", foreign_keys="ApplicationAssignment.assigner_id", backref="assigner", lazy=True)  # Assigner’s assignments
+    primary_verifications = db.relationship("ApplicationAssignment", foreign_keys="ApplicationAssignment.primary_verifier_id", backref="primary_verifier", lazy=True)  # Primary Verifier’s tasks
+    secondary_verifications = db.relationship("ApplicationAssignment", foreign_keys="ApplicationAssignment.secondary_verifier_id", backref="secondary_verifier", lazy=True)  # Secondary Verifier’s tasks
+    sent_messages = db.relationship("ChatMessage", foreign_keys="ChatMessage.sender_id", backref="sender", lazy=True)  # Sent chat messages
+    received_messages = db.relationship("ChatMessage", foreign_keys="ChatMessage.receiver_id", backref="receiver", lazy=True)  # Received chat messages
 
 class Application(db.Model):
     __tablename__ = "applications"

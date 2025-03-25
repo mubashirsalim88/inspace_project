@@ -42,7 +42,7 @@ def fill_step(step):
     application = Application.query.get_or_404(app_id)
     if application.user_id != current_user.id or application.status != "Pending":
         flash("Unauthorized access or application not editable.", "error")
-        return redirect(url_for("dashboard.home"))
+        return redirect(url_for("applicant.home"))
 
     all_module_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_4").all()
     module_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_4", step=step).first()
@@ -95,7 +95,7 @@ def download_file(file_id):
     uploaded_file = UploadedFile.query.get_or_404(file_id)
     if uploaded_file.application.user_id != current_user.id:
         flash("Unauthorized access.", "error")
-        return redirect(url_for("dashboard.home"))
+        return redirect(url_for("applicant.home"))
     return send_file(uploaded_file.filepath, as_attachment=True, download_name=uploaded_file.filename)
 
 @module_4.route("/submit_application/<int:application_id>", methods=["POST"])
@@ -104,7 +104,7 @@ def submit_application(application_id):
     application = Application.query.get_or_404(application_id)
     if application.user_id != current_user.id or application.status != "Pending":
         flash("Unauthorized access or application already submitted.", "error")
-        return redirect(url_for("dashboard.home"))
+        return redirect(url_for("applicant.home"))
 
     all_module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_4").all()
     completed_steps = {md.step for md in all_module_data if md.completed}
@@ -117,7 +117,7 @@ def submit_application(application_id):
     application.status = "Submitted"
     db.session.commit()
     flash("Application submitted successfully!", "success")
-    return redirect(url_for("dashboard.home"))
+    return redirect(url_for("applicant.home"))
 
 @module_4.route("/download_pdf/<int:application_id>")
 @login_required
@@ -125,7 +125,7 @@ def download_pdf(application_id):
     application = Application.query.get_or_404(application_id)
     if application.user_id != current_user.id or application.status != "Submitted":
         flash("Unauthorized access or application not submitted.", "error")
-        return redirect(url_for("dashboard.home"))
+        return redirect(url_for("applicant.home"))
 
     all_module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_4").all()
     buffer = io.BytesIO()

@@ -1,6 +1,6 @@
-<!-- app/dashboard/templates/user_dashboard.html -->
+<!-- app/applicant/templates/applicant/home.html -->
 {% extends "base.html" %}
-{% block title %}Dashboard - IN-SPACe{% endblock %}
+{% block title %}Applicant Dashboard - IN-SPACe{% endblock %}
 {% block content %}
 <div class="p-6">
     <h2 class="text-2xl font-bold text-gray-800 mb-4 animate__animated animate__fadeInDown">Welcome to IN-SPACe Portal</h2>
@@ -9,14 +9,14 @@
     <!-- Navigation Tabs for Modules -->
     <div class="border-b border-gray-200 mb-6">
         <nav class="-mb-px flex space-x-8">
-            {% for module in ['module_1', 'module_2', 'module_3', 'module_4'] %}  <!-- Add module_4 -->
+            {% for module in ['module_1', 'module_2', 'module_3', 'module_4'] %}
             <button class="tab-link px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 border-b-2 {% if module == active_module %}text-blue-600 bg-blue-100 border-blue-600 font-bold{% else %}border-transparent{% endif %} focus:outline-none transition-all duration-200" data-tab="{{ module }}">{{ module|replace('_', ' ')|title }}</button>
             {% endfor %}
         </nav>
     </div>
 
     <!-- Module Sections -->
-    {% for module in ['module_1', 'module_2', 'module_3', 'module_4'] %}  <!-- Add module_4 -->
+    {% for module in ['module_1', 'module_2', 'module_3', 'module_4'] %}
     <div id="{{ module }}" class="tab-content {% if module != active_module %}hidden{% endif %}">
         <!-- Create New Application Button -->
         <div class="text-center mb-6">
@@ -74,31 +74,27 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Tab Switching
         const tabLinks = document.querySelectorAll(".tab-link");
         const tabContents = document.querySelectorAll(".tab-content");
 
         tabLinks.forEach(button => {
             button.addEventListener("click", () => {
                 const tabId = button.getAttribute("data-tab");
-
                 tabLinks.forEach(btn => {
                     btn.classList.remove("text-blue-600", "bg-blue-100", "border-blue-600", "font-bold");
                     btn.classList.add("border-transparent");
                 });
                 tabContents.forEach(content => content.classList.add("hidden"));
-
                 button.classList.add("text-blue-600", "bg-blue-100", "border-blue-600", "font-bold");
                 document.getElementById(tabId).classList.remove("hidden");
             });
         });
 
-        // Create New Application Buttons
         document.querySelectorAll("[id^='start-application-link-']").forEach(link => {
             link.addEventListener("click", function(event) {
                 event.preventDefault();
                 const module = this.getAttribute("data-module");
-                fetch(`{{ url_for('dashboard.start_application') }}?module=${module}`, {
+                fetch(`{{ url_for('applicant.start_application') }}?module=${module}`, {  // Updated from dashboard
                     method: "GET",
                     headers: { "Content-Type": "application/json" }
                 })
