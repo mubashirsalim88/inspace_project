@@ -4,11 +4,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import Application, ModuleData, UploadedFile
 from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
-from reportlab.lib.styles import getSampleStyleSheet
 import os
-from PIL import Image as PILImage
 
 module_1 = Blueprint("module_1", __name__, url_prefix="/module_1", template_folder="templates")
 
@@ -167,38 +163,6 @@ def submit_application(application_id):
         return redirect(url_for("module_1.fill_step", step="summary", application_id=application_id))
 
     return redirect(url_for("applicant.home"))
-
-@module_1.route("/download_pdf/<int:application_id>")
-@login_required
-def download_pdf(application_id):
-    application = Application.query.get_or_404(application_id)
-    if application.user_id != current_user.id or application.status != "Submitted":
-        return "Unauthorized or invalid application", 403
-
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    styles = getSampleStyleSheet()
-    story = []
-
-    story.append(Paragraph("Information and Credentials of the Applicant", styles["Title"]))
-    story.append(Spacer(1, 12))
-
-    module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_1").all()
-    for md in module_data:
-        data = md.data
-        story.append(Paragraph(f"<b>{md.step.replace('_', ' ').title()}</b>", styles["Heading2"]))
-        for key, value in data.items():
-            if isinstance(value, list) and all(isinstance(v, str) for v in value):
-                story.append(Paragraph(f"{key.replace('_', ' ').title()}:", styles["Normal"]))
-                for doc_path in value:
-                    story.append(Paragraph(f"- {os.path.basename(doc_path)}", styles["Normal"]))
-            else:
-                story.append(Paragraph(f"{key.replace('_', ' ').title()}: {value}", styles["Normal"]))
-        story.append(Spacer(1, 12))
-
-    doc.build(story)
-    buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name=f"module_1_application_{application_id}.pdf", mimetype="application/pdf")
 
 @module_1.route("/start_application", methods=["GET", "POST"])
 @login_required

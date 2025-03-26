@@ -4,9 +4,6 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import Application, ModuleData, UploadedFile
 from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
 import os
 import logging
 
@@ -133,18 +130,6 @@ def fill_step(step):
         existing_files=existing_files
     )
 
-@module_3.route("/download_file/<int:file_id>")
-@login_required
-def download_file(file_id):
-    uploaded_file = UploadedFile.query.get_or_404(file_id)
-    application = Application.query.get_or_404(uploaded_file.application_id)
-    if application.user_id != current_user.id:
-        return "Unauthorized", 403
-    full_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", uploaded_file.filepath)
-    if not os.path.exists(full_path):
-        return f"File not found: {full_path}", 404
-    return send_file(full_path, as_attachment=True, download_name=uploaded_file.filename)
-
 @module_3.route("/submit_application/<application_id>", methods=["POST"])
 @login_required
 def submit_application(application_id):
@@ -164,37 +149,6 @@ def submit_application(application_id):
     db.session.commit()
     flash("Application submitted successfully!", "success")
     return redirect(url_for("applicant.home", module="module_3"))
-
-@module_3.route("/download_pdf/<int:application_id>")
-@login_required
-def download_pdf(application_id):
-    application = Application.query.get_or_404(application_id)
-    if application.user_id != current_user.id or application.status != "Submitted":
-        return "Unauthorized or invalid application", 403
-
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    styles = getSampleStyleSheet()
-    story = []
-
-    story.append(Paragraph("Module 3: Authorization of Non-Indian GSO/NGSO Satellite", styles["Title"]))
-    story.append(Spacer(1, 12))
-
-    module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_3").all()
-    for md in module_data:
-        story.append(Paragraph(f"<b>{md.step.replace('_', ' ').title()}</b>", styles["Heading2"]))
-        for key, value in md.data.items():
-            if isinstance(value, list) and all(isinstance(v, str) for v in value):
-                story.append(Paragraph(f"{key.replace('_', ' ').title()}:", styles["Normal"]))
-                for doc_path in value:
-                    story.append(Paragraph(f"- {os.path.basename(doc_path)}", styles["Normal"]))
-            else:
-                story.append(Paragraph(f"{key.replace('_', ' ').title()}: {value}", styles["Normal"]))
-        story.append(Spacer(1, 12))
-
-    doc.build(story)
-    buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name=f"module_3_application_{application_id}.pdf", mimetype="application/pdf")
 
 @module_3.route("/start_application", methods=["GET", "POST"])
 @login_required

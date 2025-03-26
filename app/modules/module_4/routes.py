@@ -5,9 +5,6 @@ from app import db
 from app.models import Application, ModuleData, UploadedFile
 from werkzeug.utils import secure_filename
 import os
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
 import io
 import logging
 
@@ -118,34 +115,3 @@ def submit_application(application_id):
     db.session.commit()
     flash("Application submitted successfully!", "success")
     return redirect(url_for("applicant.home"))
-
-@module_4.route("/download_pdf/<int:application_id>")
-@login_required
-def download_pdf(application_id):
-    application = Application.query.get_or_404(application_id)
-    if application.user_id != current_user.id or application.status != "Submitted":
-        flash("Unauthorized access or application not submitted.", "error")
-        return redirect(url_for("applicant.home"))
-
-    all_module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_4").all()
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    styles = getSampleStyleSheet()
-    story = []
-
-    story.append(Paragraph("Module 4: Establishment and/or Operation of Remote Sensing Satellite Systems and Amateur Satellite Systems", styles["Title"]))
-    story.append(Spacer(1, 12))
-    for md in all_module_data:
-        story.append(Paragraph(f"Step: {md.step.replace('_', ' ').title()}", styles["Heading2"]))
-        for key, value in md.data.items():
-            story.append(Paragraph(f"{key.replace('_', ' ').title()}: {value}", styles["BodyText"]))
-        files = UploadedFile.query.filter_by(application_id=application_id, module_name="module_4", step=md.step).all()
-        if files:
-            story.append(Paragraph("Uploaded Files:", styles["BodyText"]))
-            for file in files:
-                story.append(Paragraph(f"- {file.filename}", styles["BodyText"]))
-        story.append(Spacer(1, 12))
-
-    doc.build(story)
-    buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name=f"module_4_application_{application_id}.pdf", mimetype="application/pdf")
