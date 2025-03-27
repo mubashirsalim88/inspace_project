@@ -16,3 +16,6 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Ignore Django migration files
+*/migrations/*
