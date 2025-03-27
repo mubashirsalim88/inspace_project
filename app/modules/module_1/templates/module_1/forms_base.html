@@ -14,9 +14,9 @@
             background-color: #f3f4f6;
         }
         #progress-bar {
-            background: linear-gradient(to bottom, #1e3a8a, #1e40af); /* Professional blue gradient */
+            background: linear-gradient(to bottom, #1e3a8a, #1e40af);
             color: white;
-            width: 16rem; /* Fixed width */
+            width: 16rem;
             height: 100vh;
             position: fixed;
             left: 0;
@@ -43,7 +43,7 @@
         }
         .progress-fill {
             height: 100%;
-            background: linear-gradient(to right, #10b981, #34d399); /* Green gradient for progress */
+            background: linear-gradient(to right, #10b981, #34d399);
             transition: width 0.3s ease;
         }
         .form-container {
@@ -71,7 +71,6 @@
             const progressFill = document.querySelector(".progress-fill");
             progressFill.style.width = `${progressPercentage}%`;
 
-            // Orbiting Particles Animation
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("bgCanvas"), alpha: true });

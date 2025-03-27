@@ -1,13 +1,12 @@
 # app/modules/module_2/routes.py
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, send_file, flash
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, send_file, flash, abort
 from flask_login import login_required, current_user
 from app import db
 from app.models import Application, ModuleData, UploadedFile
-from io import BytesIO
 import os
 import logging
+import subprocess
 
-# Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -20,8 +19,7 @@ STEPS = [
     "payload_details",
     "ground_segment",
     "itu_and_regulatory",
-    "misc_and_declarations",
-    "summary"
+    "misc_and_declarations"
 ]
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "uploads")
@@ -31,7 +29,7 @@ if not os.path.exists(UPLOAD_FOLDER):
 @module_2.route("/fill_step/<step>", methods=["GET", "POST"])
 @login_required
 def fill_step(step):
-    if step not in STEPS:
+    if step not in STEPS and step != "summary":
         logger.error(f"Invalid step requested: {step}")
         return "Invalid step", 404
 
@@ -45,11 +43,10 @@ def fill_step(step):
         logger.warning(f"Unauthorized access or invalid application status for user {current_user.id}, app {app_id}")
         return "Unauthorized or invalid application", 403
 
-    # Check Module 1 completion before proceeding with Module 2
+    # Check Module 1 completion
     all_user_apps = Application.query.filter_by(user_id=current_user.id).all()
     module_1_complete = False
     required_module_1_steps = ["applicant_identity", "entity_details", "management_ownership", "financial_credentials", "operational_contact", "declarations_submission"]
-
     for app in all_user_apps:
         module_1_data = ModuleData.query.filter_by(application_id=app.id, module_name="module_1").all()
         if all(any(md.step == rs and md.completed for md in module_1_data) for rs in required_module_1_steps):
@@ -59,14 +56,12 @@ def fill_step(step):
     if not module_1_complete:
         flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 2.", "error")
         logger.info(f"User {current_user.id} redirected to Module 1 due to incomplete Module 1 data")
-        # Redirect to Module 1 without creating Module 2 data
         existing_module_2_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_2").first()
         if existing_module_2_data and not existing_module_2_data.completed:
-            db.session.delete(existing_module_2_data)  # Clean up incomplete Module 2 data
+            db.session.delete(existing_module_2_data)
             db.session.commit()
         return redirect(url_for("module_1.fill_step", step="applicant_identity", application_id=app_id))
 
-    # Only create ModuleData if Module 1 is complete
     module_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_2", step=step).first()
     if not module_data:
         module_data = ModuleData(application_id=app_id, module_name="module_2", step=step, data={})
@@ -76,9 +71,8 @@ def fill_step(step):
     existing_files = UploadedFile.query.filter_by(application_id=app_id, module_name="module_2", step=step).all()
     logger.debug(f"Step: {step}, Existing Files: {[f.filename for f in existing_files]}")
 
-    if request.method == "POST":
+    if request.method == "POST" and step != "misc_and_declarations":
         form_data = request.form.to_dict()
-
         file_fields = {
             "safety_and_manufacturing": ["safety_assessment_report", "consent_document"],
             "payload_details": ["annexure_4"],
@@ -117,16 +111,26 @@ def fill_step(step):
         module_data.completed = True
         db.session.commit()
 
-        if "next" in request.form:
-            next_step_idx = STEPS.index(step) + 1
-            if next_step_idx < len(STEPS):
-                return redirect(url_for("module_2.fill_step", step=STEPS[next_step_idx], application_id=app_id))
-            return redirect(url_for("module_2.fill_step", step="summary", application_id=app_id))
-        return redirect(url_for("module_2.fill_step", step=step, application_id=app_id))
+        next_step_idx = STEPS.index(step) + 1
+        if next_step_idx < len(STEPS):
+            return redirect(url_for("module_2.fill_step", step=STEPS[next_step_idx], application_id=app_id))
+        return redirect(url_for("module_2.fill_step", step="summary", application_id=app_id))
 
-    if step == "summary" and not module_data.completed:
-        module_data.completed = True
-        db.session.commit()
+    if step == "summary":
+        all_module_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_2").all()
+        processed_module_data = []
+        for md in all_module_data:
+            data_copy = md.data.copy()
+            for key, value in data_copy.items():
+                if isinstance(value, list) and all(isinstance(v, str) for v in value):
+                    data_copy[key] = [os.path.basename(doc) for doc in value]
+            processed_module_data.append({"step": md.step, "data": data_copy, "completed": md.completed})
+        return render_template(
+            "module_2/summary.html",
+            all_module_data=processed_module_data,
+            application_id=app_id,
+            application=application
+        )
 
     all_module_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_2").all()
     processed_module_data = []
@@ -138,8 +142,7 @@ def fill_step(step):
         processed_module_data.append({"step": md.step, "data": data_copy, "completed": md.completed})
 
     template_map = {
-        "misc_and_declarations": "module_2/misc_and_declarations.html",
-        "summary": "module_2/summary.html"
+        "misc_and_declarations": "module_2/misc_and_declarations.html"
     }
     return render_template(
         template_map.get(step, f"module_2/{step}.html"),
@@ -151,6 +154,83 @@ def fill_step(step):
         application=application,
         existing_files=existing_files
     )
+
+@module_2.route("/save_misc_and_declarations/<int:application_id>", methods=["POST"])
+@login_required
+def save_misc_and_declarations(application_id):
+    application = Application.query.get_or_404(application_id)
+    if application.user_id != current_user.id or application.status != "Pending":
+        return jsonify({"status": "error", "message": "Unauthorized or already submitted"}), 403
+
+    form_data = request.form.to_dict()
+    file_fields = ["official_seal"]
+    for field in file_fields:
+        files = request.files.getlist(field)
+        if files and files[0].filename:
+            file_paths = []
+            for f in files:
+                filename = f"{application_id}_misc_and_declarations_{field}_{f.filename}"
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                f.save(file_path)
+                relative_path = os.path.join("uploads", filename)
+                uploaded_file = UploadedFile(
+                    application_id=application_id,
+                    module_name="module_2",
+                    step="misc_and_declarations",
+                    field_name=field,
+                    filename=f.filename,
+                    filepath=relative_path
+                )
+                db.session.add(uploaded_file)
+                file_paths.append(relative_path)
+            form_data[field] = file_paths
+        else:
+            form_data[field] = form_data.get(field, [])
+
+    for decl in ['coord_agreement', 'cease_emission', 'change_notification', 'govt_control', 'app_submission', 'compliance_affirmation', 'hosted_payload_undertaking']:
+        form_data[decl] = decl in request.form
+
+    module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_2", step="misc_and_declarations").first()
+    if not module_data:
+        module_data = ModuleData(application_id=application_id, module_name="module_2", step="misc_and_declarations", data={})
+        db.session.add(module_data)
+
+    module_data.data = form_data
+    module_data.completed = True
+    try:
+        db.session.commit()
+        return jsonify({"status": "success", "message": "Form saved successfully"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@module_2.route("/submit_application/<int:application_id>", methods=["POST"])
+@login_required
+def submit_application(application_id):
+    application = Application.query.get_or_404(application_id)
+    if application.user_id != current_user.id:
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("applicant.home"))
+    if application.status != "Pending":
+        flash("Application already submitted.", "warning")
+        return redirect(url_for("applicant.home"))
+
+    all_module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_2").all()
+    required_steps = STEPS
+    completed_steps = [md.step for md in all_module_data if md.completed]
+    if len(completed_steps) < len(required_steps) or not all(step in completed_steps for step in required_steps):
+        flash("Please complete all required steps before submitting.", "error")
+        return redirect(url_for("module_2.fill_step", step="misc_and_declarations", application_id=application_id))
+
+    try:
+        application.status = "Submitted"
+        db.session.commit()
+        flash("Application submitted successfully!", "success")
+        return redirect(url_for("module_2.fill_step", step="summary", application_id=application_id))
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error submitting application: {str(e)}", "error")
+        return redirect(url_for("module_2.fill_step", step="misc_and_declarations", application_id=application_id))
 
 @module_2.route("/download_file/<int:file_id>")
 @login_required
@@ -165,28 +245,79 @@ def download_file(file_id):
         return f"File not found: {full_path}", 404
     return send_file(full_path, as_attachment=True, download_name=uploaded_file.filename)
 
-@module_2.route("/submit_application/<application_id>", methods=["POST"])
+@module_2.route("/download_pdf/<int:application_id>")
 @login_required
-def submit_application(application_id):
+def download_pdf(application_id):
     application = Application.query.get_or_404(application_id)
-    if application.user_id != current_user.id:
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("applicant.home"))
-    if application.status != "Pending":
-        flash("Application already submitted.", "warning")
-        return redirect(url_for("applicant.home"))
+    if application.user_id != current_user.id or application.status != "Submitted":
+        print(f"Debug: current_user.id = {current_user.id}, application.user_id = {application.user_id}, status = {application.status}")
+        abort(403, "Unauthorized or invalid application")
 
-    all_module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_2").all()
-    required_steps = [s for s in STEPS if s != "summary"]
-    completed_steps = [md.step for md in all_module_data if md.completed]
-    if len(completed_steps) < len(required_steps) or not all(step in completed_steps for step in required_steps):
-        flash("Please complete all required steps before submitting.", "error")
-        return redirect(url_for("module_2.fill_step", step="misc_and_declarations", application_id=application_id))
+    module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_2").all()
+    uploaded_files = UploadedFile.query.filter_by(application_id=application_id, module_name="module_2").all()
 
-    application.status = "Submitted"
-    db.session.commit()
-    flash("Application submitted successfully!", "success")
-    return redirect(url_for("applicant.home", module="module_2"))
+    typst_content = """
+    #set page(margin: 1in)
+    #set text(font: "Arial", size: 12pt)
+    #show heading: set text(size: 16pt, weight: "bold")
+
+    = Application {{ application_id }} - Module 2 Summary
+    #outline(title: "Table of Contents", indent: true)
+
+    """
+    for md in module_data:
+        step_title = md.step.replace('_', ' ').title()
+        typst_content += f"\n== {step_title}\n"
+        for key, value in md.data.items():
+            key_title = key.replace('_', ' ').title()
+            if isinstance(value, list) and all(isinstance(v, str) for v in value):
+                typst_content += f"- *{key_title}*: "
+                if value:
+                    typst_content += ", ".join([f"[{os.path.basename(v)}](#appendix)" for v in value])
+                else:
+                    typst_content += "None uploaded"
+                typst_content += "\n"
+            else:
+                typst_content += f"- *{key_title}*: {value}\n"
+
+    typst_content += "\n#pagebreak()\n= Appendix: Uploaded Files\n"
+    for i, uf in enumerate(uploaded_files, 1):
+        typst_content += f"[#set anchor({uf.filename})]\n- {uf.field_name.replace('_', ' ').title()}: {uf.filename} (Page {i})\n"
+
+    typst_file = f"temp_{application_id}.typ"
+    with open(typst_file, "w", encoding="utf-8") as f:
+        f.write(typst_content.replace("{{ application_id }}", str(application_id)))
+
+    base_pdf = f"temp_{application_id}.pdf"
+    try:
+        subprocess.run(["typst", "compile", typst_file, base_pdf], check=True, shell=True)
+    except subprocess.CalledProcessError as e:
+        os.remove(typst_file)
+        abort(500, f"Typst compilation failed: {e}")
+
+    pdf_files = [base_pdf]
+    for uf in uploaded_files:
+        full_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", uf.filepath))
+        if os.path.exists(full_path) and full_path.lower().endswith(".pdf"):
+            pdf_files.append(full_path.replace("/", "\\"))
+        else:
+            print(f"Skipping {full_path}: Not found or not a PDF")
+
+    final_pdf = f"final_{application_id}.pdf"
+    try:
+        cmd = ["pdftk"] + [f'"{pdf}"' for pdf in pdf_files] + ["cat", "output", f'"{final_pdf}"']
+        subprocess.run(cmd, check=True, shell=True)
+    except subprocess.CalledProcessError as e:
+        os.remove(typst_file)
+        os.remove(base_pdf)
+        abort(500, f"PDF merging failed: {e}")
+
+    os.remove(typst_file)
+    os.remove(base_pdf)
+
+    response = send_file(final_pdf, as_attachment=True, download_name=f"Module_2_Application_{application_id}.pdf")
+    os.remove(final_pdf)
+    return response
 
 @module_2.route("/start_application", methods=["GET", "POST"])
 @login_required

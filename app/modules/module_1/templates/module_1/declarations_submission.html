@@ -3,7 +3,7 @@
 {% block title %}Module 1 - Declarations{% endblock %}
 {% block form_content %}
 <div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
-    <form method="POST" enctype="multipart/form-data">
+    <form id="declarations-form" method="POST" action="{{ url_for('module_1.submit_application', application_id=application_id) }}" enctype="multipart/form-data">
         <div class="mb-4">
             <label class="block text-base mb-1 text-gray-800">Security Clearance Proforma (if requested)</label>
             <input type="file" name="security_clearance_doc" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
@@ -78,8 +78,61 @@
         </div>
         <div class="flex justify-between">
             <a href="{{ url_for('module_1.fill_step', step='operational_contact', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
-            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+            <button type="button" onclick="handleSubmit()" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Submit Application</button>
         </div>
     </form>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function handleSubmit() {
+        const form = document.getElementById('declarations-form');
+        const formData = new FormData(form);
+
+        // First, save the form data
+        fetch("{{ url_for('module_1.save_declarations', application_id=application_id) }}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Show SweetAlert2 popup
+                Swal.fire({
+                    title: "Ready to Submit?",
+                    text: "Before submitting finally, you can review your application if you want or submit it now. Once submitted, you cannot edit it.",
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Submit Finally",
+                    cancelButtonText: "Review"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit(); // Proceed with final submission
+                    } else {
+                        // Redirect to Step 1 (Applicant Identity)
+                        window.location.href = "{{ url_for('module_1.fill_step', step='applicant_identity', application_id=application_id) }}";
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: "Error!",
+                    text: "Error saving form: " + data.message,
+                    icon: "error",
+                    confirmButtonColor: "#d33",
+                    confirmButtonText: "Close"
+                });
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                title: "Error!",
+                text: "Something went wrong while saving: " + error,
+                icon: "error",
+                confirmButtonColor: "#d33",
+                confirmButtonText: "Close"
+            });
+        });
+    }
+</script>
 {% endblock %}

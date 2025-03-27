@@ -1,40 +1,41 @@
+<!-- app/modules/module_3/templates/module_3/misc_and_declarations.html -->
 {% extends "module_3/forms_base.html" %}
 {% block title %}Module 3 - Miscellaneous & Declarations{% endblock %}
 {% block form_content %}
 <div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
-    <form method="POST" enctype="multipart/form-data">
+    <form id="misc-declarations-form" method="POST" action="{{ url_for('module_3.submit_application', application_id=application_id) }}" enctype="multipart/form-data">
         <div class="mb-4">
             <label class="block text-base mb-1 text-gray-800">Value Addition to Indian Space Sector</label>
-            <textarea name="value_addition" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Economy, employment, etc.">{{ form_data.value_addition or '' }}</textarea>
+            <textarea name="value_addition" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Economy, employment, etc.">{{ form_data.value_addition or '' }}</textarea>
         </div>
         <div class="mb-4">
             <label class="block text-base mb-1 text-gray-800">Other Clearances</label>
-            <textarea name="other_clearances" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Details of other approvals">{{ form_data.other_clearances or '' }}</textarea>
+            <textarea name="other_clearances" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Details of other approvals">{{ form_data.other_clearances or '' }}</textarea>
         </div>
         <div class="mb-4">
             <label class="block text-base mb-1 text-gray-800">Collaborations</label>
-            <textarea name="collaborations" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="International/national collaborations">{{ form_data.collaborations or '' }}</textarea>
+            <textarea name="collaborations" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="International/national collaborations">{{ form_data.collaborations or '' }}</textarea>
         </div>
         <div class="mb-4">
             <label class="block text-base mb-1 text-gray-800">Additional Information</label>
-            <textarea name="additional_info" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Any other relevant details">{{ form_data.additional_info or '' }}</textarea>
+            <textarea name="additional_info" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Any other relevant details">{{ form_data.additional_info or '' }}</textarea>
         </div>
         <div class="mb-4">
             <h3 class="text-lg font-semibold text-gray-800 mb-2">Undertaking/Declaration</h3>
-            <label class="flex items-start mb-2"><input type="checkbox" name="auth_by_operator" required class="mt-1 mr-2"><span>F. Authorized by satellite operator to provide capacity in India, will inform IN-SPACe within 5 days if withdrawn.</span></label>
-            <label class="flex items-start mb-2"><input type="checkbox" name="coord_agreement" required class="mt-1 mr-2"><span>G. Agree to coordinate with other operators for interference-free services.</span></label>
-            <label class="flex items-start mb-2"><input type="checkbox" name="cease_emission" required class="mt-1 mr-2"><span>H. Agree to cease emissions if directed by IN-SPACe due to interference.</span></label>
-            <label class="flex items-start mb-2"><input type="checkbox" name="change_notification" required class="mt-1 mr-2"><span>I. Will notify IN-SPACe within 48 hours of ownership/control changes.</span></label>
-            <label class="flex items-start mb-2"><input type="checkbox" name="national_security" required class="mt-1 mr-2"><span>J. Understand authorization may be terminated for national security reasons.</span></label>
-            <label class="flex items-start mb-2"><input type="checkbox" name="auth_validity" required class="mt-1 mr-2"><span>K. Agree authorization is valid for the specified period.</span></label>
-            <label class="flex items-start mb-2"><input type="checkbox" name="app_submission" required class="mt-1 mr-2"><span>L. Affirm submission of this application.</span></label>
-            <label class="flex items-start mb-2"><input type="checkbox" name="compliance_affirmation" required class="mt-1 mr-2"><span>M. Confirm compliance with IN-SPACe conditions and Indian laws.</span></label>
+            <label class="flex items-start mb-2"><input type="checkbox" name="auth_by_operator" required class="mt-1 mr-2" {% if form_data.auth_by_operator %}checked{% endif %}><span>F. Authorized by satellite operator to provide capacity in India, will inform IN-SPACe within 5 days if withdrawn.</span></label>
+            <label class="flex items-start mb-2"><input type="checkbox" name="coord_agreement" required class="mt-1 mr-2" {% if form_data.coord_agreement %}checked{% endif %}><span>G. Agree to coordinate with other operators for interference-free services.</span></label>
+            <label class="flex items-start mb-2"><input type="checkbox" name="cease_emission" required class="mt-1 mr-2" {% if form_data.cease_emission %}checked{% endif %}><span>H. Agree to cease emissions if directed by IN-SPACe due to interference.</span></label>
+            <label class="flex items-start mb-2"><input type="checkbox" name="change_notification" required class="mt-1 mr-2" {% if form_data.change_notification %}checked{% endif %}><span>I. Will notify IN-SPACe within 48 hours of ownership/control changes.</span></label>
+            <label class="flex items-start mb-2"><input type="checkbox" name="national_security" required class="mt-1 mr-2" {% if form_data.national_security %}checked{% endif %}><span>J. Understand authorization may be terminated for national security reasons.</span></label>
+            <label class="flex items-start mb-2"><input type="checkbox" name="auth_validity" required class="mt-1 mr-2" {% if form_data.auth_validity %}checked{% endif %}><span>K. Agree authorization is valid for the specified period.</span></label>
+            <label class="flex items-start mb-2"><input type="checkbox" name="app_submission" required class="mt-1 mr-2" {% if form_data.app_submission %}checked{% endif %}><span>L. Affirm submission of this application.</span></label>
+            <label class="flex items-start mb-2"><input type="checkbox" name="compliance_affirmation" required class="mt-1 mr-2" {% if form_data.compliance_affirmation %}checked{% endif %}><span>M. Confirm compliance with IN-SPACe conditions and Indian laws.</span></label>
         </div>
         <div class="mb-4">
             <h3 class="text-lg font-semibold text-gray-800 mb-2">Signature Block</h3>
-            <input type="text" name="signature_name" required value="{{ form_data.signature_name or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Name in block letters">
-            <textarea name="signature_address" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800" placeholder="Full address">{{ form_data.signature_address or '' }}</textarea>
-            <input type="file" name="official_seal" multiple {% if not existing_files|selectattr('field_name', 'equalto', 'official_seal')|list %}required{% endif %} class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800">
+            <input type="text" name="signature_name" required value="{{ form_data.signature_name or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name in block letters">
+            <textarea name="signature_address" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Full address">{{ form_data.signature_address or '' }}</textarea>
+            <input type="file" name="official_seal" multiple {% if not existing_files|selectattr('field_name', 'equalto', 'official_seal')|list %}required{% endif %} class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
             {% if existing_files|selectattr('field_name', 'equalto', 'official_seal')|list %}
                 <div class="mt-2"><p class="text-sm text-gray-600">Previously Uploaded:</p>
                 <ul class="list-disc pl-5">
@@ -43,16 +44,66 @@
                     {% endif %}{% endfor %}
                 </ul></div>
             {% endif %}
-            <input type="text" name="signature_place" required value="{{ form_data.signature_place or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800" placeholder="Place">
-            <input type="text" name="signature_tel" required value="{{ form_data.signature_tel or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800" placeholder="Telephone number">
-            <input type="date" name="signature_date" required value="{{ form_data.signature_date or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800">
-            <input type="email" name="signature_email" required value="{{ form_data.signature_email or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800" placeholder="Email">
-            <input type="url" name="signature_website" value="{{ form_data.signature_website or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800" placeholder="Website (optional)">
+            <input type="text" name="signature_place" required value="{{ form_data.signature_place or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Place">
+            <input type="text" name="signature_tel" required value="{{ form_data.signature_tel or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Telephone number">
+            <input type="date" name="signature_date" required value="{{ form_data.signature_date or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            <input type="email" name="signature_email" required value="{{ form_data.signature_email or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Email">
+            <input type="url" name="signature_website" value="{{ form_data.signature_website or '' }}" class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Website (optional)">
         </div>
         <div class="flex justify-between">
             <a href="{{ url_for('module_3.fill_step', step='launch_and_regulatory', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
-            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105">Next</button>
+            <button type="button" onclick="handleSubmit()" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Submit Application</button>
         </div>
     </form>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function handleSubmit() {
+        const form = document.getElementById('misc-declarations-form');
+        const formData = new FormData(form);
+
+        fetch("{{ url_for('module_3.save_misc_and_declarations', application_id=application_id) }}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                Swal.fire({
+                    title: "Ready to Submit?",
+                    text: "Before submitting finally, you can review your application if you want or submit it now. Once submitted, you cannot edit it.",
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Submit Finally",
+                    cancelButtonText: "Review"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    } else {
+                        window.location.href = "{{ url_for('module_3.fill_step', step='renewal_and_provisioning', application_id=application_id) }}";
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: "Error!",
+                    text: "Error saving form: " + data.message,
+                    icon: "error",
+                    confirmButtonColor: "#d33",
+                    confirmButtonText: "Close"
+                });
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                title: "Error!",
+                text: "Something went wrong while saving: " + error,
+                icon: "error",
+                confirmButtonColor: "#d33",
+                confirmButtonText: "Close"
+            });
+        });
+    }
+</script>
 {% endblock %}

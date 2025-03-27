@@ -4,7 +4,7 @@
 {% block form_content %}
 <div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-4xl mx-auto">
     <h3 class="text-xl font-semibold mb-4 text-gray-800">Miscellaneous & Declarations</h3>
-    <form method="POST" enctype="multipart/form-data">
+    <form id="misc-declarations-form" method="POST" action="{{ url_for('module_2.submit_application', application_id=application_id) }}" enctype="multipart/form-data">
         <div class="mt-6">
             <h4 class="text-lg font-semibold mb-2 text-gray-800">Miscellaneous</h4>
             <div class="mb-4">
@@ -44,7 +44,7 @@
             <h4 class="text-lg font-semibold mb-2 text-gray-800">Undertaking/Declaration</h4>
             {% for decl in ['coord_agreement', 'cease_emission', 'change_notification', 'govt_control', 'app_submission', 'compliance_affirmation'] %}
             <div class="flex items-start mb-2">
-                <input type="checkbox" name="{{ decl }}" value="true" required class="mt-1 mr-2" {% if form_data[decl] == 'true' %}checked{% endif %}>
+                <input type="checkbox" name="{{ decl }}" required class="mt-1 mr-2" {% if form_data[decl] %}checked{% endif %}>
                 <p class="text-gray-700 text-sm">
                     {{ { 
                         'coord_agreement': 'F. Agreement to coordinate with other operators for interference-free services', 
@@ -58,7 +58,7 @@
             </div>
             {% endfor %}
             <div class="flex items-start mb-2 {% if not all_module_data|selectattr('step', 'equalto', 'payload_details')|map(attribute='data')|map(attribute='hosted_payloads')|first == 'Yes' %}hidden{% endif %}" id="hosted_payload_undertaking_container">
-                <input type="checkbox" name="hosted_payload_undertaking" value="true" {% if all_module_data|selectattr('step', 'equalto', 'payload_details')|map(attribute='data')|map(attribute='hosted_payloads')|first == 'Yes' %}required{% endif %} class="mt-1 mr-2" {% if form_data.hosted_payload_undertaking == 'true' %}checked{% endif %}>
+                <input type="checkbox" name="hosted_payload_undertaking" {% if all_module_data|selectattr('step', 'equalto', 'payload_details')|map(attribute='data')|map(attribute='hosted_payloads')|first == 'Yes' %}required{% endif %} class="mt-1 mr-2" {% if form_data.hosted_payload_undertaking %}checked{% endif %}>
                 <p class="text-gray-700 text-sm">Hosted Payload Undertaking: Affirmation to obtain requisite authorizations for hosted payloads before operation</p>
             </div>
         </div>
@@ -109,11 +109,60 @@
         </div>
         <div class="flex justify-between mt-6">
             <a href="{{ url_for('module_2.fill_step', step='itu_and_regulatory', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
-            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+            <button type="button" onclick="handleSubmit()" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Submit Application</button>
         </div>
     </form>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    function handleSubmit() {
+        const form = document.getElementById('misc-declarations-form');
+        const formData = new FormData(form);
+
+        fetch("{{ url_for('module_2.save_misc_and_declarations', application_id=application_id) }}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                Swal.fire({
+                    title: "Ready to Submit?",
+                    text: "Before submitting finally, you can review your application if you want or submit it now. Once submitted, you cannot edit it.",
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Submit Finally",
+                    cancelButtonText: "Review"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    } else {
+                        window.location.href = "{{ url_for('module_2.fill_step', step='satellite_overview', application_id=application_id) }}";
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: "Error!",
+                    text: "Error saving form: " + data.message,
+                    icon: "error",
+                    confirmButtonColor: "#d33",
+                    confirmButtonText: "Close"
+                });
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                title: "Error!",
+                text: "Something went wrong while saving: " + error,
+                icon: "error",
+                confirmButtonColor: "#d33",
+                confirmButtonText: "Close"
+            });
+        });
+    }
+
     const hostedPayloads = "{{ all_module_data|selectattr('step', 'equalto', 'payload_details')|map(attribute='data')|map(attribute='hosted_payloads')|first or 'No' }}";
     if (hostedPayloads === "Yes") {
         document.getElementById("hosted_payload_undertaking_container").classList.remove("hidden");
