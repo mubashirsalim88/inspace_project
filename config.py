@@ -5,9 +5,12 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+
 class Config:
     # Security
-    SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key-for-dev-only")  # Fallback for dev
+    SECRET_KEY = os.getenv(
+        "SECRET_KEY", "default-secret-key-for-dev-only"
+    )  # Fallback for dev
 
     # Database
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
@@ -22,15 +25,19 @@ class Config:
     MAIL_USERNAME = os.getenv("MAIL_USERNAME")
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
     if not MAIL_USERNAME or not MAIL_PASSWORD:
-        print("Warning: MAIL_USERNAME or MAIL_PASSWORD not set. Email functionality will be disabled.")
+        print(
+            "Warning: MAIL_USERNAME or MAIL_PASSWORD not set. Email functionality will be disabled."
+        )
 
     # Optional: Debug mode (set via environment or default to False)
     DEBUG = os.getenv("FLASK_DEBUG", "False").lower() in ("true", "1", "t")
+
 
 # For production, you might want a subclass like this:
 class ProductionConfig(Config):
     DEBUG = False
     # Add production-specific settings if needed (e.g., SSL for mail)
+
 
 # For development (current setup uses this implicitly)
 class DevelopmentConfig(Config):
