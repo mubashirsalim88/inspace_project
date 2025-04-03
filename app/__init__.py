@@ -1,15 +1,20 @@
 # app/__init__.py
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager, current_user, login_required
 from flask_mail import Mail
 from config import Config
+import logging
 
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 mail = Mail()
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def create_app():
     app = Flask(__name__)
@@ -25,6 +30,7 @@ def create_app():
 
     # Register blueprints
     from app.auth import auth as auth_bp
+    from app.admin import admin as admin_bp
     from app.applicant import applicant as applicant_bp
     from app.assigner import assigner as assigner_bp
     from app.verifier import verifier as verifier_bp
@@ -36,6 +42,7 @@ def create_app():
     from app.chat import chat as chat_bp
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
     app.register_blueprint(applicant_bp)
     app.register_blueprint(assigner_bp)
     app.register_blueprint(verifier_bp)
@@ -46,7 +53,7 @@ def create_app():
     app.register_blueprint(module_4_bp) 
     app.register_blueprint(chat_bp)
 
-    # Add homepage route with role-based redirection
+    # Homepage route with role-based redirection
     @app.route('/')
     def index():
         if current_user.is_authenticated:
@@ -59,6 +66,19 @@ def create_app():
             else:
                 return "Role not implemented yet", 501
         return redirect(url_for('auth.login'))
+
+    # Test route to bypass potential middleware
+    @app.route('/test_notifications')
+    @login_required
+    def test_notifications():
+        logger.info(f"Test route accessed by user {current_user.id} (role: {current_user.role})")
+        return redirect(url_for('chat.notifications'))
+
+    # Custom 403 handler to debug permission error
+    @app.errorhandler(403)
+    def forbidden(e):
+        logger.error(f"403 error for user {current_user.id if current_user.is_authenticated else 'anonymous'} at {request.path}")
+        return render_template('403.html', message="You do not have permission to access this page."), 403
 
     return app
 

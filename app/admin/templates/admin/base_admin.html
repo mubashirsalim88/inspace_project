@@ -1,10 +1,10 @@
-<!-- app/templates/base.html -->
+<!-- app/admin/templates/admin/base_admin.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}IN-SPACe Portal{% endblock %}</title>
+    <title>Admin - {% block title %}{% endblock %} - IN-SPACe Portal</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
@@ -13,18 +13,34 @@
 </head>
 <body class="flex h-screen bg-gray-100 m-0 p-0">
     <div class="flex w-full">
-        <div id="main-content" class="flex-1 bg-white">
+        <!-- Sidebar -->
+        <div class="w-64 bg-gray-800 text-white flex-shrink-0 h-screen">
+            <div class="p-4">
+                <h1 class="text-2xl font-bold">Admin Panel</h1>
+                <p class="text-sm">Welcome, {{ current_user.username }}</p>
+            </div>
+            <nav class="mt-4">
+                <a href="{{ url_for('admin.dashboard') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.path == '/admin/dashboard' %}bg-gray-700{% endif %}">Overview</a>
+                <a href="{{ url_for('admin.manage_users') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.path == '/admin/users' %}bg-gray-700{% endif %}">Users</a>
+                <a href="{{ url_for('admin.applications') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.path == '/admin/applications' %}bg-gray-700{% endif %}">Applications</a>
+                <a href="{{ url_for('admin.assignments') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.path == '/admin/assignments' %}bg-gray-700{% endif %}">Assignments</a>
+                <a href="{{ url_for('admin.chat') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.path == '/admin/chat' %}bg-gray-700{% endif %}">Chat</a>
+                <a href="{{ url_for('admin.notifications') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.path == '/admin/notifications' %}bg-gray-700{% endif %}">Notifications</a>
+                <a href="{{ url_for('auth.logout') }}" class="block py-2 px-4 hover:bg-red-700">Logout</a>
+            </nav>
+        </div>
+        <!-- Main Content -->
+        <div class="flex-1 bg-white">
             <div class="navbar shadow-md p-4 flex justify-between items-center w-full bg-white border-b">
                 <div class="flex items-center space-x-4">
-                    <a href="{{ url_for('applicant.home') if current_user.is_authenticated else url_for('auth.login') }}">
+                    <a href="{{ url_for('admin.dashboard') }}">
                         <img src="{{ url_for('static', filename='images/IN-SPACe_Logo.png') }}" alt="Logo" class="h-8">
                     </a>
                 </div>
                 <div class="flex-1 text-center text-gray-800 font-medium text-xl">
-                    Welcome to IN-SPACe Portal
+                    IN-SPACe Admin Portal
                 </div>
                 <div class="flex items-center space-x-4">
-                    {% if current_user.is_authenticated %}
                     <a href="{{ url_for('chat.notifications') }}" class="relative">
                         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9"></path>
@@ -42,13 +58,6 @@
                             Logout
                         </button>
                     </a>
-                    {% else %}
-                    <a href="{{ url_for('auth.login') }}">
-                        <button class="py-2 px-4 rounded bg-blue-600 text-white hover:bg-blue-700 transition-all duration-300">
-                            Login
-                        </button>
-                    </a>
-                    {% endif %}
                 </div>
             </div>
             <div class="p-4">

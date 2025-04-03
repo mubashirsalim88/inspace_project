@@ -58,7 +58,9 @@ def fill_step(step):
         return redirect(url_for("applicant.home"))
 
     application = Application.query.get_or_404(app_id)
-    if application.user_id != current_user.id or (application.status != "Pending" and step != "summary"):
+    if application.user_id != current_user.id or (
+        application.status != "Pending" and not application.editable and step != "summary"
+    ):
         logger.warning(f"Unauthorized access or invalid application status for user {current_user.id}, app {app_id}")
         return "Unauthorized or invalid application", 403
 
@@ -230,7 +232,7 @@ def submit_application(application_id):
     if application.user_id != current_user.id:
         flash("Unauthorized access.", "error")
         return redirect(url_for("applicant.home"))
-    if application.status != "Pending":
+    if application.status != "Pending" and not application.editable:
         flash("Application already submitted.", "warning")
         return redirect(url_for("applicant.home"))
 
@@ -243,6 +245,7 @@ def submit_application(application_id):
 
     try:
         application.status = "Submitted"
+        application.editable = False
         db.session.commit()
         flash("Application submitted successfully!", "success")
         return redirect(url_for("module_2.fill_step", step="summary", application_id=application_id))
@@ -250,7 +253,7 @@ def submit_application(application_id):
         db.session.rollback()
         flash(f"Error submitting application: {str(e)}", "error")
         return redirect(url_for("module_2.fill_step", step="misc_and_declarations", application_id=application_id))
-
+    
 @module_2.route("/download_file/<int:file_id>")
 @login_required
 def download_file(file_id):

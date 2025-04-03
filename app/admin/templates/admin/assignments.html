@@ -1,0 +1,28 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Assignments{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">Assignments</h2>
+
+<div class="overflow-x-auto">
+    <table class="w-full border-collapse bg-white shadow rounded-lg">
+        <thead>
+            <tr class="bg-gray-200">
+                <th class="p-3 text-left">Application ID</th>
+                <th class="p-3 text-left">Assigner</th>
+                <th class="p-3 text-left">Primary Verifier</th>
+                <th class="p-3 text-left">Secondary Verifier</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for assignment in assignments %}
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3 border-t">{{ assignment.application_id }}</td>
+                    <td class="p-3 border-t">{{ assignment.assigner.username }}</td>
+                    <td class="p-3 border-t">{{ assignment.primary_verifier.username if assignment.primary_verifier else 'N/A' }}</td>
+                    <td class="p-3 border-t">{{ assignment.secondary_verifier.username if assignment.secondary_verifier else 'N/A' }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

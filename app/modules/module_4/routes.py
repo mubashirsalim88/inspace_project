@@ -58,7 +58,9 @@ def fill_step(step):
         return redirect(url_for("applicant.home"))
 
     application = Application.query.get_or_404(app_id)
-    if application.user_id != current_user.id or (application.status != "Pending" and step != "summary"):
+    if application.user_id != current_user.id or (
+        application.status != "Pending" and not application.editable and step != "summary"
+    ):
         flash("Unauthorized access or application not editable.", "error")
         return redirect(url_for("applicant.home"))
 
@@ -212,7 +214,7 @@ def submit_application(application_id):
     if application.user_id != current_user.id:
         flash("Unauthorized access.", "error")
         return redirect(url_for("applicant.home"))
-    if application.status != "Pending":
+    if application.status != "Pending" and not application.editable:
         flash("Application already submitted.", "warning")
         return redirect(url_for("applicant.home"))
 
@@ -224,6 +226,7 @@ def submit_application(application_id):
         return redirect(url_for("module_4.fill_step", step="miscellaneous_and_declarations", application_id=application_id))
 
     application.status = "Submitted"
+    application.editable = False
     db.session.commit()
     flash("Application submitted successfully!", "success")
     return redirect(url_for("module_4.fill_step", step="summary", application_id=application_id))

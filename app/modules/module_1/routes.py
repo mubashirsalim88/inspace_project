@@ -46,7 +46,6 @@ UPLOAD_FOLDER = os.path.join(
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-
 @module_1.route("/fill_step/<step>", methods=["GET", "POST"])
 @login_required
 def fill_step(step):
@@ -59,7 +58,7 @@ def fill_step(step):
 
     application = Application.query.get_or_404(app_id)
     if application.user_id != current_user.id or (
-        application.status != "Pending" and step != "summary"
+        application.status != "Pending" and not application.editable and step != "summary"
     ):
         return "Unauthorized or invalid application", 403
 
@@ -187,7 +186,6 @@ def fill_step(step):
         existing_files=existing_files,
     )
 
-
 @module_1.route("/save_declarations/<int:application_id>", methods=["POST"])
 @login_required
 def save_declarations(application_id):
@@ -266,7 +264,6 @@ def save_declarations(application_id):
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-
 @module_1.route("/submit_application/<int:application_id>", methods=["POST"])
 @login_required
 def submit_application(application_id):
@@ -274,44 +271,27 @@ def submit_application(application_id):
     if application.user_id != current_user.id:
         flash("Unauthorized access.", "error")
         return redirect(url_for("applicant.home"))
-    if application.status != "Pending":
+    if application.status != "Pending" and not application.editable:
         flash("Application already submitted.", "warning")
         return redirect(url_for("applicant.home"))
 
-    all_module_data = ModuleData.query.filter_by(
-        application_id=application_id, module_name="module_1"
-    ).all()
+    all_module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_1").all()
     required_steps = STEPS
     completed_steps = [md.step for md in all_module_data if md.completed]
-    if len(completed_steps) < len(required_steps) or not all(
-        step in completed_steps for step in required_steps
-    ):
+    if len(completed_steps) < len(required_steps) or not all(step in completed_steps for step in required_steps):
         flash("Please complete all required steps before submitting.", "error")
-        return redirect(
-            url_for(
-                "module_1.fill_step",
-                step="declarations_submission",
-                application_id=application_id,
-            )
-        )
+        return redirect(url_for("module_1.fill_step", step="declarations_submission", application_id=application_id))
 
     try:
         application.status = "Submitted"
+        application.editable = False
         db.session.commit()
         flash("Application submitted successfully!", "success")
-        return redirect(
-            url_for("module_1.fill_step", step="summary", application_id=application_id)
-        )
+        return redirect(url_for("module_1.fill_step", step="summary", application_id=application_id))
     except Exception as e:
         db.session.rollback()
         flash(f"Error submitting application: {str(e)}", "error")
-        return redirect(
-            url_for(
-                "module_1.fill_step",
-                step="declarations_submission",
-                application_id=application_id,
-            )
-        )
+        return redirect(url_for("module_1.fill_step", step="declarations_submission", application_id=application_id))
 
 @module_1.route("/download_pdf/<application_id>", methods=["GET"])
 @login_required
@@ -867,3 +847,30 @@ def start_application():
             url_for("module_1.fill_step", step=STEPS[0], application_id=application.id)
         )
     return render_template("module_1/start_application.html")
+
+@module_1.route("/download_file/<int:file_id>")
+@login_required
+def download_file(file_id):
+    uploaded_file = UploadedFile.query.get_or_404(file_id)
+    application = Application.query.get_or_404(uploaded_file.application_id)
+    
+    # Allow Applicant or Verifiers assigned to the application
+    assignment = ApplicationAssignment.query.filter_by(application_id=application.id).first()
+    allowed_users = [application.user_id]
+    if assignment:
+        allowed_users.extend([assignment.primary_verifier_id, assignment.secondary_verifier_id])
+    
+    if current_user.id not in allowed_users:
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("applicant.home"))
+
+    full_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", uploaded_file.filepath)
+    if not os.path.exists(full_path):
+        flash(f"File not found: {uploaded_file.filename}", "error")
+        return redirect(url_for("applicant.home"))
+    
+    return send_file(
+        full_path,
+        as_attachment=True,
+        download_name=uploaded_file.filename
+    )

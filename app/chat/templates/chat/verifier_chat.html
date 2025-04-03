@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Verifier Chat - Application #{{ application.id }}{% endblock %}
+{% block content %}
+<div class="p-6">
+    <h2 class="text-2xl font-bold mb-4">Chat with {{ other_verifier.username }} ({{ 'Secondary' if current_user.role == 'Primary Verifier' else 'Primary' }} Verifier) - Application #{{ application.id }}</h2>
+    <div class="bg-white shadow-lg rounded-lg p-6">
+        <div class="mb-4 h-96 overflow-y-auto border p-4 flex flex-col space-y-4">
+            {% for msg in messages %}
+                {% if msg.sender_id == current_user.id %}
+                    <div class="flex justify-end">
+                        <div class="bg-blue-100 text-blue-800 p-3 rounded-lg max-w-xs">
+                            <p>{{ msg.message }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="flex justify-start">
+                        <div class="bg-gray-100 text-gray-800 p-3 rounded-lg max-w-xs">
+                            <p><strong>{{ msg.sender.username }}</strong>: {{ msg.message }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <form method="POST" class="flex space-x-4">
+            <textarea name="message" class="w-full p-3 border rounded-md" rows="2" placeholder="Type your message..." required></textarea>
+            <input type="hidden" name="receiver_id" value="{{ other_verifier.id }}">
+            <button type="submit" class="py-2 px-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600">Send</button>
+        </form>
+        <div class="mt-4 flex space-x-4">
+            <a href="{{ url_for('verifier.review', application_id=application.id) }}" class="text-blue-600 hover:underline">Back to Review</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

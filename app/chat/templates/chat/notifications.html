@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Notifications - IN-SPACe{% endblock %}
+{% block content %}
+<div class="p-6">
+    <h2 class="text-2xl font-bold mb-4">Notifications</h2>
+    <div class="mb-6">
+        <a href="{{ url_for('applicant.home' if current_user.role == 'user' else 'verifier.home') }}" class="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300">Return to Home</a>
+    </div>
+    {% if notifications %}
+    <ul class="space-y-4">
+        {% for notification in notifications %}
+            <li class="p-4 border rounded {% if not notification.read %}bg-yellow-100{% endif %} flex justify-between items-center" data-notification-id="{{ notification.id }}">
+                <div>
+                    {% if notification.message %}
+                        <p>{{ notification.message.sender.username }} ({{ notification.message.timestamp.strftime('%Y-%m-%d %H:%M') }}): {{ notification.message.message }}</p>
+                        <a href="{{ url_for('chat.verifier_chat' if current_user.role in ['Primary Verifier', 'Secondary Verifier'] else 'chat.applicant_chat', application_id=notification.message.application_id, message_id=notification.message_id) }}" class="text-blue-600 hover:underline">View Message</a>
+                    {% else %}
+                        <p>{{ notification.content }} ({{ notification.timestamp.strftime('%Y-%m-%d %H:%M') }})</p>
+                    {% endif %}
+                </div>
+                {% if not notification.read %}
+                    <span class="text-sm text-gray-500 unread-indicator">Unread</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-gray-500">No notifications available.</p>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const notificationLinks = document.querySelectorAll('a[href*="message_id"]');
+    notificationLinks.forEach(link => {
+        link.addEventListener('click', (event) => {
+            const listItem = link.closest('li');
+            listItem.classList.remove('bg-yellow-100');
+            const unreadIndicator = listItem.querySelector('.unread-indicator');
+            if (unreadIndicator) {
+                unreadIndicator.remove();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
