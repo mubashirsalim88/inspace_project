@@ -53,6 +53,17 @@ def review(application_id):
     primary_verifier = User.query.get(assignment.primary_verifier_id)
     secondary_verifier = User.query.get(assignment.secondary_verifier_id)
 
+    # Determine the module and construct the PDF download URL
+    module_name = next(
+        (md.module_name for md in application.module_data if md.module_name in ["module_1", "module_2", "module_3", "module_4"]),
+        None
+    )
+    if not module_name:
+        flash("No valid module found for this application.", "error")
+        return redirect(url_for("verifier.home"))
+    
+    pdf_download_url = url_for(f"{module_name}.download_pdf", application_id=application_id)
+
     if request.method == "POST":
         decision = request.form.get("decision")
         comments = request.form.get("comments")
@@ -85,5 +96,6 @@ def review(application_id):
         assignment=assignment,
         primary_verifier=primary_verifier,
         secondary_verifier=secondary_verifier,
+        pdf_download_url=pdf_download_url,  # Pass the PDF URL to the template
         role=current_user.role
     )

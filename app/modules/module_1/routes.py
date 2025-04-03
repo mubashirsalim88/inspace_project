@@ -1,18 +1,8 @@
 # app/modules/module_1/routes.py
-from flask import (
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    jsonify,
-    send_file,
-    flash,
-    abort,
-)
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, send_file, flash, abort
 from flask_login import login_required, current_user
 from app import db
-from app.models import Application, ModuleData, UploadedFile
+from app.models import Application, ModuleData, UploadedFile, ApplicationAssignment
 import subprocess
 import os
 from reportlab.lib.pagesizes import letter
@@ -22,28 +12,23 @@ from reportlab.lib.units import inch
 from pypdf import PdfReader, PdfWriter
 from docx2pdf import convert
 import tempfile
-from pypdf.generic import ArrayObject, DictionaryObject, NameObject
+from pypdf.generic import ArrayObject, DictionaryObject, NameObject, NumberObject
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter as reportlab_letter
 from PIL import Image
 import io
 from reportlab.lib import colors
-from reportlab.platypus import (
-    Table,
-    TableStyle,
-    Paragraph,
-    SimpleDocTemplate,
-    Spacer,
-    PageBreak,
-    # ParagraphStyle,
-    HRFlowable,
-)
+from reportlab.platypus import Table, TableStyle, Paragraph, SimpleDocTemplate, Spacer, PageBreak, HRFlowable
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from datetime import datetime
 
 module_1 = Blueprint(
     "module_1", __name__, url_prefix="/module_1", template_folder="templates"
+)
+
+logo_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "static/images/IN-SPACe_Logo.png"
 )
 
 STEPS = [
@@ -328,12 +313,18 @@ def submit_application(application_id):
             )
         )
 
-
 @module_1.route("/download_pdf/<application_id>", methods=["GET"])
 @login_required
 def download_pdf(application_id):
     application = Application.query.get_or_404(application_id)
-    if application.user_id != current_user.id or application.status != "Submitted":
+    
+    # Allow Applicant or Verifiers assigned to the application
+    assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first()
+    allowed_users = [application.user_id]
+    if assignment:
+        allowed_users.extend([assignment.primary_verifier_id, assignment.secondary_verifier_id])
+    
+    if current_user.id not in allowed_users or application.status not in ["Submitted", "Under Review"]:
         return "Unauthorized or invalid application", 403
 
     # Fetch all module data
@@ -430,7 +421,6 @@ def download_pdf(application_id):
                 "static/images/company_logo.png",
             )
             if os.path.exists(logo_path):
-                # If logo exists, add it to the header
                 canvas.drawImage(
                     logo_path,
                     36,
@@ -440,7 +430,6 @@ def download_pdf(application_id):
                     preserveAspectRatio=True,
                 )
             else:
-                # Fallback if logo doesn't exist
                 canvas.setFont("Helvetica-Bold", 12)
                 canvas.setFillColor(colors.HexColor("#1A5276"))
                 canvas.drawString(36, height - 36, "Company Name")
@@ -459,9 +448,6 @@ def download_pdf(application_id):
             # Add footer
             canvas.setFont("Helvetica", 8)
             canvas.setFillColor(colors.gray)
-            # canvas.drawString(
-            #     36, 20, "Generated on: " + datetime.now().strftime("%Y-%m-%d %H:%M")
-            # )
             canvas.drawCentredString(width / 2, 20, "CONFIDENTIAL")
             canvas.drawRightString(width - 36, 20, "Page %d" % doc.page)
 
@@ -501,7 +487,6 @@ def download_pdf(application_id):
             ],
         ]
 
-        # Create a nice table for metadata
         metadata_table = Table(metadata_content, colWidths=[120, 300])
         metadata_table.setStyle(
             TableStyle(
@@ -559,34 +544,26 @@ def download_pdf(application_id):
 
         # Dictionary to store attachment files and their positions in the summary
         attachment_files = []
-        attachment_positions = {}  # To store where to place links later
+        attachment_positions = {}
 
         # Add summary content with improved formatting
         for i, md in enumerate(processed_module_data):
-            # Add section header with numbering
             story.append(
                 Paragraph(
                     f"{i+1}. {md['step'].replace('_', ' ').title()}", heading_style
                 )
             )
 
-            # Create a table for each category's key-value pairs
             data_items = []
-
             for key, value in md["data"].items():
                 if key not in ["documents", "document_names"] and value:
-                    if isinstance(value, list):  # Handle file attachments
-                        # Add label for attachment category
+                    if isinstance(value, list):
                         story.append(
                             Paragraph(f"{key.replace('_', ' ').title()}:", label_style)
                         )
-
-                        # Add each attachment with link styling
                         for idx, file_path in enumerate(value):
                             filename = os.path.basename(file_path)
-                            # Record where this link will be placed
                             attachment_positions[filename] = len(story)
-                            # Add a placeholder paragraph for the link
                             story.append(
                                 Paragraph(
                                     f"• Attachment: {filename} (Click to view)",
@@ -595,7 +572,6 @@ def download_pdf(application_id):
                             )
                             attachment_files.append((filename, file_path))
                     else:
-                        # Add regular key-value pair to table
                         data_items.append(
                             [
                                 Paragraph(
@@ -605,7 +581,6 @@ def download_pdf(application_id):
                             ]
                         )
 
-            # Only create a table if we have items
             if data_items:
                 data_table = Table(data_items, colWidths=[150, 360])
                 data_table.setStyle(
@@ -621,10 +596,7 @@ def download_pdf(application_id):
                 )
                 story.append(data_table)
 
-            # Add spacing between sections
             story.append(Spacer(1, 0.2 * inch))
-
-            # Add a subtle divider if not the last section
             if i < len(processed_module_data) - 1:
                 story.append(
                     HRFlowable(
@@ -636,65 +608,36 @@ def download_pdf(application_id):
                     )
                 )
 
-        # Build the initial summary PDF with headers and footers
+        # Build the initial summary PDF
         doc.build(story, onFirstPage=header_footer, onLaterPages=header_footer)
 
         # Step 2: Add attachments and create final PDF with links
-        from pypdf import PdfReader, PdfWriter
-        from pypdf.generic import (
-            ArrayObject,
-            DictionaryObject,
-            NameObject,
-            NumberObject,
-            TextStringObject,
-            create_string_object,
-        )
-        from reportlab.lib.pagesizes import letter as reportlab_letter
-        from PIL import Image
-        import io
-        from datetime import datetime
-
-        # Create a new PDF writer
         writer = PdfWriter()
         summary_pdf = PdfReader(pdf_path)
-
-        # Add the summary pages to the writer
         for page in summary_pdf.pages:
             writer.add_page(page)
 
-        # Calculate summary page height for link positioning
         page_height = reportlab_letter[1]
-
-        # Dictionary to store attachment destinations (page numbers)
         attachment_destinations = {}
 
-        # Add attachments as separate pages with professional styling
         for filename, file_path in attachment_files:
-            # Convert the relative file_path to an absolute path
             absolute_file_path = os.path.abspath(
                 os.path.join(
                     os.path.dirname(os.path.abspath(__file__)), "..", file_path
                 )
             )
 
-            # Check if the file exists
             if not os.path.exists(absolute_file_path):
                 print(f"File not found: {absolute_file_path}")
-                continue  # Skip this file if it doesn't exist
+                continue
 
-            # Record the starting page for this attachment
             attachment_page = len(writer.pages)
             attachment_destinations[filename] = attachment_page
 
-            # Create a professional separator page with the attachment name
-            with tempfile.NamedTemporaryFile(
-                delete=False, suffix=".pdf"
-            ) as separator_file:
-                # Create a custom separator page
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as separator_file:
                 c = canvas.Canvas(separator_file.name, pagesize=reportlab_letter)
                 width, height = reportlab_letter
 
-                # Add header with logo
                 logo_path = os.path.join(
                     os.path.dirname(os.path.abspath(__file__)),
                     "static/images/company_logo.png",
@@ -710,45 +653,31 @@ def download_pdf(application_id):
                     )
                 else:
                     c.setFont("Helvetica-Bold", 12)
-                    c.setFillColorRGB(0.1, 0.32, 0.46)  # Dark blue
+                    c.setFillColorRGB(0.1, 0.32, 0.46)
                     c.drawString(36, height - 36, "Company Name")
 
-                # Add header separator line
-                c.setStrokeColorRGB(0.68, 0.85, 0.95)  # Light blue
+                c.setStrokeColorRGB(0.68, 0.85, 0.95)
                 c.line(36, height - 60, width - 36, height - 60)
 
-                # Add back to summary button
                 c.setFont("Helvetica", 10)
-                c.setFillColorRGB(0.18, 0.47, 0.7)  # Blue
+                c.setFillColorRGB(0.18, 0.47, 0.7)
                 c.drawString(36, height - 80, "← Back to Summary")
-
-                # Draw a box around the back button to make it obvious
-                c.setStrokeColorRGB(0.18, 0.47, 0.7)  # Blue
+                c.setStrokeColorRGB(0.18, 0.47, 0.7)
                 c.rect(32, height - 92, 105, 20, stroke=1, fill=0)
 
-                # Add attachment title in a stylish box
-                c.setFillColorRGB(0.95, 0.95, 0.95)  # Very light gray
+                c.setFillColorRGB(0.95, 0.95, 0.95)
                 c.rect(36, height - 150, width - 72, 50, stroke=0, fill=1)
-
-                c.setFillColorRGB(0.1, 0.32, 0.46)  # Dark blue
+                c.setFillColorRGB(0.1, 0.32, 0.46)
                 c.setFont("Helvetica-Bold", 14)
                 c.drawCentredString(width / 2, height - 120, "Attachment:")
-
-                # Draw file name in the box
                 c.setFont("Helvetica", 12)
                 c.drawCentredString(width / 2, height - 140, filename)
 
-                # Add footer
                 c.setFont("Helvetica", 8)
-                c.setFillColorRGB(0.5, 0.5, 0.5)  # Gray
-                # c.drawString(
-                #     36, 20, "Generated on: " + datetime.now().strftime("%Y-%m-%d %H:%M")
-                # )
+                c.setFillColorRGB(0.5, 0.5, 0.5)
                 c.drawCentredString(width / 2, 20, "CONFIDENTIAL")
                 c.drawRightString(width - 36, 20, f"Application ID: {application_id}")
-
-                # Add footer line
-                c.setStrokeColorRGB(0.68, 0.85, 0.95)  # Light blue
+                c.setStrokeColorRGB(0.68, 0.85, 0.95)
                 c.line(36, 30, width - 36, 30)
 
                 c.save()
@@ -756,11 +685,8 @@ def download_pdf(application_id):
                 separator_pdf = PdfReader(separator_file.name)
                 writer.add_page(separator_pdf.pages[0])
 
-            # Process the attachment based on file type
             file_ext = os.path.splitext(absolute_file_path)[1].lower()
-
             if file_ext == ".pdf":
-                # Directly add PDF pages
                 try:
                     attachment_pdf = PdfReader(absolute_file_path)
                     for page in attachment_pdf.pages:
@@ -768,12 +694,8 @@ def download_pdf(application_id):
                 except Exception as e:
                     print(f"Error reading PDF {absolute_file_path}: {str(e)}")
                     continue
-
             elif file_ext == ".docx":
-                # Convert DOCX to PDF
-                with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".pdf"
-                ) as temp_pdf:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
                     try:
                         convert(absolute_file_path, temp_pdf.name)
                         attachment_pdf = PdfReader(temp_pdf.name)
@@ -783,31 +705,20 @@ def download_pdf(application_id):
                     except Exception as e:
                         print(f"Error converting DOCX {absolute_file_path}: {str(e)}")
                         continue
-
             elif file_ext in [".jpg", ".jpeg", ".png"]:
-                # Convert image to PDF with professional presentation
                 try:
-                    with tempfile.NamedTemporaryFile(
-                        delete=False, suffix=".pdf"
-                    ) as temp_img_pdf:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_img_pdf:
                         img = Image.open(absolute_file_path)
-
-                        # Create a PDF with the image
                         c = canvas.Canvas(temp_img_pdf.name, pagesize=reportlab_letter)
                         width, height = reportlab_letter
 
-                        # Add basic header
                         c.setFont("Helvetica-Bold", 10)
-                        c.setFillColorRGB(0.1, 0.32, 0.46)  # Dark blue
+                        c.setFillColorRGB(0.1, 0.32, 0.46)
                         c.drawString(36, height - 30, f"Attachment: {filename}")
 
-                        # Add a light border around the image area
                         img_width, img_height = img.size
-
-                        # Adjust image size to fit on a letter page with margins
-                        max_width = width - 72  # 1-inch margins
-                        max_height = height - 120  # Allow room for header/footer
-
+                        max_width = width - 72
+                        max_height = height - 120
                         if img_width > max_width or img_height > max_height:
                             ratio = min(max_width / img_width, max_height / img_height)
                             display_width = img_width * ratio
@@ -816,12 +727,9 @@ def download_pdf(application_id):
                             display_width = img_width
                             display_height = img_height
 
-                        # Calculate centered position
                         x_pos = (width - display_width) / 2
                         y_pos = (height - display_height) / 2
-
-                        # Draw a subtle border around the image
-                        c.setStrokeColorRGB(0.8, 0.8, 0.8)  # Light gray
+                        c.setStrokeColorRGB(0.8, 0.8, 0.8)
                         c.rect(
                             x_pos - 5,
                             y_pos - 5,
@@ -830,8 +738,6 @@ def download_pdf(application_id):
                             stroke=1,
                             fill=0,
                         )
-
-                        # Draw the image centered
                         c.drawImage(
                             absolute_file_path,
                             x_pos,
@@ -840,21 +746,16 @@ def download_pdf(application_id):
                             height=display_height,
                         )
 
-                        # Add footer
                         c.setFont("Helvetica", 8)
-                        c.setFillColorRGB(0.5, 0.5, 0.5)  # Gray
+                        c.setFillColorRGB(0.5, 0.5, 0.5)
                         c.drawString(36, 20, f"File: {filename}")
-                        c.drawRightString(
-                            width - 36, 20, f"Application ID: {application_id}"
-                        )
+                        c.drawRightString(width - 36, 20, f"Application ID: {application_id}")
 
                         c.save()
 
-                        # Add the image PDF to our document
                         img_pdf = PdfReader(temp_img_pdf.name)
                         for page in img_pdf.pages:
                             writer.add_page(page)
-
                         os.remove(temp_img_pdf.name)
                 except Exception as e:
                     print(f"Error processing image {absolute_file_path}: {str(e)}")
@@ -866,28 +767,19 @@ def download_pdf(application_id):
         # Create links from summary to attachments
         for filename, page_position in attachment_positions.items():
             if filename not in attachment_destinations:
-                continue  # Skip if the attachment wasn't added
+                continue
 
-            # Calculate which summary page this link is on
-            items_per_page = 25  # Estimate: adjust based on your layout
-            page_index = min(
-                page_position // items_per_page, len(summary_pdf.pages) - 1
-            )
+            items_per_page = 25
+            page_index = min(page_position // items_per_page, len(summary_pdf.pages) - 1)
             page = writer.pages[page_index]
-
-            # Calculate rough position on page (improve this based on your actual layout)
             position_on_page = page_position % items_per_page
             y_offset = page_height - 180 - (position_on_page * 20)
 
-            # Create the link annotation with proper destination
-            destination_page = attachment_destinations[filename]
-
-            # Create a GoTo action for the link
             action = DictionaryObject(
                 {
                     NameObject("/S"): NameObject("/GoTo"),
                     NameObject("/D"): ArrayObject(
-                        [NumberObject(destination_page), NameObject("/Fit")]
+                        [NumberObject(attachment_destinations[filename]), NameObject("/Fit")]
                     ),
                 }
             )
@@ -898,10 +790,10 @@ def download_pdf(application_id):
                     NameObject("/Subtype"): NameObject("/Link"),
                     NameObject("/Rect"): ArrayObject(
                         [
-                            NumberObject(60),  # Left
-                            NumberObject(y_offset - 10),  # Bottom
-                            NumberObject(450),  # Right
-                            NumberObject(y_offset + 10),  # Top
+                            NumberObject(60),
+                            NumberObject(y_offset - 10),
+                            NumberObject(450),
+                            NumberObject(y_offset + 10),
                         ]
                     ),
                     NameObject("/A"): action,
@@ -911,24 +803,19 @@ def download_pdf(application_id):
                 }
             )
 
-            # Add the link to the page's annotations
             if NameObject("/Annots") not in page:
                 page[NameObject("/Annots")] = ArrayObject()
-
             annots = page[NameObject("/Annots")]
             annots.append(writer._add_object(link))
 
-        # Add back button on each attachment page to return to summary
+        # Add back button on each attachment page
         for filename, page_num in attachment_destinations.items():
-            # Add a back button on the separator page
             page = writer.pages[page_num]
-
-            # Create a GoTo action to return to the summary page
             return_action = DictionaryObject(
                 {
                     NameObject("/S"): NameObject("/GoTo"),
                     NameObject("/D"): ArrayObject(
-                        [NumberObject(0), NameObject("/Fit")]  # Return to first page
+                        [NumberObject(0), NameObject("/Fit")]
                     ),
                 }
             )
@@ -939,10 +826,10 @@ def download_pdf(application_id):
                     NameObject("/Subtype"): NameObject("/Link"),
                     NameObject("/Rect"): ArrayObject(
                         [
-                            NumberObject(32),  # Left
-                            NumberObject(height - 92),  # Bottom
-                            NumberObject(137),  # Right
-                            NumberObject(height - 72),  # Top
+                            NumberObject(32),
+                            NumberObject(page_height - 92),
+                            NumberObject(137),
+                            NumberObject(page_height - 72),
                         ]
                     ),
                     NameObject("/A"): return_action,
@@ -952,10 +839,8 @@ def download_pdf(application_id):
                 }
             )
 
-            # Add the back link to the page's annotations
             if NameObject("/Annots") not in page:
                 page[NameObject("/Annots")] = ArrayObject()
-
             annots = page[NameObject("/Annots")]
             annots.append(writer._add_object(back_link))
 
@@ -970,7 +855,6 @@ def download_pdf(application_id):
             download_name=f"application_{application_id}_summary.pdf",
             mimetype="application/pdf",
         )
-
 
 @module_1.route("/start_application", methods=["GET", "POST"])
 @login_required

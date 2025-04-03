@@ -19,11 +19,10 @@
             <p class="text-gray-600">Secondary: {{ secondary_verifier.name }} ({{ secondary_verifier.username }})</p>
         </div>
 
-        <!-- Placeholder for PDF (to be added later) -->
+        <!-- PDF Link -->
         <div class="mb-6">
             <h3 class="text-lg font-semibold text-gray-800">Application PDF</h3>
-            <p class="text-gray-500">PDF generation and review will be integrated later.</p>
-            <!-- Example for later: <a href="{{ url_for('static', filename='pdfs/application_' + application.id|string + '.pdf') }}" target="_blank" class="text-blue-600 hover:underline">View PDF</a> -->
+            <a href="{{ pdf_download_url }}" target="_blank" class="text-blue-600 hover:underline">View Application PDF</a>
         </div>
 
         <!-- Review Form -->
