@@ -282,27 +282,3 @@ def mark_notification_read(notification_id):
         db.session.commit()
         logger.info(f"Notification {notification_id} marked as read for user {current_user.id}")
     return jsonify({"status": "success", "message": "Notification marked as read"})
-
-# Original /notifications route (commented out for reference)
-"""
-@chat.route("/notifications")
-@login_required
-def notifications():
-    logger.info(f"Entering /chat/notifications for user {current_user.id} (role: {current_user.role}, authenticated: {current_user.is_authenticated})")
-    if not current_user.is_authenticated:
-        logger.error("User not authenticated despite @login_required")
-        flash("Please log in to view notifications.", "error")
-        return redirect(url_for("auth.login"))
-    
-    logger.info(f"Querying notifications for user {current_user.id}")
-    try:
-        notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).all()
-        logger.info(f"Retrieved {len(notifications)} notifications for user {current_user.id}")
-    except Exception as e:
-        logger.error(f"Error fetching notifications for user {current_user.id}: {str(e)}")
-        flash("An error occurred while loading notifications.", "error")
-        return redirect(url_for("applicant.home" if current_user.role == "user" else "verifier.home"))
-
-    logger.info(f"Rendering notifications.html for user {current_user.id}")
-    return render_template("chat/notifications.html", notifications=notifications)
-"""
