@@ -12,15 +12,21 @@
             <li class="p-4 border rounded {% if not notification.read %}bg-yellow-100{% endif %} flex justify-between items-center" data-notification-id="{{ notification.id }}">
                 <div>
                     {% if notification.message %}
-                        <p>{{ notification.message.sender.username }} ({{ notification.message.timestamp.strftime('%Y-%m-%d %H:%M') }}): {{ notification.message.message }}</p>
-                        <a href="{{ url_for('chat.verifier_chat' if current_user.role in ['Primary Verifier', 'Secondary Verifier'] else 'chat.applicant_chat', application_id=notification.message.application_id, message_id=notification.message_id) }}" class="text-blue-600 hover:underline">View Message</a>
+                        <p class="font-semibold">{{ notification.message.sender.username }}</p>
+                        <p class="text-sm text-gray-600">{{ notification.message.timestamp.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <p>{{ notification.message.message }}</p>
+                        <a href="{{ url_for('chat.verifier_chat' if current_user.role in ['Primary Verifier', 'Secondary Verifier'] else 'chat.applicant_chat', application_id=notification.message.application_id, message_id=notification.message_id) }}" class="text-blue-600 hover:underline view-message-link">View Message</a>
                     {% else %}
-                        <p>{{ notification.content }} ({{ notification.timestamp.strftime('%Y-%m-%d %H:%M') }})</p>
+                        <p class="font-semibold">{{ notification.content }}</p>
+                        <p class="text-sm text-gray-600">{{ notification.timestamp.strftime('%Y-%m-%d %H:%M') }}</p>
                     {% endif %}
                 </div>
-                {% if not notification.read %}
-                    <span class="text-sm text-gray-500 unread-indicator">Unread</span>
-                {% endif %}
+                <div class="flex items-center space-x-2">
+                    {% if not notification.read %}
+                        <span class="text-sm text-gray-500 unread-indicator">Unread</span>
+                        <button class="mark-read-btn py-1 px-2 bg-green-500 text-white rounded hover:bg-green-600 transition-all duration-300" data-notification-id="{{ notification.id }}">Mark as Read</button>
+                    {% endif %}
+                </div>
             </li>
         {% endfor %}
     </ul>
@@ -31,17 +37,71 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const notificationLinks = document.querySelectorAll('a[href*="message_id"]');
+    // Handle "View Message" links
+    const notificationLinks = document.querySelectorAll('.view-message-link');
     notificationLinks.forEach(link => {
         link.addEventListener('click', (event) => {
             const listItem = link.closest('li');
-            listItem.classList.remove('bg-yellow-100');
-            const unreadIndicator = listItem.querySelector('.unread-indicator');
-            if (unreadIndicator) {
-                unreadIndicator.remove();
-            }
+            const notificationId = listItem.getAttribute('data-notification-id');
+            markNotificationAsRead(notificationId, listItem);
         });
     });
+
+    // Handle "Mark as Read" buttons
+    const markReadButtons = document.querySelectorAll('.mark-read-btn');
+    markReadButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            const notificationId = button.getAttribute('data-notification-id');
+            const listItem = button.closest('li');
+            markNotificationAsRead(notificationId, listItem);
+        });
+    });
+
+    function markNotificationAsRead(notificationId, listItem) {
+        fetch(`/chat/mark_notification_read/${notificationId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                listItem.classList.remove('bg-yellow-100');
+                const unreadIndicator = listItem.querySelector('.unread-indicator');
+                const markReadBtn = listItem.querySelector('.mark-read-btn');
+                if (unreadIndicator) unreadIndicator.remove();
+                if (markReadBtn) markReadBtn.remove();
+                updateNotificationBadge();
+            }
+        })
+        .catch(error => console.error('Error marking notification as read:', error));
+    }
+
+    function updateNotificationBadge() {
+        fetch('/chat/notifications/unread_count', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const badge = document.querySelector('.notification-badge');
+                if (data.count > 0) {
+                    if (!badge) {
+                        const icon = document.querySelector('a[href="/chat/notifications"]');
+                        const newBadge = document.createElement('span');
+                        newBadge.className = 'notification-badge absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center';
+                        newBadge.textContent = data.count;
+                        icon.appendChild(newBadge);
+                    } else {
+                        badge.textContent = data.count;
+                    }
+                } else if (badge) {
+                    badge.remove();
+                }
+            }
+        })
+        .catch(error => console.error('Error updating notification badge:', error));
+    }
 });
 </script>
 {% endblock %}

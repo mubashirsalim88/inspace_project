@@ -4,20 +4,26 @@
 <div class="p-6">
     <h2 class="text-2xl font-bold mb-4">Chat with {{ other_verifier.username }} ({{ 'Secondary' if current_user.role == 'Primary Verifier' else 'Primary' }} Verifier) - Application #{{ application.id }}</h2>
     <div class="bg-white shadow-lg rounded-lg p-6">
-        <div class="mb-4 h-96 overflow-y-auto border p-4 flex flex-col space-y-4">
+        <div class="mb-4 h-96 overflow-y-auto border p-4 flex flex-col space-y-4 chat-messages">
             {% for msg in messages %}
                 {% if msg.sender_id == current_user.id %}
                     <div class="flex justify-end">
-                        <div class="bg-blue-100 text-blue-800 p-3 rounded-lg max-w-xs">
+                        <div class="bg-blue-100 text-blue-800 p-3 rounded-lg max-w-xs {% if msg.id == message_id %}highlight-message{% endif %}" id="message-{{ msg.id }}">
                             <p>{{ msg.message }}</p>
                             <p class="text-xs text-gray-500 mt-1">{{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}</p>
+                            {% if not msg.read and msg.receiver_id == current_user.id %}
+                                <p class="text-xs text-red-500">Unread</p>
+                            {% endif %}
                         </div>
                     </div>
                 {% else %}
                     <div class="flex justify-start">
-                        <div class="bg-gray-100 text-gray-800 p-3 rounded-lg max-w-xs">
+                        <div class="bg-gray-100 text-gray-800 p-3 rounded-lg max-w-xs {% if msg.id == message_id %}highlight-message{% endif %}" id="message-{{ msg.id }}">
                             <p><strong>{{ msg.sender.username }}</strong>: {{ msg.message }}</p>
                             <p class="text-xs text-gray-500 mt-1">{{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}</p>
+                            {% if not msg.read and msg.receiver_id == current_user.id %}
+                                <p class="text-xs text-red-500">Unread</p>
+                            {% endif %}
                         </div>
                     </div>
                 {% endif %}
@@ -33,4 +39,20 @@
         </div>
     </div>
 </div>
+
+<style>
+    .highlight-message {
+        background-color: #e6f3ff !important; /* Light blue highlight */
+        border: 2px solid #3498db; /* Blue border */
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const highlightedMessage = document.querySelector('.highlight-message');
+    if (highlightedMessage) {
+        highlightedMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
+</script>
 {% endblock %}

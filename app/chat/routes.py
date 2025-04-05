@@ -14,15 +14,18 @@ logger = logging.getLogger(__name__)
 @chat.route("/verifier_chat/<int:application_id>", methods=["GET", "POST"])
 @login_required
 def verifier_chat(application_id):
+    logger.info(f"User {current_user.id} (role: {current_user.role}) accessing /verifier_chat/{application_id}")
     application = Application.query.get_or_404(application_id)
     assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first_or_404()
     
     if current_user.id not in [assignment.primary_verifier_id, assignment.secondary_verifier_id]:
+        logger.warning(f"Unauthorized access attempt by user {current_user.id} to verifier_chat for application {application_id}")
         flash("Unauthorized access.", "error")
         return redirect(url_for("verifier.home"))
 
     other_verifier_id = assignment.secondary_verifier_id if current_user.id == assignment.primary_verifier_id else assignment.primary_verifier_id
     if not other_verifier_id:
+        logger.info(f"No other verifier assigned for application {application_id}")
         flash("No other verifier assigned to chat with.", "error")
         return redirect(url_for("verifier.review", application_id=application_id))
 
@@ -30,6 +33,7 @@ def verifier_chat(application_id):
     if message_id:
         message = ChatMessage.query.get_or_404(message_id)
         if message.application_id == application_id and message.receiver_id == current_user.id and not message.read:
+            logger.info(f"Marking message {message_id} as read for user {current_user.id}")
             message.read = True
             notification = Notification.query.filter_by(message_id=message_id, user_id=current_user.id).first()
             if notification and not notification.read:
@@ -69,8 +73,9 @@ def verifier_chat(application_id):
         msg.body = f"You have a new message regarding Application ID {application_id}:\n\n{message}\n\nLogin to respond: {url_for('auth.login', _external=True)}"
         try:
             mail.send(msg)
+            logger.info(f"Email sent to {receiver.email} for new message on application {application_id}")
         except Exception as e:
-            logger.error(f"Failed to send email: {str(e)}")
+            logger.error(f"Failed to send email to {receiver.email}: {str(e)}")
 
         db.session.commit()
         flash("Message sent successfully.", "success")
@@ -82,6 +87,7 @@ def verifier_chat(application_id):
     ).order_by(ChatMessage.timestamp.asc()).all()
 
     other_verifier = User.query.get(other_verifier_id)
+    logger.info(f"Rendering verifier_chat.html for application {application_id}")
     return render_template(
         "chat/verifier_chat.html",
         application=application,
@@ -94,6 +100,7 @@ def verifier_chat(application_id):
 @chat.route("/applicant_chat/<int:application_id>", methods=["GET", "POST"])
 @login_required
 def applicant_chat(application_id):
+    logger.info(f"User {current_user.id} (role: {current_user.role}) accessing /applicant_chat/{application_id}")
     application = Application.query.get_or_404(application_id)
     assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first_or_404()
     
@@ -102,6 +109,7 @@ def applicant_chat(application_id):
         allowed_users.append(assignment.secondary_verifier_id)
     
     if current_user.id not in allowed_users:
+        logger.warning(f"Unauthorized access attempt by user {current_user.id} to applicant_chat for application {application_id}")
         flash("Unauthorized access.", "error")
         return redirect(url_for("applicant.home" if current_user.role == "user" else "verifier.home"))
 
@@ -109,6 +117,7 @@ def applicant_chat(application_id):
     if message_id:
         message = ChatMessage.query.get_or_404(message_id)
         if message.application_id == application_id and message.receiver_id == current_user.id and not message.read:
+            logger.info(f"Marking message {message_id} as read for user {current_user.id}")
             message.read = True
             notification = Notification.query.filter_by(message_id=message_id, user_id=current_user.id).first()
             if notification and not notification.read:
@@ -150,8 +159,9 @@ def applicant_chat(application_id):
         msg.body = f"You have a new message regarding Application ID {application_id}:\n\n{message}\n\nLogin to respond: {url_for('auth.login', _external=True)}"
         try:
             mail.send(msg)
+            logger.info(f"Email sent to {receiver.email} for new message on application {application_id}")
         except Exception as e:
-            logger.error(f"Failed to send email: {str(e)}")
+            logger.error(f"Failed to send email to {receiver.email}: {str(e)}")
 
         db.session.commit()
         flash("Message sent successfully.", "success")
@@ -176,6 +186,7 @@ def applicant_chat(application_id):
     secondary_verifier = User.query.get(assignment.secondary_verifier_id) if assignment.secondary_verifier_id else None
     applicant = User.query.get(application.user_id)
 
+    logger.info(f"Rendering applicant_chat.html for application {application_id}")
     return render_template(
         "chat/applicant_chat.html",
         application=application,
@@ -190,6 +201,7 @@ def applicant_chat(application_id):
 @chat.route("/enable_edit/<int:application_id>", methods=["POST"])
 @login_required
 def enable_edit(application_id):
+    logger.info(f"User {current_user.id} (role: {current_user.role}) attempting to enable edit for application {application_id}")
     application = Application.query.get_or_404(application_id)
     assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first_or_404()
     
@@ -216,6 +228,7 @@ def enable_edit(application_id):
         )
         msg.body = f"Your application (ID: {application_id}) is now editable. Please make the necessary changes and resubmit.\n\nLogin: {url_for('auth.login', _external=True)}"
         mail.send(msg)
+        logger.info(f"Edit enabled and email sent to {application.user.email} for application {application_id}")
 
         db.session.commit()
         return jsonify({"status": "success", "message": "Edit enabled for applicant."})
@@ -227,12 +240,61 @@ def enable_edit(application_id):
 @chat.route("/notifications")
 @login_required
 def notifications():
-    logger.info(f"User {current_user.id} (role: {current_user.role}, authenticated: {current_user.is_authenticated}) accessing /chat/notifications")
+    logger.info(f"START /chat/notifications - User ID: {current_user.id}, Role: {current_user.role}, Authenticated: {current_user.is_authenticated}")
+    try:
+        # Log user details
+        logger.info(f"User details - Username: {current_user.username}, Email: {current_user.email}")
+        # Skip database query for now to isolate issue
+        logger.info("Rendering notifications.html with empty notifications list")
+        return render_template("chat/notifications.html", notifications=[])
+    except Exception as e:
+        logger.error(f"ERROR in /chat/notifications for user {current_user.id}: {str(e)}")
+        flash("Failed to load notifications. Please try again.", "error")
+        return redirect(url_for("applicant.home" if current_user.role == "user" else "verifier.home"))
+
+# Fallback route in case original route has issues
+@chat.route("/notifications_new")
+@login_required
+def notifications_new():
+    logger.info(f"START /notifications_new - User ID: {current_user.id}, Role: {current_user.role}, Authenticated: {current_user.is_authenticated}")
+    try:
+        logger.info(f"Querying notifications for user {current_user.id}")
+        notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).all()
+        logger.info(f"Retrieved {len(notifications)} notifications for user {current_user.id}")
+        return render_template("chat/notifications.html", notifications=notifications)
+    except Exception as e:
+        logger.error(f"ERROR in /notifications_new for user {current_user.id}: {str(e)}")
+        flash("Unable to load notifications.", "error")
+        return redirect(url_for("applicant.home" if current_user.role == "user" else "verifier.home"))
+
+@chat.route("/mark_notification_read/<int:notification_id>", methods=["POST"])
+@login_required
+def mark_notification_read(notification_id):
+    logger.info(f"User {current_user.id} marking notification {notification_id} as read")
+    notification = Notification.query.get_or_404(notification_id)
+    if notification.user_id != current_user.id:
+        logger.warning(f"Unauthorized attempt by user {current_user.id} to mark notification {notification_id}")
+        return jsonify({"status": "error", "message": "Unauthorized"}), 403
+    if not notification.read:
+        notification.read = True
+        if notification.message_id:
+            notification.message.read = True
+        db.session.commit()
+        logger.info(f"Notification {notification_id} marked as read for user {current_user.id}")
+    return jsonify({"status": "success", "message": "Notification marked as read"})
+
+# Original /notifications route (commented out for reference)
+"""
+@chat.route("/notifications")
+@login_required
+def notifications():
+    logger.info(f"Entering /chat/notifications for user {current_user.id} (role: {current_user.role}, authenticated: {current_user.is_authenticated})")
     if not current_user.is_authenticated:
         logger.error("User not authenticated despite @login_required")
         flash("Please log in to view notifications.", "error")
         return redirect(url_for("auth.login"))
     
+    logger.info(f"Querying notifications for user {current_user.id}")
     try:
         notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).all()
         logger.info(f"Retrieved {len(notifications)} notifications for user {current_user.id}")
@@ -241,16 +303,6 @@ def notifications():
         flash("An error occurred while loading notifications.", "error")
         return redirect(url_for("applicant.home" if current_user.role == "user" else "verifier.home"))
 
+    logger.info(f"Rendering notifications.html for user {current_user.id}")
     return render_template("chat/notifications.html", notifications=notifications)
-
-@chat.route("/mark_notification_read/<int:notification_id>", methods=["POST"])
-@login_required
-def mark_notification_read(notification_id):
-    notification = Notification.query.get_or_404(notification_id)
-    if notification.user_id != current_user.id:
-        return jsonify({"status": "error", "message": "Unauthorized"}), 403
-    if notification.message_id and not notification.read:
-        notification.read = True
-        notification.message.read = True
-        db.session.commit()
-    return jsonify({"status": "success", "message": "Notification marked as read"})
+"""
