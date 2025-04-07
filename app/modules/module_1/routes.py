@@ -1,5 +1,15 @@
 # app/modules/module_1/routes.py
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, send_file, flash, abort
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    jsonify,
+    send_file,
+    flash,
+    abort,
+)
 from flask_login import login_required, current_user
 from app import db
 from app.models import Application, ModuleData, UploadedFile, ApplicationAssignment
@@ -18,7 +28,15 @@ from reportlab.lib.pagesizes import letter as reportlab_letter
 from PIL import Image
 import io
 from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle, Paragraph, SimpleDocTemplate, Spacer, PageBreak, HRFlowable
+from reportlab.platypus import (
+    Table,
+    TableStyle,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    PageBreak,
+    HRFlowable,
+)
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from datetime import datetime
@@ -46,6 +64,7 @@ UPLOAD_FOLDER = os.path.join(
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
+
 @module_1.route("/fill_step/<step>", methods=["GET", "POST"])
 @login_required
 def fill_step(step):
@@ -58,7 +77,9 @@ def fill_step(step):
 
     application = Application.query.get_or_404(app_id)
     if application.user_id != current_user.id or (
-        application.status != "Pending" and not application.editable and step != "summary"
+        application.status != "Pending"
+        and not application.editable
+        and step != "summary"
     ):
         return "Unauthorized or invalid application", 403
 
@@ -186,6 +207,7 @@ def fill_step(step):
         existing_files=existing_files,
     )
 
+
 @module_1.route("/save_declarations/<int:application_id>", methods=["POST"])
 @login_required
 def save_declarations(application_id):
@@ -264,6 +286,7 @@ def save_declarations(application_id):
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
 @module_1.route("/submit_application/<int:application_id>", methods=["POST"])
 @login_required
 def submit_application(application_id):
@@ -275,566 +298,420 @@ def submit_application(application_id):
         flash("Application already submitted.", "warning")
         return redirect(url_for("applicant.home"))
 
-    all_module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_1").all()
+    all_module_data = ModuleData.query.filter_by(
+        application_id=application_id, module_name="module_1"
+    ).all()
     required_steps = STEPS
     completed_steps = [md.step for md in all_module_data if md.completed]
-    if len(completed_steps) < len(required_steps) or not all(step in completed_steps for step in required_steps):
+    if len(completed_steps) < len(required_steps) or not all(
+        step in completed_steps for step in required_steps
+    ):
         flash("Please complete all required steps before submitting.", "error")
-        return redirect(url_for("module_1.fill_step", step="declarations_submission", application_id=application_id))
+        return redirect(
+            url_for(
+                "module_1.fill_step",
+                step="declarations_submission",
+                application_id=application_id,
+            )
+        )
 
     try:
         application.status = "Submitted"
         application.editable = False
         db.session.commit()
         flash("Application submitted successfully!", "success")
-        return redirect(url_for("module_1.fill_step", step="summary", application_id=application_id))
+        return redirect(
+            url_for("module_1.fill_step", step="summary", application_id=application_id)
+        )
     except Exception as e:
         db.session.rollback()
         flash(f"Error submitting application: {str(e)}", "error")
-        return redirect(url_for("module_1.fill_step", step="declarations_submission", application_id=application_id))
+        return redirect(
+            url_for(
+                "module_1.fill_step",
+                step="declarations_submission",
+                application_id=application_id,
+            )
+        )
+
+
+from flask import send_file
+from flask_login import login_required, current_user
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter as reportlab_letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, HRFlowable
+from reportlab.pdfgen import canvas
+import fitz  # PyMuPDF
+import os
+import tempfile
+from docx2pdf import convert
+from PIL import Image
+
 
 @module_1.route("/download_pdf/<application_id>", methods=["GET"])
 @login_required
 def download_pdf(application_id):
     application = Application.query.get_or_404(application_id)
-    
-    # Allow Applicant or Verifiers assigned to the application
-    assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first()
+
+    # Authorization check
+    assignment = ApplicationAssignment.query.filter_by(
+        application_id=application_id
+    ).first()
     allowed_users = [application.user_id]
     if assignment:
-        allowed_users.extend([assignment.primary_verifier_id, assignment.secondary_verifier_id])
-    
-    if current_user.id not in allowed_users or application.status not in ["Submitted", "Under Review"]:
+        allowed_users.extend(
+            [assignment.primary_verifier_id, assignment.secondary_verifier_id]
+        )
+
+    if current_user.id not in allowed_users or application.status not in [
+        "Submitted",
+        "Under Review",
+    ]:
         return "Unauthorized or invalid application", 403
 
-    # Fetch all module data
+    # Fetch module data
     all_module_data = ModuleData.query.filter_by(
         application_id=application_id, module_name="module_1"
     ).all()
-    processed_module_data = []
-    for md in all_module_data:
-        data_copy = md.data.copy()
-        for key, value in data_copy.items():
-            if isinstance(value, list) and all(isinstance(v, str) for v in value):
-                data_copy[key] = value  # Keep full paths for PDF generation
-        processed_module_data.append(
-            {"step": md.step, "data": data_copy, "completed": md.completed}
+    processed_module_data = [
+        {"step": md.step, "data": md.data.copy(), "completed": md.completed}
+        for md in all_module_data
+    ]
+
+    # Create temporary files
+    summary_pdf_path = tempfile.mktemp(suffix=".pdf")
+    final_pdf_path = tempfile.mktemp(suffix=".pdf")
+
+    # Styles setup
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "CustomTitle",
+        parent=styles["Title"],
+        fontSize=18,
+        textColor=colors.HexColor("#1A5276"),
+        spaceAfter=16,
+        alignment=1,
+    )
+    heading_style = ParagraphStyle(
+        "CustomHeading",
+        parent=styles["Heading2"],
+        fontSize=14,
+        textColor=colors.HexColor("#2874A6"),
+        spaceBefore=12,
+        spaceAfter=6,
+    )
+    normal_style = ParagraphStyle(
+        "CustomNormal",
+        parent=styles["Normal"],
+        fontSize=11,
+        leading=14,
+        spaceBefore=2,
+        spaceAfter=2,
+    )
+    label_style = ParagraphStyle(
+        "CustomLabel",
+        parent=styles["Normal"],
+        fontSize=11,
+        leading=14,
+        textColor=colors.HexColor("#34495E"),
+        fontName="Helvetica-Bold",
+    )
+    link_style = ParagraphStyle(
+        "Link",
+        parent=styles["Normal"],
+        fontSize=11,
+        textColor=colors.HexColor("#2E86C1"),
+        fontName="Helvetica",
+    )
+
+    # Track attachment positions and file paths
+    attachment_positions = {}
+    attachment_files = []
+
+    # PDF Document setup
+    doc = SimpleDocTemplate(
+        summary_pdf_path,
+        pagesize=reportlab_letter,
+        leftMargin=36,
+        rightMargin=36,
+        topMargin=72,
+        bottomMargin=36,
+    )
+
+    def header_footer(canvas, doc):
+        canvas.saveState()
+        width, height = reportlab_letter
+        logo_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "static/images/company_logo.png"
         )
-
-    # Create a temporary file for the PDF
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
-        pdf_path = temp_file.name
-
-        # Define custom styles
-        styles = getSampleStyleSheet()
-
-        # Create custom styles for a more professional look
-        title_style = ParagraphStyle(
-            "CustomTitle",
-            parent=styles["Title"],
-            fontSize=18,
-            textColor=colors.HexColor("#1A5276"),  # Dark blue color
-            spaceAfter=16,
-            alignment=1,  # Center alignment
-        )
-
-        heading_style = ParagraphStyle(
-            "CustomHeading",
-            parent=styles["Heading2"],
-            fontSize=14,
-            textColor=colors.HexColor("#2874A6"),  # Medium blue color
-            spaceBefore=12,
-            spaceAfter=6,
-            borderPadding=(0, 0, 1, 0),  # Bottom padding
-            borderWidth=0,
-            borderColor=colors.HexColor("#AED6F1"),  # Light blue
-            borderRadius=None,
-        )
-
-        normal_style = ParagraphStyle(
-            "CustomNormal",
-            parent=styles["Normal"],
-            fontSize=11,
-            leading=14,
-            spaceBefore=2,
-            spaceAfter=2,
-        )
-
-        label_style = ParagraphStyle(
-            "CustomLabel",
-            parent=styles["Normal"],
-            fontSize=11,
-            leading=14,
-            textColor=colors.HexColor("#34495E"),  # Dark gray
-            fontName="Helvetica-Bold",
-        )
-
-        attachment_style = ParagraphStyle(
-            "AttachmentLink",
-            parent=styles["Normal"],
-            fontSize=11,
-            leading=14,
-            textColor=colors.HexColor("#2E86C1"),  # Bright blue for links
-            fontName="Helvetica",
-        )
-
-        # Step 1: Generate the summary PDF without links initially
-        doc = SimpleDocTemplate(
-            pdf_path,
-            pagesize=letter,
-            leftMargin=36,
-            rightMargin=36,
-            topMargin=72,
-            bottomMargin=36,
-        )
-
-        # Define a header and footer function
-        def header_footer(canvas, doc):
-            canvas.saveState()
-
-            # Define width and height
-            width, height = letter
-
-            # Add company logo
-            logo_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "static/images/company_logo.png",
+        if os.path.exists(logo_path):
+            canvas.drawImage(
+                logo_path,
+                36,
+                height - 54,
+                width=120,
+                height=40,
+                preserveAspectRatio=True,
             )
-            if os.path.exists(logo_path):
-                canvas.drawImage(
-                    logo_path,
-                    36,
-                    height - 54,
-                    width=120,
-                    height=40,
-                    preserveAspectRatio=True,
-                )
-            else:
-                canvas.setFont("Helvetica-Bold", 12)
-                canvas.setFillColor(colors.HexColor("#1A5276"))
-                canvas.drawString(36, height - 36, "Company Name")
+        else:
+            canvas.setFont("Helvetica-Bold", 12)
+            canvas.setFillColor(colors.HexColor("#1A5276"))
+            canvas.drawString(36, height - 36, "Company Name")
 
-            # Add header line
-            canvas.setStrokeColor(colors.HexColor("#AED6F1"))
-            canvas.line(36, height - 60, width - 36, height - 60)
+        canvas.setStrokeColor(colors.HexColor("#AED6F1"))
+        canvas.line(36, height - 60, width - 36, height - 60)
+        canvas.setFont("Helvetica", 10)
+        canvas.setFillColor(colors.HexColor("#34495E"))
+        canvas.drawRightString(
+            width - 36, height - 36, f"Application ID: {application_id}"
+        )
+        canvas.setFont("Helvetica", 8)
+        canvas.setFillColor(colors.gray)
+        canvas.drawCentredString(width / 2, 20, "CONFIDENTIAL")
+        canvas.drawRightString(width - 36, 20, f"Page {doc.page}")
+        canvas.line(36, 30, width - 36, 30)
+        canvas.restoreState()
 
-            # Add application ID in the header right side
-            canvas.setFont("Helvetica", 10)
-            canvas.setFillColor(colors.HexColor("#34495E"))
-            canvas.drawRightString(
-                width - 36, height - 36, f"Application ID: {application_id}"
-            )
+    story = []
+    story.append(Paragraph("Application Summary", title_style))
+    story.append(Spacer(1, 0.25 * inch))
 
-            # Add footer
-            canvas.setFont("Helvetica", 8)
-            canvas.setFillColor(colors.gray)
-            canvas.drawCentredString(width / 2, 20, "CONFIDENTIAL")
-            canvas.drawRightString(width - 36, 20, "Page %d" % doc.page)
-
-            # Add footer line
-            canvas.setStrokeColor(colors.HexColor("#AED6F1"))
-            canvas.line(36, 30, width - 36, 30)
-
-            canvas.restoreState()
-
-        story = []
-
-        # Add title
-        story.append(Paragraph(f"Application Summary", title_style))
-        story.append(Spacer(1, 0.25 * inch))
-
-        # Add application metadata in a stylish box
-        metadata_content = [
-            ["Application ID:", application_id],
-            [
-                "Date Submitted:",
-                (
-                    application.submitted_date.strftime("%B %d, %Y")
-                    if hasattr(application, "submitted_date")
-                    and application.submitted_date
-                    else "N/A"
-                ),
-            ],
-            ["Status:", application.status],
-            [
-                "Applicant:",
-                (
-                    f"{current_user.first_name} {current_user.last_name}"
-                    if hasattr(current_user, "first_name")
-                    and hasattr(current_user, "last_name")
-                    else current_user.username
-                ),
-            ],
+    # Metadata table
+    metadata_content = [
+        ["Application ID:", application_id],
+        ["Status:", application.status],
+        [
+            "Applicant:",
+            (
+                f"{current_user.first_name} {current_user.last_name}"
+                if hasattr(current_user, "first_name")
+                else current_user.username
+            ),
+        ],
+    ]
+    metadata_table = Table(metadata_content, colWidths=[120, 300])
+    metadata_table.setStyle(
+        [
+            ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#EBF5FB")),
+            ("TEXTCOLOR", (0, 0), (0, -1), colors.HexColor("#2874A6")),
+            ("ALIGN", (0, 0), (0, -1), "RIGHT"),
+            ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D6EAF8")),
         ]
+    )
+    story.append(metadata_table)
+    story.append(Spacer(1, 0.3 * inch))
 
-        metadata_table = Table(metadata_content, colWidths=[120, 300])
-        metadata_table.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#EBF5FB")),
-                    ("TEXTCOLOR", (0, 0), (0, -1), colors.HexColor("#2874A6")),
-                    ("ALIGN", (0, 0), (0, -1), "RIGHT"),
-                    ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, -1), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                    ("TOPPADDING", (0, 0), (-1, -1), 6),
-                    ("LEFTPADDING", (0, 0), (0, -1), 10),
-                    ("RIGHTPADDING", (0, 0), (0, -1), 10),
-                    ("LEFTPADDING", (1, 0), (1, -1), 10),
-                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D6EAF8")),
-                ]
-            )
+    # TOC
+    toc_items = [
+        [f"{i+1}.", md["step"].replace("_", " ").title()]
+        for i, md in enumerate(processed_module_data)
+    ]
+    toc_table = Table(toc_items, colWidths=[30, 390])
+    toc_table.setStyle(
+        [
+            ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("LEFTPADDING", (1, 0), (1, -1), 5),
+        ]
+    )
+    story.append(Paragraph("Table of Contents", heading_style))
+    story.append(toc_table)
+    story.append(Spacer(1, 0.3 * inch))
+    story.append(
+        HRFlowable(
+            width="100%",
+            thickness=1,
+            color=colors.HexColor("#AED6F1"),
+            spaceAfter=0.2 * inch,
         )
+    )
 
-        story.append(metadata_table)
-        story.append(Spacer(1, 0.3 * inch))
-
-        # Add table of contents header
-        story.append(Paragraph("Table of Contents", heading_style))
-        toc_items = []
-        for i, md in enumerate(processed_module_data):
-            toc_items.append([f"{i+1}.", md["step"].replace("_", " ").title()])
-
-        toc_table = Table(toc_items, colWidths=[30, 390])
-        toc_table.setStyle(
-            TableStyle(
-                [
-                    ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, -1), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-                    ("TOPPADDING", (0, 0), (-1, -1), 3),
-                    ("RIGHTPADDING", (0, 0), (0, -1), 0),
-                    ("LEFTPADDING", (1, 0), (1, -1), 5),
-                ]
-            )
-        )
-
-        story.append(toc_table)
-        story.append(Spacer(1, 0.3 * inch))
-
-        # Add a divider before content
+    # Content with attachment links
+    for i, md in enumerate(processed_module_data):
         story.append(
-            HRFlowable(
-                width="100%",
-                thickness=1,
-                color=colors.HexColor("#AED6F1"),
-                spaceAfter=0.2 * inch,
+            Paragraph(f"{i+1}. {md['step'].replace('_', ' ').title()}", heading_style)
+        )
+        for key, value in md["data"].items():
+            if key not in ["documents", "document_names"] and value:
+                if isinstance(value, list):
+                    story.append(
+                        Paragraph(f"{key.replace('_', ' ').title()}:", label_style)
+                    )
+                    for file_path in value:
+                        filename = os.path.basename(file_path)
+                        attachment_positions[filename] = (len(story) + 1, f"{filename}")
+                        story.append(Paragraph(f"• {filename}", link_style))
+                        attachment_files.append((filename, file_path))
+                else:
+                    story.append(
+                        Table(
+                            [
+                                [
+                                    Paragraph(
+                                        f"{key.replace('_', ' ').title()}:", label_style
+                                    ),
+                                    Paragraph(str(value), normal_style),
+                                ]
+                            ],
+                            colWidths=[150, 360],
+                        )
+                    )
+        story.append(Spacer(1, 0.2 * inch))
+        if i < len(processed_module_data) - 1:
+            story.append(
+                HRFlowable(
+                    width="100%", thickness=0.5, color=colors.HexColor("#D6EAF8")
+                )
             )
+
+    # Build the initial PDF with ReportLab
+    doc.build(story, onFirstPage=header_footer, onLaterPages=header_footer)
+
+    # Use PyMuPDF to assemble the final PDF with working links
+    doc = fitz.open(summary_pdf_path)
+
+    # Dictionary to track attachment page numbers
+    attachment_page_numbers = {}
+    current_page = len(doc)
+
+    # Add attachment pages and track their positions
+    for filename, file_path in attachment_files:
+        absolute_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", file_path)
+        )
+        if not os.path.exists(absolute_path):
+            continue
+
+        # Add separator page
+        separator_page = doc.new_page(
+            width=doc[0].rect.width, height=doc[0].rect.height
+        )
+        page_width = doc[0].rect.width
+
+        # Center "Attachment" text
+        text = "Attachment"
+        text_width = fitz.get_text_length(text, fontname="helv", fontsize=14)
+        separator_page.insert_text(
+            (page_width / 2 - text_width / 2, 100),
+            text,
+            fontname="helv",
+            fontsize=14,
+            color=(26 / 255, 82 / 255, 118 / 255),
         )
 
-        # Dictionary to store attachment files and their positions in the summary
-        attachment_files = []
-        attachment_positions = {}
+        # Center filename text
+        text = filename
+        text_width = fitz.get_text_length(text, fontname="helv", fontsize=12)
+        separator_page.insert_text(
+            (page_width / 2 - text_width / 2, 120),
+            text,
+            fontname="helv",
+            fontsize=12,
+            color=(0, 0, 0),
+        )
 
-        # Add summary content with improved formatting
-        for i, md in enumerate(processed_module_data):
-            story.append(
-                Paragraph(
-                    f"{i+1}. {md['step'].replace('_', ' ').title()}", heading_style
+        # Left-aligned "Back to Summary" text
+        separator_page.insert_text(
+            (36, 80),
+            "← Back to Summary",
+            fontname="helv",
+            fontsize=10,
+            color=(46 / 255, 134 / 255, 193 / 255),
+        )
+
+        # Save the page number for this attachment
+        attachment_page_numbers[filename] = current_page
+        current_page += 1
+
+        # Add file content
+        file_ext = os.path.splitext(absolute_path)[1].lower()
+        if file_ext == ".pdf":
+            src_doc = fitz.open(absolute_path)
+            doc.insert_pdf(src_doc)
+            current_page += len(src_doc)
+            src_doc.close()
+        elif file_ext == ".docx":
+            temp_pdf = tempfile.mktemp(suffix=".pdf")
+            convert(absolute_path, temp_pdf)
+            src_doc = fitz.open(temp_pdf)
+            doc.insert_pdf(src_doc)
+            current_page += len(src_doc)
+            src_doc.close()
+            os.unlink(temp_pdf)
+        elif file_ext in [".jpg", ".png", ".jpeg", ".gif"]:
+            img = Image.open(absolute_path)
+            temp_pdf = tempfile.mktemp(suffix=".pdf")
+            img_width, img_height = img.size
+            c = canvas.Canvas(temp_pdf, pagesize=reportlab_letter)
+            page_width, page_height = reportlab_letter
+            scale = min((page_width - 72) / img_width, (page_height - 150) / img_height)
+            c.drawImage(absolute_path, 36, 150, img_width * scale, img_height * scale)
+            c.save()
+            src_doc = fitz.open(temp_pdf)
+            doc.insert_pdf(src_doc)
+            current_page += len(src_doc)
+            src_doc.close()
+            os.unlink(temp_pdf)
+
+    # Add links from summary to attachments
+    for filename, (position, link_text) in attachment_positions.items():
+        if filename in attachment_page_numbers:
+            page_num = position // 40  # Estimate rows per page
+            if page_num >= len(doc):
+                page_num = len(doc) - 1
+
+            page = doc[page_num]
+
+            # Search for the text on the page to get a more accurate position
+            instances = page.search_for(f"• {filename}")
+            if instances:
+                rect = instances[0]
+                page.insert_link(
+                    {
+                        "kind": fitz.LINK_GOTO,
+                        "from": rect,
+                        "to": fitz.Point(0, 0),
+                        "page": attachment_page_numbers[filename],
+                    }
                 )
-            )
 
-            data_items = []
-            for key, value in md["data"].items():
-                if key not in ["documents", "document_names"] and value:
-                    if isinstance(value, list):
-                        story.append(
-                            Paragraph(f"{key.replace('_', ' ').title()}:", label_style)
-                        )
-                        for idx, file_path in enumerate(value):
-                            filename = os.path.basename(file_path)
-                            attachment_positions[filename] = len(story)
-                            story.append(
-                                Paragraph(
-                                    f"• Attachment: {filename} (Click to view)",
-                                    attachment_style,
-                                )
-                            )
-                            attachment_files.append((filename, file_path))
-                    else:
-                        data_items.append(
-                            [
-                                Paragraph(
-                                    f"{key.replace('_', ' ').title()}:", label_style
-                                ),
-                                Paragraph(f"{value}", normal_style),
-                            ]
-                        )
-
-            if data_items:
-                data_table = Table(data_items, colWidths=[150, 360])
-                data_table.setStyle(
-                    TableStyle(
-                        [
-                            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                            ("LEFTPADDING", (0, 0), (0, -1), 0),
-                            ("RIGHTPADDING", (0, 0), (0, -1), 10),
-                            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-                            ("TOPPADDING", (0, 0), (-1, -1), 5),
-                        ]
-                    )
-                )
-                story.append(data_table)
-
-            story.append(Spacer(1, 0.2 * inch))
-            if i < len(processed_module_data) - 1:
-                story.append(
-                    HRFlowable(
-                        width="100%",
-                        thickness=0.5,
-                        color=colors.HexColor("#D6EAF8"),
-                        spaceBefore=0.1 * inch,
-                        spaceAfter=0.1 * inch,
-                    )
+    # Add back links from attachments to summary
+    for filename, page_num in attachment_page_numbers.items():
+        if page_num < len(doc):
+            page = doc[page_num]
+            instances = page.search_for("← Back to Summary")
+            if instances:
+                rect = instances[0]
+                page.insert_link(
+                    {
+                        "kind": fitz.LINK_GOTO,
+                        "from": rect,
+                        "to": fitz.Point(0, 0),
+                        "page": 0,
+                    }
                 )
 
-        # Build the initial summary PDF
-        doc.build(story, onFirstPage=header_footer, onLaterPages=header_footer)
+    # Save the final PDF
+    doc.save(final_pdf_path)
+    doc.close()
 
-        # Step 2: Add attachments and create final PDF with links
-        writer = PdfWriter()
-        summary_pdf = PdfReader(pdf_path)
-        for page in summary_pdf.pages:
-            writer.add_page(page)
+    # Clean up the temporary summary PDF
+    os.unlink(summary_pdf_path)
 
-        page_height = reportlab_letter[1]
-        attachment_destinations = {}
-
-        for filename, file_path in attachment_files:
-            absolute_file_path = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)), "..", file_path
-                )
-            )
-
-            if not os.path.exists(absolute_file_path):
-                print(f"File not found: {absolute_file_path}")
-                continue
-
-            attachment_page = len(writer.pages)
-            attachment_destinations[filename] = attachment_page
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as separator_file:
-                c = canvas.Canvas(separator_file.name, pagesize=reportlab_letter)
-                width, height = reportlab_letter
-
-                logo_path = os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)),
-                    "static/images/company_logo.png",
-                )
-                if os.path.exists(logo_path):
-                    c.drawImage(
-                        logo_path,
-                        36,
-                        height - 54,
-                        width=120,
-                        height=40,
-                        preserveAspectRatio=True,
-                    )
-                else:
-                    c.setFont("Helvetica-Bold", 12)
-                    c.setFillColorRGB(0.1, 0.32, 0.46)
-                    c.drawString(36, height - 36, "Company Name")
-
-                c.setStrokeColorRGB(0.68, 0.85, 0.95)
-                c.line(36, height - 60, width - 36, height - 60)
-
-                c.setFont("Helvetica", 10)
-                c.setFillColorRGB(0.18, 0.47, 0.7)
-                c.drawString(36, height - 80, "← Back to Summary")
-                c.setStrokeColorRGB(0.18, 0.47, 0.7)
-                c.rect(32, height - 92, 105, 20, stroke=1, fill=0)
-
-                c.setFillColorRGB(0.95, 0.95, 0.95)
-                c.rect(36, height - 150, width - 72, 50, stroke=0, fill=1)
-                c.setFillColorRGB(0.1, 0.32, 0.46)
-                c.setFont("Helvetica-Bold", 14)
-                c.drawCentredString(width / 2, height - 120, "Attachment:")
-                c.setFont("Helvetica", 12)
-                c.drawCentredString(width / 2, height - 140, filename)
-
-                c.setFont("Helvetica", 8)
-                c.setFillColorRGB(0.5, 0.5, 0.5)
-                c.drawCentredString(width / 2, 20, "CONFIDENTIAL")
-                c.drawRightString(width - 36, 20, f"Application ID: {application_id}")
-                c.setStrokeColorRGB(0.68, 0.85, 0.95)
-                c.line(36, 30, width - 36, 30)
-
-                c.save()
-
-                separator_pdf = PdfReader(separator_file.name)
-                writer.add_page(separator_pdf.pages[0])
-
-            file_ext = os.path.splitext(absolute_file_path)[1].lower()
-            if file_ext == ".pdf":
-                try:
-                    attachment_pdf = PdfReader(absolute_file_path)
-                    for page in attachment_pdf.pages:
-                        writer.add_page(page)
-                except Exception as e:
-                    print(f"Error reading PDF {absolute_file_path}: {str(e)}")
-                    continue
-            elif file_ext == ".docx":
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
-                    try:
-                        convert(absolute_file_path, temp_pdf.name)
-                        attachment_pdf = PdfReader(temp_pdf.name)
-                        for page in attachment_pdf.pages:
-                            writer.add_page(page)
-                        os.remove(temp_pdf.name)
-                    except Exception as e:
-                        print(f"Error converting DOCX {absolute_file_path}: {str(e)}")
-                        continue
-            elif file_ext in [".jpg", ".jpeg", ".png"]:
-                try:
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_img_pdf:
-                        img = Image.open(absolute_file_path)
-                        c = canvas.Canvas(temp_img_pdf.name, pagesize=reportlab_letter)
-                        width, height = reportlab_letter
-
-                        c.setFont("Helvetica-Bold", 10)
-                        c.setFillColorRGB(0.1, 0.32, 0.46)
-                        c.drawString(36, height - 30, f"Attachment: {filename}")
-
-                        img_width, img_height = img.size
-                        max_width = width - 72
-                        max_height = height - 120
-                        if img_width > max_width or img_height > max_height:
-                            ratio = min(max_width / img_width, max_height / img_height)
-                            display_width = img_width * ratio
-                            display_height = img_height * ratio
-                        else:
-                            display_width = img_width
-                            display_height = img_height
-
-                        x_pos = (width - display_width) / 2
-                        y_pos = (height - display_height) / 2
-                        c.setStrokeColorRGB(0.8, 0.8, 0.8)
-                        c.rect(
-                            x_pos - 5,
-                            y_pos - 5,
-                            display_width + 10,
-                            display_height + 10,
-                            stroke=1,
-                            fill=0,
-                        )
-                        c.drawImage(
-                            absolute_file_path,
-                            x_pos,
-                            y_pos,
-                            width=display_width,
-                            height=display_height,
-                        )
-
-                        c.setFont("Helvetica", 8)
-                        c.setFillColorRGB(0.5, 0.5, 0.5)
-                        c.drawString(36, 20, f"File: {filename}")
-                        c.drawRightString(width - 36, 20, f"Application ID: {application_id}")
-
-                        c.save()
-
-                        img_pdf = PdfReader(temp_img_pdf.name)
-                        for page in img_pdf.pages:
-                            writer.add_page(page)
-                        os.remove(temp_img_pdf.name)
-                except Exception as e:
-                    print(f"Error processing image {absolute_file_path}: {str(e)}")
-                    continue
-            else:
-                print(f"Unsupported file type: {absolute_file_path}")
-                continue
-
-        # Create links from summary to attachments
-        for filename, page_position in attachment_positions.items():
-            if filename not in attachment_destinations:
-                continue
-
-            items_per_page = 25
-            page_index = min(page_position // items_per_page, len(summary_pdf.pages) - 1)
-            page = writer.pages[page_index]
-            position_on_page = page_position % items_per_page
-            y_offset = page_height - 180 - (position_on_page * 20)
-
-            action = DictionaryObject(
-                {
-                    NameObject("/S"): NameObject("/GoTo"),
-                    NameObject("/D"): ArrayObject(
-                        [NumberObject(attachment_destinations[filename]), NameObject("/Fit")]
-                    ),
-                }
-            )
-
-            link = DictionaryObject(
-                {
-                    NameObject("/Type"): NameObject("/Annot"),
-                    NameObject("/Subtype"): NameObject("/Link"),
-                    NameObject("/Rect"): ArrayObject(
-                        [
-                            NumberObject(60),
-                            NumberObject(y_offset - 10),
-                            NumberObject(450),
-                            NumberObject(y_offset + 10),
-                        ]
-                    ),
-                    NameObject("/A"): action,
-                    NameObject("/Border"): ArrayObject(
-                        [NumberObject(0), NumberObject(0), NumberObject(0)]
-                    ),
-                }
-            )
-
-            if NameObject("/Annots") not in page:
-                page[NameObject("/Annots")] = ArrayObject()
-            annots = page[NameObject("/Annots")]
-            annots.append(writer._add_object(link))
-
-        # Add back button on each attachment page
-        for filename, page_num in attachment_destinations.items():
-            page = writer.pages[page_num]
-            return_action = DictionaryObject(
-                {
-                    NameObject("/S"): NameObject("/GoTo"),
-                    NameObject("/D"): ArrayObject(
-                        [NumberObject(0), NameObject("/Fit")]
-                    ),
-                }
-            )
-
-            back_link = DictionaryObject(
-                {
-                    NameObject("/Type"): NameObject("/Annot"),
-                    NameObject("/Subtype"): NameObject("/Link"),
-                    NameObject("/Rect"): ArrayObject(
-                        [
-                            NumberObject(32),
-                            NumberObject(page_height - 92),
-                            NumberObject(137),
-                            NumberObject(page_height - 72),
-                        ]
-                    ),
-                    NameObject("/A"): return_action,
-                    NameObject("/Border"): ArrayObject(
-                        [NumberObject(0), NumberObject(0), NumberObject(0)]
-                    ),
-                }
-            )
-
-            if NameObject("/Annots") not in page:
-                page[NameObject("/Annots")] = ArrayObject()
-            annots = page[NameObject("/Annots")]
-            annots.append(writer._add_object(back_link))
-
-        # Write the final PDF
-        with open(pdf_path, "wb") as f:
-            writer.write(f)
-
-        # Serve the PDF for download
+    try:
         return send_file(
-            pdf_path,
+            final_pdf_path,
             as_attachment=True,
             download_name=f"application_{application_id}_summary.pdf",
             mimetype="application/pdf",
         )
+    finally:
+        os.unlink(final_pdf_path)
+
 
 @module_1.route("/start_application", methods=["GET", "POST"])
 @login_required
@@ -848,29 +725,34 @@ def start_application():
         )
     return render_template("module_1/start_application.html")
 
+
 @module_1.route("/download_file/<int:file_id>")
 @login_required
 def download_file(file_id):
     uploaded_file = UploadedFile.query.get_or_404(file_id)
     application = Application.query.get_or_404(uploaded_file.application_id)
-    
+
     # Allow Applicant or Verifiers assigned to the application
-    assignment = ApplicationAssignment.query.filter_by(application_id=application.id).first()
+    assignment = ApplicationAssignment.query.filter_by(
+        application_id=application.id
+    ).first()
     allowed_users = [application.user_id]
     if assignment:
-        allowed_users.extend([assignment.primary_verifier_id, assignment.secondary_verifier_id])
-    
+        allowed_users.extend(
+            [assignment.primary_verifier_id, assignment.secondary_verifier_id]
+        )
+
     if current_user.id not in allowed_users:
         flash("Unauthorized access.", "error")
         return redirect(url_for("applicant.home"))
 
-    full_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", uploaded_file.filepath)
+    full_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", uploaded_file.filepath
+    )
     if not os.path.exists(full_path):
         flash(f"File not found: {uploaded_file.filename}", "error")
         return redirect(url_for("applicant.home"))
-    
+
     return send_file(
-        full_path,
-        as_attachment=True,
-        download_name=uploaded_file.filename
+        full_path, as_attachment=True, download_name=uploaded_file.filename
     )
