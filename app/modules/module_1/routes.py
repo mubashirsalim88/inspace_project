@@ -40,6 +40,7 @@ from reportlab.platypus import (
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from datetime import datetime
+import fitz  # PyMuPDF
 
 module_1 = Blueprint(
     "module_1", __name__, url_prefix="/module_1", template_folder="templates"
@@ -343,11 +344,6 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, HRFlowable
 from reportlab.pdfgen import canvas
-import fitz  # PyMuPDF
-import os
-import tempfile
-from docx2pdf import convert
-from PIL import Image
 
 
 @module_1.route("/download_pdf/<application_id>", methods=["GET"])
@@ -380,9 +376,11 @@ def download_pdf(application_id):
         for md in all_module_data
     ]
 
-    # Create temporary files
-    summary_pdf_path = tempfile.mktemp(suffix=".pdf")
-    final_pdf_path = tempfile.mktemp(suffix=".pdf")
+    # Create temporary files with NamedTemporaryFile
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as summary_file:
+        summary_pdf_path = summary_file.name
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as final_file:
+        final_pdf_path = final_file.name
 
     # Styles setup
     styles = getSampleStyleSheet()
@@ -702,15 +700,24 @@ def download_pdf(application_id):
     # Clean up the temporary summary PDF
     os.unlink(summary_pdf_path)
 
+    # Serve the file and ensure cleanup after response
     try:
-        return send_file(
+        response = send_file(
             final_pdf_path,
             as_attachment=True,
             download_name=f"application_{application_id}_summary.pdf",
             mimetype="application/pdf",
         )
-    finally:
+        @response.call_on_close
+        def cleanup():
+            try:
+                os.unlink(final_pdf_path)
+            except Exception as e:
+                print(f"Error deleting {final_pdf_path}: {e}")
+        return response
+    except Exception as e:
         os.unlink(final_pdf_path)
+        raise e
 
 
 @module_1.route("/start_application", methods=["GET", "POST"])
