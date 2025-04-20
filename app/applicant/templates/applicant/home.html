@@ -38,6 +38,13 @@
                         <p class="text-sm {% if module == 'module_1' %}text-blue-600{% elif module == 'module_2' %}text-green-600{% elif module == 'module_3' %}text-purple-600{% elif module == 'module_4' %}text-indigo-600{% elif module == 'module_5' %}text-pink-600{% elif module == 'module_6' %}text-yellow-600{% elif module == 'module_7' %}text-orange-600{% elif module == 'module_8' %}text-teal-600{% endif %}">
                             Completed Steps: {{ module_tabs[module].steps|selectattr('completed', 'equalto', True)|list|length }} / {{ module_tabs[module].steps|length }}
                         </p>
+                        {% if application.status in ['Approved', 'Rejected'] %}
+                        <p class="text-sm {% if application.status == 'Approved' %}text-green-600{% else %}text-red-600{% endif %}">
+                            Status: {{ application.status }} {% if application.comments %}- Comments: {{ application.comments }}{% endif %}
+                        </p>
+                        {% elif application.status in ['Under Review', 'Pending Secondary Approval', 'Pending Primary Confirmation'] %}
+                        <p class="text-sm text-yellow-600">Status: {{ application.status }}</p>
+                        {% endif %}
                     </div>
                     <div class="flex items-center space-x-4">
                         {% if application.status == 'Pending' %}
@@ -46,8 +53,12 @@
                             <span class="bg-green-100 text-green-700 text-xs font-medium px-3 py-1 rounded-lg">Approved</span>
                         {% elif application.status == 'Submitted' %}
                             <span class="bg-blue-100 text-blue-700 text-xs font-medium px-3 py-1 rounded-lg">Submitted</span>
-                        {% else %}
+                        {% elif application.status in ['Under Review', 'Pending Secondary Approval', 'Pending Primary Confirmation'] %}
+                            <span class="bg-yellow-100 text-yellow-700 text-xs font-medium px-3 py-1 rounded-lg">{{ application.status }}</span>
+                        {% elif application.status == 'Rejected' %}
                             <span class="bg-red-100 text-red-700 text-xs font-medium px-3 py-1 rounded-lg">Rejected</span>
+                        {% else %}
+                            <span class="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-lg">{{ application.status }}</span>
                         {% endif %}
                         {% if application.status == 'Pending' %}
                         <a href="{% if module == 'module_1' %}{{ url_for('module_1.fill_step', step='applicant_identity', application_id=application.id) }}{% elif module == 'module_2' %}{{ url_for('module_2.fill_step', step='satellite_overview', application_id=application.id) }}{% elif module == 'module_3' %}{{ url_for('module_3.fill_step', step='renewal_and_provisioning', application_id=application.id) }}{% elif module == 'module_4' %}{{ url_for('module_4.fill_step', step='extension_and_orbit', application_id=application.id) }}{% elif module == 'module_5' %}{{ url_for('module_5.fill_step', step='host_space_object_details', application_id=application.id) }}{% elif module == 'module_6' %}{{ url_for('module_6.fill_step', step='itu_filing_details', application_id=application.id) }}{% elif module == 'module_7' %}{{ url_for('module_7.fill_step', step='previous_authorization', application_id=application.id) }}{% elif module == 'module_8' %}{{ url_for('module_8.fill_step', step='renewal_and_extension_details', application_id=application.id) }}{% endif %}" class="{% if module == 'module_1' %}text-blue-600{% elif module == 'module_2' %}text-green-600{% elif module == 'module_3' %}text-purple-600{% elif module == 'module_4' %}text-indigo-600{% elif module == 'module_5' %}text-pink-600{% elif module == 'module_6' %}text-yellow-600{% elif module == 'module_7' %}text-orange-600{% elif module == 'module_8' %}text-teal-600{% endif %} hover:underline text-sm font-semibold">
@@ -57,6 +68,9 @@
                         <span class="text-gray-500 text-sm font-semibold cursor-not-allowed" title="Editing is disabled because the application is {{ application.status }}">
                             View / Edit (Disabled)
                         </span>
+                        {% endif %}
+                        {% if application.status in ['Under Review', 'Pending Secondary Approval', 'Pending Primary Confirmation', 'Rejected', 'Approved'] %}
+                        <a href="{{ url_for('chat.applicant_chat', application_id=application.id) }}" class="py-1 px-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm font-semibold">Chat</a>
                         {% endif %}
                     </div>
                 </li>

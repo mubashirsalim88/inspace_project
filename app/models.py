@@ -12,23 +12,27 @@ class User(db.Model, UserMixin):
     role = db.Column(db.String(20), default="user", nullable=False)
     name = db.Column(db.String(100), nullable=False)
     # Relationships
-    applications = db.relationship("Application", backref="user", lazy=True)  # Applicant’s applications
-    assigned_applications = db.relationship("ApplicationAssignment", foreign_keys="ApplicationAssignment.assigner_id", backref="assigner", lazy=True)  # Assigner’s assignments
-    primary_verifications = db.relationship("ApplicationAssignment", foreign_keys="ApplicationAssignment.primary_verifier_id", backref="primary_verifier", lazy=True)  # Primary Verifier’s tasks
-    secondary_verifications = db.relationship("ApplicationAssignment", foreign_keys="ApplicationAssignment.secondary_verifier_id", backref="secondary_verifier", lazy=True)  # Secondary Verifier’s tasks
-    sent_messages = db.relationship("ChatMessage", foreign_keys="ChatMessage.sender_id", backref="sender", lazy=True)  # Sent chat messages
-    received_messages = db.relationship("ChatMessage", foreign_keys="ChatMessage.receiver_id", backref="receiver", lazy=True)  # Received chat messages
+    applications = db.relationship("Application", backref="user", lazy=True)
+    assigned_applications = db.relationship("ApplicationAssignment", foreign_keys="ApplicationAssignment.assigner_id", backref="assigner", lazy=True)
+    primary_verifications = db.relationship("ApplicationAssignment", foreign_keys="ApplicationAssignment.primary_verifier_id", backref="primary_verifier", lazy=True)
+    secondary_verifications = db.relationship("ApplicationAssignment", foreign_keys="ApplicationAssignment.secondary_verifier_id", backref="secondary_verifier", lazy=True)
+    sent_messages = db.relationship("ChatMessage", foreign_keys="ChatMessage.sender_id", backref="sender", lazy=True)
+    received_messages = db.relationship("ChatMessage", foreign_keys="ChatMessage.receiver_id", backref="receiver", lazy=True)
+    notifications = db.relationship("Notification", backref="user", lazy=True)
 
 class Application(db.Model):
     __tablename__ = "applications"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    status = db.Column(db.String(20), default="Pending", nullable=False)
+    status = db.Column(db.String(50), default="Pending", nullable=False)  # Increased from 20 to 50
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    editable = db.Column(db.Boolean, default=False)  # Added for edit permission
     module_data = db.relationship("ModuleData", backref="application", lazy=True)
     assignment = db.relationship("ApplicationAssignment", uselist=False, cascade="all, delete-orphan")
     files = db.relationship("UploadedFile", backref="application", lazy=True, cascade="all, delete-orphan")
+    chat_messages = db.relationship("ChatMessage", backref="application", lazy=True)
+    comments = db.Column(db.Text, nullable=True)
 
 class ModuleData(db.Model):
     __tablename__ = "module_data"
@@ -36,7 +40,7 @@ class ModuleData(db.Model):
     application_id = db.Column(db.Integer, db.ForeignKey("applications.id"), nullable=False)
     module_name = db.Column(db.String(50), nullable=False)
     step = db.Column(db.String(50), nullable=False)
-    data = db.Column(db.JSON, nullable=False)  # Stores form data excluding file paths
+    data = db.Column(db.JSON, nullable=False)
     completed = db.Column(db.Boolean, default=False)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     abandoned = db.Column(db.Boolean, default=False)
@@ -54,8 +58,8 @@ class UploadedFile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     application_id = db.Column(db.Integer, db.ForeignKey("applications.id"), nullable=False)
     module_name = db.Column(db.String(50), nullable=False)
-    step = db.Column(db.String(50), nullable=False)  # Added to track step
-    field_name = db.Column(db.String(50), nullable=False)  # e.g., "annual_report"
+    step = db.Column(db.String(50), nullable=False)
+    field_name = db.Column(db.String(50), nullable=False)
     filename = db.Column(db.String(200), nullable=False)
     filepath = db.Column(db.String(200), nullable=False)
 
@@ -68,3 +72,13 @@ class ChatMessage(db.Model):
     message = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
+    notifications = db.relationship("Notification", backref="message", lazy=True)
+
+class Notification(db.Model):
+    __tablename__ = "notifications"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    message_id = db.Column(db.Integer, db.ForeignKey("chat_messages.id"), nullable=True)  # Nullable for non-chat notifications
+    content = db.Column(db.Text, nullable=True)  # For custom messages like "Edit enabled"
+    read = db.Column(db.Boolean, default=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)

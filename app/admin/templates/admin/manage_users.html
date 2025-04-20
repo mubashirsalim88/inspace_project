@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-6">
+    <h2 class="text-3xl font-bold mb-6">Manage Users</h2>
+
+    <div class="mb-8">
+        <h3 class="text-2xl font-semibold mb-4">Assign Roles</h3>
+        <form method="POST" class="mb-4">
+            <div class="flex flex-col md:flex-row gap-4">
+                <select name="user_id" class="p-2 border rounded" required>
+                    <option value="">Select User</option>
+                    {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username }} ({{ user.role }})</option>
+                    {% endfor %}
+                </select>
+                <select name="role" class="p-2 border rounded" required>
+                    <option value="">Select Role</option>
+                    <option value="user">User</option>
+                    <option value="Assigner">Assigner</option>
+                    <option value="Primary Verifier">Primary Verifier</option>
+                    <option value="Secondary Verifier">Secondary Verifier</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <button type="submit" class="py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700">Update Role</button>
+            </div>
+        </form>
+
+        <h4 class="text-xl font-semibold mb-2">All Users</h4>
+        <table class="w-full border-collapse">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-2 border">ID</th>
+                    <th class="p-2 border">Username</th>
+                    <th class="p-2 border">Role</th>
+                    <th class="p-2 border">Email</th>
+                    <th class="p-2 border">Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td class="p-2 border">{{ user.id }}</td>
+                        <td class="p-2 border">{{ user.username }}</td>
+                        <td class="p-2 border">{{ user.role }}</td>
+                        <td class="p-2 border">{{ user.email }}</td>
+                        <td class="p-2 border">{{ user.name }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

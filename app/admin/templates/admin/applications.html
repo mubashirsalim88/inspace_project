@@ -1,0 +1,37 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Applications{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-6">Applications</h2>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    {% for status, count in applications_by_status.items() %}
+        <div class="p-4 bg-green-100 rounded-lg text-center">
+            <p class="font-medium">{{ status }}</p>
+            <p class="text-xl font-bold">{{ count }}</p>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="overflow-x-auto">
+    <table class="w-full border-collapse bg-white shadow rounded-lg">
+        <thead>
+            <tr class="bg-gray-200">
+                <th class="p-3 text-left">ID</th>
+                <th class="p-3 text-left">User</th>
+                <th class="p-3 text-left">Status</th>
+                <th class="p-3 text-left">Created At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applications %}
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3 border-t">{{ app.id }}</td>
+                    <td class="p-3 border-t">{{ app.user.username }}</td>
+                    <td class="p-3 border-t">{{ app.status }}</td>
+                    <td class="p-3 border-t">{{ app.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

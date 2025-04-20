@@ -9,3 +9,6 @@ python-dotenv==1.0.0
 psycopg2-binary==2.9.9
 Werkzeug==2.3.8
 email_validator==2.2.0 
+reportlab
+pypdf
+docx2pdf

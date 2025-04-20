@@ -1,0 +1,80 @@
+<!-- app/admin/templates/admin/base_admin.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - {% block title %}{% endblock %} - IN-SPACe Portal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/tailwind.js') }}"></script>
+</head>
+<body class="flex h-screen bg-gray-100 m-0 p-0">
+    <div class="flex w-full">
+        <!-- Sidebar -->
+        <div class="w-64 bg-gray-800 text-white flex-shrink-0 h-screen">
+            <div class="p-4">
+                <h1 class="text-2xl font-bold">Admin Panel</h1>
+                <p class="text-sm">Welcome, {{ current_user.username }}</p>
+            </div>
+            <nav class="mt-4">
+                <a href="{{ url_for('admin.dashboard') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.path == '/admin/dashboard' %}bg-gray-700{% endif %}">Overview</a>
+                <a href="{{ url_for('admin.manage_users') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.path == '/admin/users' %}bg-gray-700{% endif %}">Users</a>
+                <a href="{{ url_for('admin.applications') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.path == '/admin/applications' %}bg-gray-700{% endif %}">Applications</a>
+                <a href="{{ url_for('admin.assignments') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.path == '/admin/assignments' %}bg-gray-700{% endif %}">Assignments</a>
+                <a href="{{ url_for('admin.chat') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.path == '/admin/chat' %}bg-gray-700{% endif %}">Chat</a>
+                <a href="{{ url_for('admin.notifications') }}" class="block py-2 px-4 hover:bg-gray-700 {% if request.path == '/admin/notifications' %}bg-gray-700{% endif %}">Notifications</a>
+                <a href="{{ url_for('auth.logout') }}" class="block py-2 px-4 hover:bg-red-700">Logout</a>
+            </nav>
+        </div>
+        <!-- Main Content -->
+        <div class="flex-1 bg-white">
+            <div class="navbar shadow-md p-4 flex justify-between items-center w-full bg-white border-b">
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('admin.dashboard') }}">
+                        <img src="{{ url_for('static', filename='images/IN-SPACe_Logo.png') }}" alt="Logo" class="h-8">
+                    </a>
+                </div>
+                <div class="flex-1 text-center text-gray-800 font-medium text-xl">
+                    IN-SPACe Admin Portal
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('chat.notifications') }}" class="relative">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9"></path>
+                        </svg>
+                        {% set unread_count = current_user.notifications|selectattr('read', 'equalto', False)|list|length %}
+                        {% if unread_count > 0 %}
+                            <span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">{{ unread_count }}</span>
+                        {% endif %}
+                    </a>
+                    <div class="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center bg-gray-500 text-white text-lg font-bold">
+                        {{ current_user.name[0]|upper }}
+                    </div>
+                    <a href="{{ url_for('auth.logout') }}">
+                        <button class="py-2 px-4 rounded bg-red-500 text-white hover:bg-red-700 transition-all duration-300">
+                            Logout
+                        </button>
+                    </a>
+                </div>
+            </div>
+            <div class="p-4">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message mb-4 p-4 rounded-lg text-white {% if category == 'error' %}bg-red-500{% elif category == 'success' %}bg-green-500{% else %}bg-blue-500{% endif %} animate__animated animate__fadeIn">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+            <div class="main p-6">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

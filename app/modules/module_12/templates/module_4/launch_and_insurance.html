@@ -1,0 +1,51 @@
+{% extends "module_4/forms_base.html" %}
+{% block title %}Module 4 - Launch and Insurance{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Launcher Details <span class="text-red-500">*</span></label>
+            <textarea name="launcher_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Launcher type, provider, facility details">{{ form_data.launcher_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Launch Service Agreement <span class="text-red-500">*</span></label>
+            <input type="file" name="files" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% for file in existing_files %}
+                <p><a href="{{ url_for('module_4.download_file', file_id=file.id) }}">{{ file.filename }}</a></p>
+            {% endfor %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Tentative Launch Timeframe <span class="text-red-500">*</span></label>
+            <input type="text" name="launch_timeframe" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ form_data.launch_timeframe or '' }}">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Insurance Details</label>
+            <input type="file" name="files" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% for file in existing_files %}
+                <p><a href="{{ url_for('module_4.download_file', file_id=file.id) }}">{{ file.filename }}</a></p>
+            {% endfor %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite Launch Status <span class="text-red-500">*</span></label>
+            <select name="launch_status" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="launch_status">
+                <option value="Yes" {% if form_data.launch_status == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.launch_status == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="launch_details" class="{% if form_data.launch_status != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="launch_details" {% if form_data.launch_status == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Launch date, launcher, other details">{{ form_data.launch_details or '' }}</textarea>
+            </div>
+        </div>
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("launch_status").addEventListener("change", function() {
+        const detailsDiv = document.getElementById("launch_details");
+        detailsDiv.classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#launch_details textarea").required = this.value === "Yes";
+    });
+</script>
+{% endblock %}
