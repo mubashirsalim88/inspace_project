@@ -1,0 +1,76 @@
+{% extends "module_5/forms_base.html" %}
+{% block title %}Module 5 - ITU Filing Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <!-- 24. ITU Filing Details -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">ITU Filing for Hosted Payload Frequencies <span class="text-red-500">*</span></label>
+            <textarea name="itu_payload_frequencies" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Name, administration, status">{{ form_data.itu_payload_frequencies or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">ITU Filing for TT&C <span class="text-red-500">*</span></label>
+            <textarea name="itu_ttc" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Name, administration, status">{{ form_data.itu_ttc or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">ITU Filing for Communication Channel Frequencies (if applicable)</label>
+            <textarea name="itu_comm_channels" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Name, administration, status">{{ form_data.itu_comm_channels or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Is a Non-Indian ITU Filing Being Used for Hosted Payload Operations? <span class="text-red-500">*</span></label>
+            <select name="non_indian_itu_filing" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="non_indian_itu_filing">
+                <option value="Yes" {% if form_data.non_indian_itu_filing == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.non_indian_itu_filing == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="non_indian_itu_details" class="{% if form_data.non_indian_itu_filing != 'Yes' %}hidden{% endif %} mt-2">
+                <label class="block text-base mb-1 text-gray-800">Arrangements with Concerned Foreign Administration <span class="text-red-500">*</span></label>
+                <textarea name="foreign_admin_arrangements" {% if form_data.non_indian_itu_filing == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Describe arrangements">{{ form_data.foreign_admin_arrangements or '' }}</textarea>
+                <label class="block text-base mb-1 text-gray-800 mt-2">Copy of Authorization/Frequency Assignment from Foreign Administration <span class="text-red-500">*</span></label>
+                <input type="file" name="foreign_admin_authorization" {% if form_data.non_indian_itu_filing == 'Yes' %}required{% endif %} multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                {% for file in existing_files if file.field_name == 'foreign_admin_authorization' %}
+                    <p><a href="{{ url_for('module_5.download_file', file_id=file.id) }}">{{ file.filename }}</a></p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Coordination Status with IARU (if applicable)</label>
+            <textarea name="iaru_coordination_status" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Completed, In Progress">{{ form_data.iaru_coordination_status or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Orbit Parameters & Coverage as per ITU Filing <span class="text-red-500">*</span></label>
+            <textarea name="itu_orbit_parameters" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Inclination, altitude, eccentricity, coverage">{{ form_data.itu_orbit_parameters or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Is this a New Indian ITU Filing? <span class="text-red-500">*</span></label>
+            <select name="new_indian_itu_filing" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="new_indian_itu_filing">
+                <option value="Yes" {% if form_data.new_indian_itu_filing == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.new_indian_itu_filing == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="new_indian_itu_details" class="{% if form_data.new_indian_itu_filing != 'Yes' %}hidden{% endif %} mt-2">
+                <label class="block text-base mb-1 text-gray-800">Interference Analysis <span class="text-red-500">*</span></label>
+                <textarea name="interference_analysis" {% if form_data.new_indian_itu_filing == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Interference analysis to protect incumbent systems, coexistence measures">{{ form_data.interference_analysis or '' }}</textarea>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("non_indian_itu_filing").addEventListener("change", function() {
+        const nonIndianDiv = document.getElementById("non_indian_itu_details");
+        nonIndianDiv.classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#non_indian_itu_details textarea").required = this.value === "Yes";
+        document.querySelector("#non_indian_itu_details input").required = this.value === "Yes";
+    });
+
+    document.getElementById("new_indian_itu_filing").addEventListener("change", function() {
+        const newIndianDiv = document.getElementById("new_indian_itu_details");
+        newIndianDiv.classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#new_indian_itu_details textarea").required = this.value === "Yes";
+    });
+</script>
+{% endblock %}

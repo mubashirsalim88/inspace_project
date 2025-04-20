@@ -1,0 +1,61 @@
+{% extends "module_5/forms_base.html" %}
+{% block title %}Module 5 - Miscellaneous{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <!-- 36. Indigenous Elements -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of Indigenous Elements (if any)</label>
+            <textarea name="indigenous_elements" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Manufacturing, testing, AIT, launch">{{ form_data.indigenous_elements or '' }}</textarea>
+        </div>
+
+        <!-- 37. Proposed Timeframe and Milestones -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Proposed/Desired Timeframe and Milestones for Completion <span class="text-red-500">*</span></label>
+            <textarea name="proposed_timeframe" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Q1 2025: Design completion, Q3 2025: Launch">{{ form_data.proposed_timeframe or '' }}</textarea>
+        </div>
+
+        <!-- 38. Collaborations -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of International/National Collaborations, Joint Development, or Joint Venture (if any)</label>
+            <textarea name="collaborations" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Collaboration with ISRO for testing">{{ form_data.collaborations or '' }}</textarea>
+        </div>
+
+        <!-- 39. Intellectual Property Rights -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Intellectual Property Rights Related to the Proposal (if any)</label>
+            <textarea name="ipr_details" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Patents on payload technology">{{ form_data.ipr_details or '' }}</textarea>
+        </div>
+
+        <!-- 40. Estimated Cost -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Estimated Cost of the Project (in INR) <span class="text-red-500">*</span></label>
+            <input type="number" name="estimated_cost" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., 100000000" value="{{ form_data.estimated_cost or '' }}">
+        </div>
+
+        <!-- 41. Source of Funding -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Source of Funding for the Project <span class="text-red-500">*</span></label>
+            <textarea name="funding_source" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Government grants, private investment">{{ form_data.funding_source or '' }}</textarea>
+        </div>
+
+        <!-- 42. Other Clearances/Approvals -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Clearances/Approvals/Licenses from Other Government Departments/Agencies (if any)</label>
+            <textarea name="other_clearances" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Obtained clearance from DRDO">{{ form_data.other_clearances or '' }}</textarea>
+        </div>
+
+        <!-- 43. Additional Information for IN-SPACe -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Any Other Information for IN-SPACe to Process the Application</label>
+            <textarea name="additional_info" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Special considerations">{{ form_data.additional_info or '' }}</textarea>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

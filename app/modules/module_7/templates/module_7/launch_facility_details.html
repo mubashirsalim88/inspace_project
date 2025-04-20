@@ -1,0 +1,44 @@
+{% extends "module_7/forms_base.html" %}
+{% block title %}Module 7 - Launch Facility Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Launch Facility Details <span class="text-red-500">*</span></label>
+            <textarea name="launch_facility_info" id="launch_facility_info" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" rows="5">{{ form_data.launch_facility_info or '' }}</textarea>
+            {% if form_data.launch_facility_info %}
+                <p class="text-sm text-gray-600 mt-2">Current: {{ form_data.launch_facility_info }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Facility Agreement Document</label>
+            <input type="file" name="facility_agreement" id="facility_agreement" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.facility_agreement %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.facility_agreement|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Foreign Entity Agreement Document</label>
+            <input type="file" name="foreign_entity_agreement" id="foreign_entity_agreement" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.foreign_entity_agreement %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.foreign_entity_agreement|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Foreign Regulatory Approval Document</label>
+            <input type="file" name="foreign_regulatory_approval" id="foreign_regulatory_approval" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.foreign_regulatory_approval %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.foreign_regulatory_approval|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

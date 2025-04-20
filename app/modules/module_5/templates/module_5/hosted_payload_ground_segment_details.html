@@ -1,0 +1,133 @@
+{% extends "module_5/forms_base.html" %}
+{% block title %}Module 5 - Hosted Payload Ground Segment Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <!-- 21. Independent TT&C for Hosted Payload -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Does the Hosted Payload have Independent TT&C? <span class="text-red-500">*</span></label>
+            <select name="independent_ttc" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="independent_ttc">
+                <option value="Yes" {% if form_data.independent_ttc == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.independent_ttc == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="ttc_details" class="{% if form_data.independent_ttc != 'Yes' %}hidden{% endif %} mt-2">
+                <!-- a. TT&C Stations Details -->
+                <label class="block text-base mb-1 text-gray-800">Details of Hosted Payload TT&C Stations <span class="text-red-500">*</span></label>
+                <textarea name="ttc_stations" {% if form_data.independent_ttc == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Locations, ownership (self-owned or service provider), service provider details">{{ form_data.ttc_stations or '' }}</textarea>
+                <!-- b. TT&C Outside India -->
+                <label class="block text-base mb-1 text-gray-800 mt-2">Is TT&C Station Located Outside India? <span class="text-red-500">*</span></label>
+                <select name="ttc_outside_india" {% if form_data.independent_ttc == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="ttc_outside_india">
+                    <option value="Yes" {% if form_data.ttc_outside_india == 'Yes' %}selected{% endif %}>Yes</option>
+                    <option value="No" {% if form_data.ttc_outside_india == 'No' %}selected{% endif %}>No</option>
+                </select>
+                <div id="ttc_outside_india_details" class="{% if form_data.ttc_outside_india != 'Yes' %}hidden{% endif %} mt-2">
+                    <label class="block text-base mb-1 text-gray-800">Justification for Using TT&C Station(s) Outside India <span class="text-red-500">*</span></label>
+                    <textarea name="ttc_outside_india_justification" {% if form_data.ttc_outside_india == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Provide location-wise justification">{{ form_data.ttc_outside_india_justification or '' }}</textarea>
+                </div>
+                <!-- c. MCC Details -->
+                <label class="block text-base mb-1 text-gray-800 mt-2">Details of Mission Control Centre (MCC) <span class="text-red-500">*</span></label>
+                <textarea name="mcc_details" {% if form_data.independent_ttc == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Locations, ownership (self-owned or service provider), service provider details">{{ form_data.mcc_details or '' }}</textarea>
+                <!-- If self-owned, upload IN-SPACe Authorization -->
+                <label class="block text-base mb-1 text-gray-800 mt-2">Is MCC Self-Owned? <span class="text-red-500">*</span></label>
+                <select name="mcc_ownership" {% if form_data.independent_ttc == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="mcc_ownership">
+                    <option value="Self-Owned" {% if form_data.mcc_ownership == 'Self-Owned' %}selected{% endif %}>Self-Owned</option>
+                    <option value="Service Provider" {% if form_data.mcc_ownership == 'Service Provider' %}selected{% endif %}>Service Provider</option>
+                </select>
+                <div id="mcc_self_owned" class="{% if form_data.mcc_ownership != 'Self-Owned' %}hidden{% endif %} mt-2">
+                    <label class="block text-base mb-1 text-gray-800">Copy of IN-SPACe Authorization for MCC <span class="text-red-500">*</span></label>
+                    <input type="file" name="mcc_inspace_authorization" {% if form_data.mcc_ownership == 'Self-Owned' %}required{% endif %} multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                    {% for file in existing_files if file.field_name == 'mcc_inspace_authorization' %}
+                        <p><a href="{{ url_for('module_5.download_file', file_id=file.id) }}">{{ file.filename }}</a></p>
+                    {% endfor %}
+                </div>
+                <!-- d. MCC Outside India -->
+                <label class="block text-base mb-1 text-gray-800 mt-2">Is MCC Located Outside India? <span class="text-red-500">*</span></label>
+                <select name="mcc_outside_india" {% if form_data.independent_ttc == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="mcc_outside_india">
+                    <option value="Yes" {% if form_data.mcc_outside_india == 'Yes' %}selected{% endif %}>Yes</option>
+                    <option value="No" {% if form_data.mcc_outside_india == 'No' %}selected{% endif %}>No</option>
+                </select>
+                <div id="mcc_outside_india_details" class="{% if form_data.mcc_outside_india != 'Yes' %}hidden{% endif %} mt-2">
+                    <label class="block text-base mb-1 text-gray-800">Justification for Using MCC Station(s) Outside India <span class="text-red-500">*</span></label>
+                    <textarea name="mcc_outside_india_justification" {% if form_data.mcc_outside_india == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Provide location-wise justification">{{ form_data.mcc_outside_india_justification or '' }}</textarea>
+                </div>
+                <!-- e. Data Security Mechanisms in MCC -->
+                <label class="block text-base mb-1 text-gray-800 mt-2">Data Security Mechanisms in the MCC <span class="text-red-500">*</span></label>
+                <textarea name="mcc_data_security" {% if form_data.independent_ttc == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Security to Indian traffic, access to security agencies, etc.">{{ form_data.mcc_data_security or '' }}</textarea>
+            </div>
+        </div>
+
+        <!-- 22. Communication Hosted Payload: Hubs/Gateways -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of Hubs/Gateways for Communication Hosted Payload (if applicable)</label>
+            <textarea name="hubs_gateways_details" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Locations, number of gateways, configuration/architecture">{{ form_data.hubs_gateways_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Constellation Management Network Centre (if applicable)</label>
+            <textarea name="constellation_management_centre" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Location, capability, configuration, network architecture">{{ form_data.constellation_management_centre or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">User Terminal Details (if applicable)</label>
+            <textarea name="user_terminal_details" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Terminal size, network architecture">{{ form_data.user_terminal_details or '' }}</textarea>
+        </div>
+
+        <!-- 23. EO Hosted Payloads: Data Reception Ground Stations -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of EO Data Reception Ground Stations (if applicable)</label>
+            <textarea name="eo_ground_stations" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Locations, ownership (self-owned or service provider), service provider details">{{ form_data.eo_ground_stations or '' }}</textarea>
+            <label class="block text-base mb-1 text-gray-800 mt-2">Is EO Ground Station Self-Owned?</label>
+            <select name="eo_ground_station_ownership" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="eo_ground_station_ownership">
+                <option value="Self-Owned" {% if form_data.eo_ground_station_ownership == 'Self-Owned' %}selected{% endif %}>Self-Owned</option>
+                <option value="Service Provider" {% if form_data.eo_ground_station_ownership == 'Service Provider' %}selected{% endif %}>Service Provider</option>
+                <option value="Not Applicable" {% if form_data.eo_ground_station_ownership == 'Not Applicable' %}selected{% endif %}>Not Applicable</option>
+            </select>
+            <div id="eo_ground_station_self_owned" class="{% if form_data.eo_ground_station_ownership != 'Self-Owned' %}hidden{% endif %} mt-2">
+                <label class="block text-base mb-1 text-gray-800">Copy of IN-SPACe Authorization for EO Ground Station</label>
+                <input type="file" name="eo_ground_station_inspace_authorization" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                {% for file in existing_files if file.field_name == 'eo_ground_station_inspace_authorization' %}
+                    <p><a href="{{ url_for('module_5.download_file', file_id=file.id) }}">{{ file.filename }}</a></p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("independent_ttc").addEventListener("change", function() {
+        const ttcDiv = document.getElementById("ttc_details");
+        ttcDiv.classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#ttc_details textarea[name='ttc_stations']").required = this.value === "Yes";
+        document.querySelector("#ttc_details select[name='ttc_outside_india']").required = this.value === "Yes";
+        document.querySelector("#ttc_details textarea[name='mcc_details']").required = this.value === "Yes";
+        document.querySelector("#ttc_details select[name='mcc_outside_india']").required = this.value === "Yes";
+        document.querySelector("#ttc_details textarea[name='mcc_data_security']").required = this.value === "Yes";
+    });
+
+    document.getElementById("ttc_outside_india").addEventListener("change", function() {
+        const ttcOutsideDiv = document.getElementById("ttc_outside_india_details");
+        ttcOutsideDiv.classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#ttc_outside_india_details textarea").required = this.value === "Yes";
+    });
+
+    document.getElementById("mcc_ownership").addEventListener("change", function() {
+        const mccSelfOwnedDiv = document.getElementById("mcc_self_owned");
+        mccSelfOwnedDiv.classList.toggle("hidden", this.value !== "Self-Owned");
+        document.querySelector("#mcc_self_owned input").required = this.value === "Self-Owned";
+    });
+
+    document.getElementById("mcc_outside_india").addEventListener("change", function() {
+        const mccOutsideDiv = document.getElementById("mcc_outside_india_details");
+        mccOutsideDiv.classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#mcc_outside_india_details textarea").required = this.value === "Yes";
+    });
+
+    document.getElementById("eo_ground_station_ownership").addEventListener("change", function() {
+        const eoSelfOwnedDiv = document.getElementById("eo_ground_station_self_owned");
+        eoSelfOwnedDiv.classList.toggle("hidden", this.value !== "Self-Owned");
+    });
+</script>
+{% endblock %}

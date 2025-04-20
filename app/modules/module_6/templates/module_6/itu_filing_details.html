@@ -1,0 +1,39 @@
+{% extends "module_6/forms_base.html" %}
+{% block title %}Module 6 - ITU Filing Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Proposed ITU Filing Name <span class="text-red-500">*</span></label>
+            <input type="text" name="itu_filing_name" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ form_data.itu_filing_name or '' }}">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Type of Orbit <span class="text-red-500">*</span></label>
+            <select name="orbit_type" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                <option value="GSO" {% if form_data.orbit_type == 'GSO' %}selected{% endif %}>GSO</option>
+                <option value="NGSO" {% if form_data.orbit_type == 'NGSO' %}selected{% endif %}>NGSO</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Proposed Launch Date <span class="text-red-500">*</span></label>
+            <input type="date" name="launch_date" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ form_data.launch_date or '' }}">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Lifetime of Satellite (years) <span class="text-red-500">*</span></label>
+            <input type="number" name="satellite_lifetime" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ form_data.satellite_lifetime or '' }}">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Planned Number of Satellites/Constellation Size <span class="text-red-500">*</span></label>
+            <input type="number" name="constellation_size" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ form_data.constellation_size or '' }}">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Orbital Parameters <span class="text-red-500">*</span></label>
+            <textarea name="orbital_parameters" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., orbital slot, plane, altitude, period, inclination">{{ form_data.orbital_parameters or '' }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('applicant.home') }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Back to Dashboard</a>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

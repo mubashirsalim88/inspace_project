@@ -7,7 +7,7 @@
             <label class="block text-base mb-1 text-gray-800">Existing or New ITU Filing <span class="text-red-500">*</span></label>
             <select name="itu_filing_type" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
                 <option value="Existing Indian ITU Filing" {% if form_data.itu_filing_type == 'Existing Indian ITU Filing' %}selected{% endif %}>Existing Indian ITU Filing</option>
-                <option value="New ITU Filing" {% if form_data.itu_filing_type == 'New ITU Filing' %}selected{% endif %}>New ITU Filing</option>
+                <option value="New ITU Filing" {% if form_dat   a.itu_filing_type == 'New ITU Filing' %}selected{% endif %}>New ITU Filing</option>
             </select>
             <textarea name="itu_filing_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 mt-2" placeholder="Specifics of the filing choice">{{ form_data.itu_filing_details or '' }}</textarea>
         </div>

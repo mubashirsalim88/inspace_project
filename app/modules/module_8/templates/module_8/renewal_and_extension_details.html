@@ -1,0 +1,25 @@
+{% extends "module_8/forms_base.html" %}
+{% block title %}Module 8 - Renewal and Extension Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Is this application for renewal, extension, or amendment of a previous Authorization? <span class="text-red-500">*</span></label>
+            <select name="is_renewal_extension_amendment" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                <option value="Yes" {% if form_data.is_renewal_extension_amendment == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.is_renewal_extension_amendment == 'No' %}selected{% endif %}>No</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">If Yes, provide details <span class="text-red-500">*</span></label>
+            <textarea name="renewal_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Provide details of the previous Authorization, including dates, type, and changes requested">{{ form_data.renewal_details or '' }}</textarea>
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600" formaction="{{ url_for('applicant.home') }}">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

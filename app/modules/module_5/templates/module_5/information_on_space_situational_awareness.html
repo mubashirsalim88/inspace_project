@@ -1,0 +1,85 @@
+{% extends "module_5/forms_base.html" %}
+{% block title %}Module 5 - Information on Space Situational Awareness{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <!-- 25. Details of Appendages -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of Appendages (if any)</label>
+            <textarea name="appendages_details" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Antennas, solar panels">{{ form_data.appendages_details or '' }}</textarea>
+        </div>
+
+        <!-- 26. Orbital Parameters for Appendage Deployment -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Orbital Parameters for Appendage Deployment (if applicable)</label>
+            <textarea name="appendage_deployment_parameters" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Altitude, inclination">{{ form_data.appendage_deployment_parameters or '' }}</textarea>
+        </div>
+
+        <!-- 27. Expected In-Orbit Lifetime -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Mission Life of Host Space Object (years) <span class="text-red-500">*</span></label>
+            <input type="number" name="mission_life" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., 5" value="{{ form_data.mission_life or '' }}">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Post-Mission Life till Atmospheric Re-Entry (years, if applicable)</label>
+            <input type="number" name="post_mission_life" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., 2" value="{{ form_data.post_mission_life or '' }}">
+        </div>
+
+        <!-- 28. Safety Assessment Report -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Does the Hosted Payload Use Hazardous Materials? <span class="text-red-500">*</span></label>
+            <select name="hazardous_materials" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="hazardous_materials">
+                <option value="Yes" {% if form_data.hazardous_materials == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.hazardous_materials == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="hazardous_materials_details" class="{% if form_data.hazardous_materials != 'Yes' %}hidden{% endif %} mt-2">
+                <label class="block text-base mb-1 text-gray-800">Safety Assessment Report for Hazardous Materials <span class="text-red-500">*</span></label>
+                <textarea name="safety_assessment_report" {% if form_data.hazardous_materials == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Details of propellant, pressurant systems, explosives, radioactive/biological materials">{{ form_data.safety_assessment_report or '' }}</textarea>
+                <label class="block text-base mb-1 text-gray-800 mt-2">Safety Data Sheet (SDS) for Hazardous Materials <span class="text-red-500">*</span></label>
+                <input type="file" name="safety_data_sheet" {% if form_data.hazardous_materials == 'Yes' %}required{% endif %} multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                {% for file in existing_files if file.field_name == 'safety_data_sheet' %}
+                    <p><a href="{{ url_for('module_5.download_file', file_id=file.id) }}">{{ file.filename }}</a></p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 29. On-Board Energy Sources -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">On-Board Energy Sources <span class="text-red-500">*</span></label>
+            <textarea name="energy_sources" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Battery, rotating mechanisms, propellant">{{ form_data.energy_sources or '' }}</textarea>
+        </div>
+
+        <!-- 30. Passivation Plan -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Plan for Passivation of Energy Sources at End of Mission (if applicable)</label>
+            <textarea name="passivation_plan" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Depleting propellant, discharging batteries">{{ form_data.passivation_plan or '' }}</textarea>
+        </div>
+
+        <!-- 31. Potential Hardware/Failure During Mission -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Potential Hardware/Failure During Mission Life (if any)</label>
+            <textarea name="potential_hardware_failure" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Solar panel deployment failure">{{ form_data.potential_hardware_failure or '' }}</textarea>
+        </div>
+
+        <!-- 32. Other Important Information -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Any Other Important Information/Remarks</label>
+            <textarea name="other_remarks_ssa" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Additional safety measures">{{ form_data.other_remarks_ssa or '' }}</textarea>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("hazardous_materials").addEventListener("change", function() {
+        const hazardousDiv = document.getElementById("hazardous_materials_details");
+        hazardousDiv.classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#hazardous_materials_details textarea").required = this.value === "Yes";
+        document.querySelector("#hazardous_materials_details input").required = this.value === "Yes";
+    });
+</script>
+{% endblock %}

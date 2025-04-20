@@ -1,0 +1,44 @@
+{% extends "module_7/forms_base.html" %}
+{% block title %}Module 7 - Mission Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Mission Objectives <span class="text-red-500">*</span></label>
+            <textarea name="mission_objectives" id="mission_objectives" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" rows="5">{{ form_data.mission_objectives or '' }}</textarea>
+            {% if form_data.mission_objectives %}
+                <p class="text-sm text-gray-600 mt-2">Current: {{ form_data.mission_objectives }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Mission Trajectory Details <span class="text-red-500">*</span></label>
+            <textarea name="mission_trajectory" id="mission_trajectory" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" rows="5">{{ form_data.mission_trajectory or '' }}</textarea>
+            {% if form_data.mission_trajectory %}
+                <p class="text-sm text-gray-600 mt-2">Current: {{ form_data.mission_trajectory }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Trajectory Details Document</label>
+            <input type="file" name="trajectory_details" id="trajectory_details" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.trajectory_details %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.trajectory_details|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">NOTAM Copy Document</label>
+            <input type="file" name="notam_copy" id="notam_copy" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.notam_copy %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.notam_copy|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

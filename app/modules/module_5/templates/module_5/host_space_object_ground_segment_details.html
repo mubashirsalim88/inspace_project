@@ -1,0 +1,25 @@
+{% extends "module_5/forms_base.html" %}
+{% block title %}Module 5 - Host Space Object Ground Segment Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <!-- 19. TT&C Stations Details -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of TT&C Stations Being Used <span class="text-red-500">*</span></label>
+            <textarea name="ttc_stations_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Locations, global operator services, etc.">{{ form_data.ttc_stations_details or '' }}</textarea>
+        </div>
+
+        <!-- 20. MCC Details -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of the MCC Being Used <span class="text-red-500">*</span></label>
+            <textarea name="mcc_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Locations, addresses, etc.">{{ form_data.mcc_details or '' }}</textarea>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

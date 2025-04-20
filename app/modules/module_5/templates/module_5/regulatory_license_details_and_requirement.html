@@ -1,0 +1,37 @@
+{% extends "module_5/forms_base.html" %}
+{% block title %}Module 5 - Regulatory License Details and Requirement{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <!-- 35. DoT Licenses and Clearances -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">DoT Operating & Service Licenses Including Clearances for Indian Ground Stations <span class="text-red-500">*</span></label>
+            <select name="dot_license_status" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="dot_license_status">
+                <option value="Obtained" {% if form_data.dot_license_status == 'Obtained' %}selected{% endif %}>Obtained</option>
+                <option value="In-Process" {% if form_data.dot_license_status == 'In-Process' %}selected{% endif %}>In-Process</option>
+                <option value="Yet to Apply" {% if form_data.dot_license_status == 'Yet to Apply' %}selected{% endif %}>Yet to Apply</option>
+            </select>
+            <div id="dot_license_obtained" class="{% if form_data.dot_license_status != 'Obtained' %}hidden{% endif %} mt-2">
+                <label class="block text-base mb-1 text-gray-800">Copies of DoT Licenses/Clearances <span class="text-red-500">*</span></label>
+                <input type="file" name="dot_license_copies" {% if form_data.dot_license_status == 'Obtained' %}required{% endif %} multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                {% for file in existing_files if file.field_name == 'dot_license_copies' %}
+                    <p><a href="{{ url_for('module_5.download_file', file_id=file.id) }}">{{ file.filename }}</a></p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("dot_license_status").addEventListener("change", function() {
+        const dotLicenseDiv = document.getElementById("dot_license_obtained");
+        dotLicenseDiv.classList.toggle("hidden", this.value !== "Obtained");
+        document.querySelector("#dot_license_obtained input").required = this.value === "Obtained";
+    });
+</script>
+{% endblock %}

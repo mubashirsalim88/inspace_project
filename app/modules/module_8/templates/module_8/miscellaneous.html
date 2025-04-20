@@ -1,0 +1,64 @@
+{% extends "module_8/forms_base.html" %}
+{% block title %}Module 8 - Miscellaneous{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of Indigenous Elements (if any) <span class="text-red-500">*</span></label>
+            <textarea name="indigenous_elements" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Manufacturing, fabrication, testing, etc.">{{ form_data.indigenous_elements or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Proposed Timeframe and Milestones for Ground Station Operationalization <span class="text-red-500">*</span></label>
+            <textarea name="timeframe_milestones" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Proposed/desired timeframe and milestones">{{ form_data.timeframe_milestones or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of Collaborations/Joint Ventures (if any) <span class="text-red-500">*</span></label>
+            <textarea name="collaborations" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="International/National collaborations, joint development, joint ventures">{{ form_data.collaborations or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Intellectual Property Rights (if any) <span class="text-red-500">*</span></label>
+            <textarea name="ipr_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Details of IPR related to the proposal">{{ form_data.ipr_details or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Expected Date of Commencement of Operations <span class="text-red-500">*</span></label>
+            <input type="date" name="commencement_date" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ form_data.commencement_date or '' }}">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Estimated Cost of the Project <span class="text-red-500">*</span></label>
+            <input type="number" name="project_cost" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ form_data.project_cost or '' }}">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Source of Funding <span class="text-red-500">*</span></label>
+            <textarea name="funding_source" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Source of funding for the project">{{ form_data.funding_source or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Additional Information for IN-SPACe <span class="text-red-500">*</span></label>
+            <textarea name="additional_info" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Any other details IN-SPACe should know">{{ form_data.additional_info or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Additional Documents <span class="text-red-500">*</span></label>
+            <input type="file" name="additional_documents" id="additional_documents" multiple required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if existing_files %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded:
+                    {% for file in existing_files %}
+                        <a href="{{ url_for('module_8.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline">{{ file.filename }}</a>{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </p>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

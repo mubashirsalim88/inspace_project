@@ -7,8 +7,11 @@ import os
 import logging
 import subprocess
 
-module_4 = Blueprint("module_4", __name__, template_folder="templates")
+
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+module_4 = Blueprint("module_4", __name__, url_prefix="/module_4", template_folder="templates")
 
 STEPS = [
     "extension_and_orbit",

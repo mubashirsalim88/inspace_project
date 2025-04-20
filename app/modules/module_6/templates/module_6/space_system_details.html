@@ -1,0 +1,28 @@
+<!-- app/modules/module_6/templates/module_6/space_system_details.html -->
+{% extends "module_6/forms_base.html" %}
+{% block title %}Module 6 - Space System Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Reference of Corresponding Application for Authorization <span class="text-red-500">*</span></label>
+            <textarea name="authorization_reference" id="authorization_reference" rows="4" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">{{ form_data['authorization_reference']|default('') }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Timeline for Establishment and Realization Plan <span class="text-red-500">*</span></label>
+            <textarea name="timeline_and_plan" id="timeline_and_plan" rows="6" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">{{ form_data['timeline_and_plan']|default('') }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Tentative Configuration and Architecture of Satellite and Payload <span class="text-red-500">*</span></label>
+            <textarea name="satellite_configuration" id="satellite_configuration" rows="6" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">{{ form_data['satellite_configuration']|default('') }}</textarea>
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

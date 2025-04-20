@@ -1,0 +1,52 @@
+{% extends "module_7/forms_base.html" %}
+{% block title %}Module 7 - Broad Configuration of Launch Vehicle Systems{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Launch Vehicle Description <span class="text-red-500">*</span></label>
+            <textarea name="launch_vehicle_description" id="launch_vehicle_description" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" rows="5">{{ form_data.launch_vehicle_description or '' }}</textarea>
+            {% if form_data.launch_vehicle_description %}
+                <p class="text-sm text-gray-600 mt-2">Current: {{ form_data.launch_vehicle_description }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Configuration Control Document</label>
+            <input type="file" name="configuration_control_doc" id="configuration_control_doc" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.configuration_control_doc %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.configuration_control_doc|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">FMECA Analysis Document</label>
+            <input type="file" name="fmeca_analysis" id="fmeca_analysis" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.fmeca_analysis %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.fmeca_analysis|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">SSA Details Document</label>
+            <input type="file" name="ssa_details" id="ssa_details" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.ssa_details %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.ssa_details|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">DoT License Details Document</label>
+            <input type="file" name="dot_license_details" id="dot_license_details" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.dot_license_details %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.dot_license_details|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

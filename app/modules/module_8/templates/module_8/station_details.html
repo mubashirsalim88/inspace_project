@@ -1,0 +1,34 @@
+{% extends "module_8/forms_base.html" %}
+{% block title %}Module 8 - Station Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Station Name <span class="text-red-500">*</span></label>
+            <input type="text" name="station_name" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ form_data.station_name or '' }}" placeholder="Enter the name of the station">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Station Location <span class="text-red-500">*</span></label>
+            <textarea name="station_location" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Provide the location of the station (e.g., coordinates, address)">{{ form_data.station_location or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Station Technical Specifications Document <span class="text-red-500">*</span></label>
+            <input type="file" name="station_technical_specs_doc" id="station_technical_specs_doc" multiple required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if existing_files %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded:
+                    {% for file in existing_files %}
+                        <a href="{{ url_for('module_8.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline">{{ file.filename }}</a>{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </p>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600" formaction="{{ url_for('module_8.fill_step', step='renewal_and_extension_details', application_id=application_id) }}">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

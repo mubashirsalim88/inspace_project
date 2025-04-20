@@ -1,0 +1,87 @@
+{% extends "module_8/forms_base.html" %}
+{% block title %}Module 8 - Technical Information{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Specification and Configuration of Ground Station (RF and Baseband) <span class="text-red-500">*</span></label>
+            <textarea name="ground_station_specs" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="RF and Baseband details">{{ form_data.ground_station_specs or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Ground System Architecture <span class="text-red-500">*</span></label>
+            <textarea name="ground_system_architecture" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Ground station terminal, Mission Operation Centre (MOC), data storage, network">{{ form_data.ground_system_architecture or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Uplink Frequency Band, Range, and Polarization <span class="text-red-500">*</span></label>
+            <input type="text" name="uplink_frequency" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Capability and actual band, carrier frequencies, bandwidth" value="{{ form_data.uplink_frequency or '' }}">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Downlink Frequency Band, Range, and Polarization <span class="text-red-500">*</span></label>
+            <input type="text" name="downlink_frequency" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Capability and actual band, carrier frequencies, bandwidth" value="{{ form_data.downlink_frequency or '' }}">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Antenna Details <span class="text-red-500">*</span></label>
+            <textarea name="antenna_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Size, height, gain (Tx & Rx), G/T, max uplink power, EIRP, tracking system, data rate, modulation">{{ form_data.antenna_details or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Is Remote Access Planned? <span class="text-red-500">*</span></label>
+            <select name="remote_access_planned" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                <option value="Yes" {% if form_data.remote_access_planned == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.remote_access_planned == 'No' %}selected{% endif %}>No</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">If Yes, Provide Remote Access Details <span class="text-red-500">*</span></label>
+            <textarea name="remote_access_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Details and locations of remote access points">{{ form_data.remote_access_details or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Mode of Signal Transfer Between TT&C and MCC and Security Mechanism <span class="text-red-500">*</span></label>
+            <textarea name="signal_transfer_security" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Include communication networking flow diagram">{{ form_data.signal_transfer_security or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Redundancy Details of MCC <span class="text-red-500">*</span></label>
+            <textarea name="mcc_redundancy" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Redundancy for workstations, network elements, etc.">{{ form_data.mcc_redundancy or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Mode of Transmission of Remote Sensing Data to Satellite Operator <span class="text-red-500">*</span></label>
+            <textarea name="remote_sensing_transmission" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Include communication networking flow diagram and security aspects">{{ form_data.remote_sensing_transmission or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of Software, Hardware, Encryption, and Support Systems <span class="text-red-500">*</span></label>
+            <textarea name="support_system_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Software, hardware, encryption, data security, network, 24x7 support, response time, escalation matrix">{{ form_data.support_system_details or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Provisions to Cease Operations if Directed by IN-SPACe <span class="text-red-500">*</span></label>
+            <textarea name="cease_operations_provisions" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Details of provisions to cease operations for national security or geopolitical reasons">{{ form_data.cease_operations_provisions or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Frequency Allocation Document <span class="text-red-500">*</span></label>
+            <input type="file" name="frequency_allocation_doc" id="frequency_allocation_doc" multiple required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if existing_files %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded:
+                    {% for file in existing_files %}
+                        <a href="{{ url_for('module_8.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline">{{ file.filename }}</a>{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </p>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

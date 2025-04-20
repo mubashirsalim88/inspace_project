@@ -1,0 +1,53 @@
+<!-- app/modules/module_6/templates/module_6/earth_station_details.html -->
+{% extends "module_6/forms_base.html" %}
+{% block title %}Module 6 - Earth Station Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Earth Station Name <span class="text-red-500">*</span></label>
+            <input type="text" name="earth_station_name" id="earth_station_name" value="{{ form_data.earth_station_name or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Location (Longitude, Latitude) <span class="text-red-500">*</span></label>
+            <input type="text" name="location" id="location" value="{{ form_data.location or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Antenna Size (meters) <span class="text-red-500">*</span></label>
+            <input type="number" step="0.01" name="antenna_size" id="antenna_size" value="{{ form_data.antenna_size or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Antenna Gain (dBi) <span class="text-red-500">*</span></label>
+            <input type="number" step="0.01" name="antenna_gain" id="antenna_gain" value="{{ form_data.antenna_gain or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Noise Temperature (K) <span class="text-red-500">*</span></label>
+            <input type="number" step="0.01" name="noise_temperature" id="noise_temperature" value="{{ form_data.noise_temperature or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">G/T Ratio (dB/K) <span class="text-red-500">*</span></label>
+            <input type="number" step="0.01" name="gt_ratio" id="gt_ratio" value="{{ form_data.gt_ratio or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Maximum EIRP (dBW) <span class="text-red-500">*</span></label>
+            <input type="number" step="0.01" name="max_eirp" id="max_eirp" value="{{ form_data.max_eirp or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Antenna Radiation Pattern <span class="text-red-500">*</span></label>
+            <input type="text" name="radiation_pattern" id="radiation_pattern" value="{{ form_data.radiation_pattern or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

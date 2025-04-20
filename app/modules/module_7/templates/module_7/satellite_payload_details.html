@@ -1,0 +1,52 @@
+{% extends "module_7/forms_base.html" %}
+{% block title %}Module 7 - Satellite/Payload Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite/Payload Description <span class="text-red-500">*</span></label>
+            <textarea name="satellite_payload_description" id="satellite_payload_description" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" rows="5">{{ form_data.satellite_payload_description or '' }}</textarea>
+            {% if form_data.satellite_payload_description %}
+                <p class="text-sm text-gray-600 mt-2">Current: {{ form_data.satellite_payload_description }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Launch Service Agreement Document</label>
+            <input type="file" name="launch_service_agreement" id="launch_service_agreement" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.launch_service_agreement %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.launch_service_agreement|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">MSDS and Safety Report Document</label>
+            <input type="file" name="msds_safety_report" id="msds_safety_report" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.msds_safety_report %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.msds_safety_report|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Foreign Approval Document</label>
+            <input type="file" name="foreign_approval" id="foreign_approval" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.foreign_approval %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.foreign_approval|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Insurance Policy Document</label>
+            <input type="file" name="insurance_policy" id="insurance_policy" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if form_data.insurance_policy %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded: {{ form_data.insurance_policy|join(', ') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

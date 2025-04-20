@@ -1,0 +1,119 @@
+{% extends "module_5/forms_base.html" %}
+{% block title %}Module 5 - Host Space Object Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <!-- 1. Name of the Host Space Object -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Name of the Host Space Object <span class="text-red-500">*</span></label>
+            <input type="text" name="host_space_object_name" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Satellite-X" value="{{ form_data.host_space_object_name or '' }}">
+        </div>
+
+        <!-- 2. Host Space Object Ownership and Authorization -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Host Space Object is owned by <span class="text-red-500">*</span></label>
+            <select name="ownership_entity" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="ownership_entity">
+                <option value="Indian" {% if form_data.ownership_entity == 'Indian' %}selected{% endif %}>Indian Entity</option>
+                <option value="Non-Indian" {% if form_data.ownership_entity == 'Non-Indian' %}selected{% endif %}>Non-Indian Entity</option>
+            </select>
+            <!-- Indian Entity: IN-SPACe Authorization Status -->
+            <div id="indian_authorization" class="{% if form_data.ownership_entity != 'Indian' %}hidden{% endif %} mt-2">
+                <label class="block text-base mb-1 text-gray-800">IN-SPACe Authorization Status <span class="text-red-500">*</span></label>
+                <select name="inspace_authorization_status" {% if form_data.ownership_entity == 'Indian' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                    <option value="Approved" {% if form_data.inspace_authorization_status == 'Approved' %}selected{% endif %}>Approved</option>
+                    <option value="Pending" {% if form_data.inspace_authorization_status == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Not Applied" {% if form_data.inspace_authorization_status == 'Not Applied' %}selected{% endif %}>Not Applied</option>
+                </select>
+            </div>
+            <!-- Non-Indian Entity: Copy of Authorization -->
+            <div id="non_indian_authorization" class="{% if form_data.ownership_entity != 'Non-Indian' %}hidden{% endif %} mt-2">
+                <label class="block text-base mb-1 text-gray-800">Copy of Authorization/Approvals from Non-Indian Administration <span class="text-red-500">*</span></label>
+                <input type="file" name="authorization_copy" {% if form_data.ownership_entity == 'Non-Indian' %}required{% endif %} multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                {% for file in existing_files if file.field_name == 'authorization_copy' %}
+                    <p><a href="{{ url_for('module_5.download_file', file_id=file.id) }}">{{ file.filename }}</a></p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 3. Name and Address of the Host Entity -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Name of the Host Entity <span class="text-red-500">*</span></label>
+            <input type="text" name="host_entity_name" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., SpaceCorp Ltd." value="{{ form_data.host_entity_name or '' }}">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Address of the Host Entity <span class="text-red-500">*</span></label>
+            <textarea name="host_entity_address" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Full address of the host entity">{{ form_data.host_entity_address or '' }}</textarea>
+        </div>
+
+        <!-- 4. Details of Shareholders/Partners of the Host Entity -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of Shareholders/Partners (10% or more shareholding) <span class="text-red-500">*</span></label>
+            <textarea name="shareholder_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Name, percentage of ownership, etc.">{{ form_data.shareholder_details or '' }}</textarea>
+        </div>
+
+        <!-- 5. Copy of Agreement/Contract and Validity Period -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Copy of Agreement/Contract between Applicant and Host Entity <span class="text-red-500">*</span></label>
+            <input type="file" name="agreement_copy" required multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% for file in existing_files if file.field_name == 'agreement_copy' %}
+                <p><a href="{{ url_for('module_5.download_file', file_id=file.id) }}">{{ file.filename }}</a></p>
+            {% endfor %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Validity Period of the Agreement/Contract <span class="text-red-500">*</span></label>
+            <input type="text" name="agreement_validity" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., 2025-2030" value="{{ form_data.agreement_validity or '' }}">
+        </div>
+
+        <!-- 6. Mechanism of Operations and Control -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Is the Hosted Payload operated independently by the Applicant? <span class="text-red-500">*</span></label>
+            <select name="independent_operation" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                <option value="Yes" {% if form_data.independent_operation == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.independent_operation == 'No' %}selected{% endif %}>No</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Does the Hosted Payload use independent TT&C, MCC, and communication channel? <span class="text-red-500">*</span></label>
+            <select name="independent_resources" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                <option value="Independent" {% if form_data.independent_resources == 'Independent' %}selected{% endif %}>Independent</option>
+                <option value="Shared" {% if form_data.independent_resources == 'Shared' %}selected{% endif %}>Shared with Host Space Object</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Data Flow and Operation Schematic Diagram <span class="text-red-500">*</span></label>
+            <input type="file" name="schematic_diagram" required multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% for file in existing_files if file.field_name == 'schematic_diagram' %}
+                <p><a href="{{ url_for('module_5.download_file', file_id=file.id) }}">{{ file.filename }}</a></p>
+            {% endfor %}
+        </div>
+
+        <!-- 7. Host Space Object Details -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Host Space Object Details <span class="text-red-500">*</span></label>
+            <textarea name="space_object_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Lift-off mass, orbital slot/orbit parameters, orbital planes, satellites per plane, number and type of other payload(s)">{{ form_data.space_object_details or '' }}</textarea>
+        </div>
+
+        <!-- 8. Intended Operational Life -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Intended Operational Life of the Host Space Object (years) <span class="text-red-500">*</span></label>
+            <input type="number" name="operational_life" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., 10" value="{{ form_data.operational_life or '' }}">
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between">
+            <a href="{{ url_for('applicant.home') }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Back to Dashboard</a>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("ownership_entity").addEventListener("change", function() {
+        const indianDiv = document.getElementById("indian_authorization");
+        const nonIndianDiv = document.getElementById("non_indian_authorization");
+        indianDiv.classList.toggle("hidden", this.value !== "Indian");
+        nonIndianDiv.classList.toggle("hidden", this.value !== "Non-Indian");
+        document.querySelector("#indian_authorization select").required = this.value === "Indian";
+        document.querySelector("#non_indian_authorization input").required = this.value === "Non-Indian";
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "module_7/forms_base.html" %}
+{% block title %}Module 7 - Previous Authorization{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Details of Previous IN-SPACe Authorization <span class="text-red-500">*</span></label>
+            <textarea name="previous_authorization_details" id="previous_authorization_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" rows="5">{{ form_data.previous_authorization_details or '' }}</textarea>
+            {% if form_data.previous_authorization_details %}
+                <p class="text-sm text-gray-600 mt-2">Current: {{ form_data.previous_authorization_details }}</p>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600" disabled>Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

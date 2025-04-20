@@ -1,0 +1,96 @@
+{% extends "module_8/forms_base.html" %}
+{% block title %}Module 8 - Undertaking & Declaration{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form id="undertaking-declaration-form" method="POST" action="{{ url_for('module_8.submit_application', application_id=application_id) }}" enctype="multipart/form-data">
+        <!-- Undertaking/Declarations -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Undertaking/Declarations <span class="text-red-500">*</span></label>
+            <div class="flex items-center mb-2">
+                <input type="checkbox" name="apply_for_authorization" required class="mr-2" {% if form_data['apply_for_authorization'] %}checked{% endif %}>
+                <span>We hereby submit our application to IN-SPACe for due consideration for authorizing the establishment and operation of ground stations within Indian Territory and/or outside the territory of India.</span>
+            </div>
+            <div class="flex items-center mb-2">
+                <input type="checkbox" name="conformity_with_laws" required class="mr-2" {% if form_data['conformity_with_laws'] %}checked{% endif %}>
+                <span>We hereby affirm that the application is in conformity with all the conditions and clauses, as given by IN-SPACe and in conformity with all the applicable laws, policies, rules, and regulations of the Government of India.</span>
+            </div>
+        </div>
+
+        <!-- Signature of Authorized Signatory -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Signature of the Authorized Signatory with Seal <span class="text-red-500">*</span></label>
+            <input type="file" name="official_seal" required multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files|selectattr('field_name', 'equalto', 'official_seal')|list %}
+                <div class="mt-2">
+                    <p class="text-sm text-gray-600">Previously Uploaded:</p>
+                    <ul class="list-disc pl-5">
+                        {% for file in existing_files %}
+                            {% if file.field_name == "official_seal" %}
+                                <li><a href="{{ url_for('module_8.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between">
+            <button type="submit" name="previous" formmethod="POST" formaction="{{ url_for('module_8.fill_step', step='miscellaneous', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="button" onclick="handleSubmit()" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105 transition-transform">Submit Application</button>
+        </div>
+    </form>
+</div>
+
+<!-- Include SweetAlert2 for confirmation dialogs -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function handleSubmit() {
+        const form = document.getElementById('undertaking-declaration-form');
+        const formData = new FormData(form);
+
+        fetch("{{ url_for('module_8.save_undertaking_declaration', application_id=application_id) }}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                Swal.fire({
+                    title: "Ready to Submit?",
+                    text: "Before submitting finally, you can review your application or submit it now. Once submitted, you cannot edit it.",
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Submit Finally",
+                    cancelButtonText: "Review"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    } else {
+                        window.location.href = "{{ url_for('module_8.fill_step', step='renewal_and_extension_details', application_id=application_id) }}";
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: "Error!",
+                    text: "Error saving form: " + data.message,
+                    icon: "error",
+                    confirmButtonColor: "#d33",
+                    confirmButtonText: "Close"
+                });
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                title: "Error!",
+                text: "Something went wrong while saving: " + error,
+                icon: "error",
+                confirmButtonColor: "#d33",
+                confirmButtonText: "Close"
+            });
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,273 @@
+{% extends "module_6/forms_base.html" %}
+{% block title %}Module 6 - Beam Operation Frequency (Earth-to-Space){% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data" id="beamForm">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Number of Beams (Earth-to-Space) <span class="text-red-500">*</span></label>
+            <input type="number" name="beam_count" id="beam_count" value="{{ form_data.beams|length if form_data.beams else (form_data.beams_earth_to_space or 0) }}" min="0" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+        </div>
+
+        <div id="beamContainer">
+            {% for beam in (form_data.beams or []) %}
+            <div class="beam-section mb-4 p-3 border rounded-md bg-gray-50">
+                <h3 class="font-semibold mb-2 text-gray-800">Beam {{ loop.index }}</h3>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Purpose <span class="text-red-500">*</span></label>
+                    <select name="beam_{{ loop.index0 }}_purpose" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                        <option value="">Select Purpose</option>
+                        {% for purpose in ['Telecommand', 'Tracking', 'Data Uplink'] %}
+                        <option value="{{ purpose }}" {% if beam.purpose == purpose %}selected{% endif %}>{{ purpose }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Frequency Band <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_frequency_band" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.frequency_band or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Bandwidth <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_bandwidth" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.bandwidth or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Minimum Frequency <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_min_frequency" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.min_frequency or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Maximum Frequency <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_max_frequency" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.max_frequency or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Spot Frequency</label>
+                    <input type="text" name="beam_{{ loop.index0 }}_spot_frequency" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.spot_frequency or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Polarization <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_polarization" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.polarization or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Satellite Receive Antenna Gain <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_rx_antenna_gain" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.rx_antenna_gain or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Satellite Antenna Radiation Pattern <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_antenna_pattern" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.antenna_pattern or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Satellite Receive Noise Temperature <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_noise_temperature" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.noise_temperature or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Maximum EIRP <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_max_eirp" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.max_eirp or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Minimum EIRP <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_min_eirp" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.min_eirp or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Data Rate <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_data_rate" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.data_rate or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Modulation Technique <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_modulation" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.modulation or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Required C/No <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_required_cno" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.required_cno or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Uplink E/S Size <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_uplink_station_size" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.uplink_station_size or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Uplink E/S Antenna Transmit Gain <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_uplink_antenna_gain" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.uplink_antenna_gain or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">E/S Radiation Pattern <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_radiation_pattern" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.radiation_pattern or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Location of U/L E/S (Longitude, Latitude) <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_{{ loop.index0 }}_uplink_station_location" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" value="{{ beam.uplink_station_location or '' }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Coverage Area Contour <span class="text-red-500">*</span></label>
+                    <textarea name="beam_{{ loop.index0 }}_coverage_area" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" rows="3">{{ beam.coverage_area or '' }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Service Area Contour <span class="text-red-500">*</span></label>
+                    <textarea name="beam_{{ loop.index0 }}_service_area" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" rows="3">{{ beam.service_area or '' }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">EIRP & Contours <span class="text-red-500">*</span></label>
+                    <textarea name="beam_{{ loop.index0 }}_eirp_contours" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" rows="3">{{ beam.eirp_contours or '' }}</textarea>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById("beam_count").addEventListener("change", function() {
+    const beamCount = parseInt(this.value) || 0;
+    const container = document.getElementById("beamContainer");
+    container.innerHTML = "";
+
+    for (let i = 0; i < beamCount; i++) {
+        const beamSection = `
+            <div class="beam-section mb-4 p-3 border rounded-md bg-gray-50">
+                <h3 class="font-semibold mb-2 text-gray-800">Beam ${i + 1}</h3>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Purpose <span class="text-red-500">*</span></label>
+                    <select name="beam_${i}_purpose" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                        <option value="">Select Purpose</option>
+                        <option value="Telecommand">Telecommand</option>
+                        <option value="Tracking">Tracking</option>
+                        <option value="Data Uplink">Data Uplink</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Frequency Band <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_frequency_band" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Bandwidth <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_bandwidth" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Minimum Frequency <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_min_frequency" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Maximum Frequency <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_max_frequency" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Spot Frequency</label>
+                    <input type="text" name="beam_${i}_spot_frequency" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Polarization <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_polarization" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Satellite Receive Antenna Gain <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_rx_antenna_gain" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Satellite Antenna Radiation Pattern <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_antenna_pattern" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Satellite Receive Noise Temperature <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_noise_temperature" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Maximum EIRP <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_max_eirp" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Minimum EIRP <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_min_eirp" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Data Rate <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_data_rate" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Modulation Technique <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_modulation" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Required C/No <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_required_cno" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Uplink E/S Size <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_uplink_station_size" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Uplink E/S Antenna Transmit Gain <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_uplink_antenna_gain" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">E/S Radiation Pattern <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_radiation_pattern" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Location of U/L E/S (Longitude, Latitude) <span class="text-red-500">*</span></label>
+                    <input type="text" name="beam_${i}_uplink_station_location" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Coverage Area Contour <span class="text-red-500">*</span></label>
+                    <textarea name="beam_${i}_coverage_area" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" rows="3"></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Service Area Contour <span class="text-red-500">*</span></label>
+                    <textarea name="beam_${i}_service_area" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" rows="3"></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">EIRP & Contours <span class="text-red-500">*</span></label>
+                    <textarea name="beam_${i}_eirp_contours" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" rows="3"></textarea>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML("beforeend", beamSection);
+    }
+});
+document.getElementById("beam_count").dispatchEvent(new Event("change"));
+</script>
+{% endblock %}

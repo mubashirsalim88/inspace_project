@@ -1,0 +1,25 @@
+{% extends "module_5/forms_base.html" %}
+{% block title %}Module 5 - Launch Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <!-- 33. Launcher and Relevant Details -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Launcher and Relevant Details <span class="text-red-500">*</span></label>
+            <textarea name="launcher_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Launcher: Falcon 9, Launch Facility: Cape Canaveral, Location: USA">{{ form_data.launcher_details or '' }}</textarea>
+        </div>
+
+        <!-- 34. Tentative Schedule -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Tentative Schedule for Hosted Payload Realization, Integration, and Launch <span class="text-red-500">*</span></label>
+            <textarea name="launch_schedule" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Realization: Q1 2025, Integration: Q2 2025, Launch: Q3 2025">{{ form_data.launch_schedule or '' }}</textarea>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "module_8/forms_base.html" %}
+{% block title %}Module 8 - Regulatory License Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Clearances/Approvals/Licenses from Other Government Departments (e.g., DoT) <span class="text-red-500">*</span></label>
+            <textarea name="regulatory_clearances" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Details of SACFA clearance, DoT operating license, etc. (Obtained/In-process/Yet to apply)">{{ form_data.regulatory_clearances or '' }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Upload License Document <span class="text-red-500">*</span></label>
+            <input type="file" name="license_document" id="license_document" multiple required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+            {% if existing_files %}
+                <p class="text-sm text-gray-600 mt-2">Uploaded:
+                    {% for file in existing_files %}
+                        <a href="{{ url_for('module_8.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline">{{ file.filename }}</a>{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </p>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

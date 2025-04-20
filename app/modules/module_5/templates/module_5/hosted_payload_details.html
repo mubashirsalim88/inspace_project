@@ -1,0 +1,160 @@
+{% extends "module_5/forms_base.html" %}
+{% block title %}Module 5 - Hosted Payload Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <!-- 9. Constellation Details -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Is the Hosted Payload part of a constellation? <span class="text-red-500">*</span></label>
+            <select name="is_constellation" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="is_constellation">
+                <option value="Yes" {% if form_data.is_constellation == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.is_constellation == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="constellation_details" class="{% if form_data.is_constellation != 'Yes' %}hidden{% endif %} mt-2">
+                <label class="block text-base mb-1 text-gray-800">Number of Hosted Payloads in the Constellation <span class="text-red-500">*</span></label>
+                <input type="number" name="constellation_payload_count" {% if form_data.is_constellation == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., 10" value="{{ form_data.constellation_payload_count or '' }}">
+                <label class="block text-base mb-1 text-gray-800 mt-2">Planned Schedule for Completion of the Constellation <span class="text-red-500">*</span></label>
+                <input type="text" name="constellation_schedule" {% if form_data.is_constellation == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Q4 2026" value="{{ form_data.constellation_schedule or '' }}">
+            </div>
+        </div>
+
+        <!-- 10. Number of Hosted Payloads for Authorization -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Number of Hosted Payloads for which Authorization is Sought <span class="text-red-500">*</span></label>
+            <input type="number" name="payloads_for_authorization" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., 5" value="{{ form_data.payloads_for_authorization or '' }}">
+        </div>
+
+        <!-- 11. Name of Hosted Payload(s) -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Name of Hosted Payload(s) <span class="text-red-500">*</span></label>
+            <input type="text" name="payload_names" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Payload-1, Payload-2" value="{{ form_data.payload_names or '' }}">
+        </div>
+
+        <!-- 12. Objectives of Hosted Payload(s) -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Objectives of Hosted Payload(s) <span class="text-red-500">*</span></label>
+            <textarea name="payload_objectives" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Earth observation, communication">{{ form_data.payload_objectives or '' }}</textarea>
+        </div>
+
+        <!-- 13. Service Details -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Service Details: Target Users and Service Area (if applicable)</label>
+            <textarea name="service_details" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Target users: Government agencies, Service area: India">{{ form_data.service_details or '' }}</textarea>
+        </div>
+
+        <!-- 14. Shared Resources/Systems -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Shared Resources/Systems of the Host Space Object for Operations of the Hosted Payload <span class="text-red-500">*</span></label>
+            <textarea name="shared_resources" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Power systems, communication channels">{{ form_data.shared_resources or '' }}</textarea>
+        </div>
+
+        <!-- 15. Data Security Mechanisms -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Data Security Mechanisms to Prevent Unauthorized Access <span class="text-red-500">*</span></label>
+            <textarea name="data_security_mechanisms" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Encryption, access control">{{ form_data.data_security_mechanisms or '' }}</textarea>
+        </div>
+
+        <!-- 16. Configuration Document and Technical Specifications -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Type of Hosted Payload <span class="text-red-500">*</span></label>
+            <select name="payload_type" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="payload_type">
+                <option value="Earth Observation" {% if form_data.payload_type == 'Earth Observation' %}selected{% endif %}>Earth Observation</option>
+                <option value="Communication" {% if form_data.payload_type == 'Communication' %}selected{% endif %}>Communication</option>
+                <option value="Scientific" {% if form_data.payload_type == 'Scientific' %}selected{% endif %}>Scientific</option>
+                <option value="Special Purpose" {% if form_data.payload_type == 'Special Purpose' %}selected{% endif %}>Special Purpose (SIGINT/COMINT/ELINT/Thruster/etc.)</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Mass of Hosted Payload (kg, Dry & Wet if applicable) <span class="text-red-500">*</span></label>
+            <input type="number" name="payload_mass_dry" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Dry Mass" value="{{ form_data.payload_mass_dry or '' }}">
+            <input type="number" name="payload_mass_wet" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 mt-2" placeholder="Wet Mass (if applicable)" value="{{ form_data.payload_mass_wet or '' }}">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Dimensions of Hosted Payload (Stowed & Deployed, if applicable) <span class="text-red-500">*</span></label>
+            <input type="text" name="payload_dimensions" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., Stowed: 1x1x1m, Deployed: 2x2x2m" value="{{ form_data.payload_dimensions or '' }}">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Intended Operational Life (years) <span class="text-red-500">*</span></label>
+            <input type="number" name="payload_operational_life" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="e.g., 5" value="{{ form_data.payload_operational_life or '' }}">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Specifications of the Hosted Payload <span class="text-red-500">*</span></label>
+            <!-- Earth Observation Payload Specifications -->
+            <div id="eo_specs" class="{% if form_data.payload_type != 'Earth Observation' %}hidden{% endif %} mt-2">
+                <textarea name="eo_specifications" {% if form_data.payload_type == 'Earth Observation' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Type of sensors, imaging mode, spectral, spatial, radiometric, temporal resolutions, swath, revisit time, onboard storage, data security (if ≤30 cm GSD)">{{ form_data.eo_specifications or '' }}</textarea>
+                <label class="block text-base mb-1 text-gray-800 mt-2">Data Communication Channel Details <span class="text-red-500">*</span></label>
+                <textarea name="eo_data_comm_channel" {% if form_data.payload_type == 'Earth Observation' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Data rate, carrier frequencies, modulation, channel source (Host Space Object or Hosted Payload)">{{ form_data.eo_data_comm_channel or '' }}</textarea>
+            </div>
+            <!-- Communication Payload Specifications -->
+            <div id="comm_specs" class="{% if form_data.payload_type != 'Communication' %}hidden{% endif %} mt-2">
+                <textarea name="comm_specifications" {% if form_data.payload_type == 'Communication' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Channelization plan, transponder frequencies, bandwidth, user/gateway link frequencies, data rate, modulation, throughput, beams, coverage, EIRP, G/T chart (over India for NGSO)">{{ form_data.comm_specifications or '' }}</textarea>
+                <label class="block text-base mb-1 text-gray-800 mt-2">Data Communication Channel Details <span class="text-red-500">*</span></label>
+                <textarea name="comm_data_comm_channel" {% if form_data.payload_type == 'Communication' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Data rate, carrier frequencies, modulation, channel source (Host Space Object or Hosted Payload)">{{ form_data.comm_data_comm_channel or '' }}</textarea>
+            </div>
+            <!-- Scientific/Special Purpose Payload Specifications -->
+            <div id="scientific_specs" class="{% if form_data.payload_type != 'Scientific' and form_data.payload_type != 'Special Purpose' %}hidden{% endif %} mt-2">
+                <textarea name="scientific_specifications" {% if form_data.payload_type == 'Scientific' or form_data.payload_type == 'Special Purpose' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Instrument details, sensor specifications, propulsion type, propellant mass, motion control details">{{ form_data.scientific_specifications or '' }}</textarea>
+                <label class="block text-base mb-1 text-gray-800 mt-2">Data Communication Channel Details (if applicable)</label>
+                <textarea name="scientific_data_comm_channel" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Data rate, carrier frequencies, modulation, channel source (Host Space Object or Hosted Payload)">{{ form_data.scientific_data_comm_channel or '' }}</textarea>
+            </div>
+        </div>
+
+        <!-- 17. Separation from Host Space Object -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Is the Hosted Payload Planned to be Separated from the Host Space Object? <span class="text-red-500">*</span></label>
+            <select name="separation_planned" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="separation_planned">
+                <option value="Yes" {% if form_data.separation_planned == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.separation_planned == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="separation_details" class="{% if form_data.separation_planned != 'Yes' %}hidden{% endif %} mt-2">
+                <label class="block text-base mb-1 text-gray-800">Details of Separation <span class="text-red-500">*</span></label>
+                <textarea name="separation_details" {% if form_data.separation_planned == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Describe the separation mechanism and timeline">{{ form_data.separation_details or '' }}</textarea>
+            </div>
+        </div>
+
+        <!-- 18. Manufacturing Details -->
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Hosted Payload Manufacturing Details <span class="text-red-500">*</span></label>
+            <select name="manufacturing_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                <option value="Own Manufacturing" {% if form_data.manufacturing_details == 'Own Manufacturing' %}selected{% endif %}>Own Manufacturing</option>
+                <option value="Procured Indigenous" {% if form_data.manufacturing_details == 'Procured Indigenous' %}selected{% endif %}>Procured (Indigenous)</option>
+                <option value="Procured Imported" {% if form_data.manufacturing_details == 'Procured Imported' %}selected{% endif %}>Procured (Imported)</option>
+            </select>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("is_constellation").addEventListener("change", function() {
+        const constellationDiv = document.getElementById("constellation_details");
+        constellationDiv.classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#constellation_details input[name='constellation_payload_count']").required = this.value === "Yes";
+        document.querySelector("#constellation_details input[name='constellation_schedule']").required = this.value === "Yes";
+    });
+
+    document.getElementById("payload_type").addEventListener("change", function() {
+        const eoDiv = document.getElementById("eo_specs");
+        const commDiv = document.getElementById("comm_specs");
+        const scientificDiv = document.getElementById("scientific_specs");
+        eoDiv.classList.toggle("hidden", this.value !== "Earth Observation");
+        commDiv.classList.toggle("hidden", this.value !== "Communication");
+        scientificDiv.classList.toggle("hidden", this.value !== "Scientific" && this.value !== "Special Purpose");
+        document.querySelector("#eo_specs textarea[name='eo_specifications']").required = this.value === "Earth Observation";
+        document.querySelector("#eo_specs textarea[name='eo_data_comm_channel']").required = this.value === "Earth Observation";
+        document.querySelector("#comm_specs textarea[name='comm_specifications']").required = this.value === "Communication";
+        document.querySelector("#comm_specs textarea[name='comm_data_comm_channel']").required = this.value === "Communication";
+        document.querySelector("#scientific_specs textarea[name='scientific_specifications']").required = (this.value === "Scientific" || this.value === "Special Purpose");
+    });
+
+    document.getElementById("separation_planned").addEventListener("change", function() {
+        const separationDiv = document.getElementById("separation_details");
+        separationDiv.classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#separation_details textarea").required = this.value === "Yes";
+    });
+</script>
+{% endblock %}
