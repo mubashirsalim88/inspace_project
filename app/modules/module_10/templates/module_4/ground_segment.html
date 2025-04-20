@@ -1,0 +1,36 @@
+{% extends "module_4/forms_base.html" %}
+{% block title %}Module 4 - Ground Segment{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite TT&C Stations <span class="text-red-500">*</span></label>
+            <textarea name="ttc_stations" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Locations, ownership details">{{ form_data.ttc_stations or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">TT&C Station Outside India</label>
+            <textarea name="ttc_outside_india" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Justification if applicable">{{ form_data.ttc_outside_india or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Mission Control Centre (MCC) <span class="text-red-500">*</span></label>
+            <textarea name="mcc_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Locations, ownership details">{{ form_data.mcc_details or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">MCC Outside India</label>
+            <textarea name="mcc_outside_india" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Justification if applicable">{{ form_data.mcc_outside_india or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Data Security in MCC <span class="text-red-500">*</span></label>
+            <textarea name="mcc_security" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Mechanisms for securing Indian traffic">{{ form_data.mcc_security or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">EO Data Reception Ground Stations <span class="text-red-500">*</span></label>
+            <textarea name="eo_stations" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Locations, ownership details">{{ form_data.eo_stations or '' }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

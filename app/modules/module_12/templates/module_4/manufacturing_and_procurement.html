@@ -1,0 +1,60 @@
+{% extends "module_4/forms_base.html" %}
+{% block title %}Module 4 - Manufacturing and Procurement{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite Manufacturing Details <span class="text-red-500">*</span></label>
+            <select name="manufacturing_source" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                <option value="Own Manufacturing" {% if form_data.manufacturing_source == 'Own Manufacturing' %}selected{% endif %}>Own Manufacturing</option>
+                <option value="Procured (Imported)" {% if form_data.manufacturing_source == 'Procured (Imported)' %}selected{% endif %}>Procured (Imported)</option>
+                <option value="Procured (Indigenous)" {% if form_data.manufacturing_source == 'Procured (Indigenous)' %}selected{% endif %}>Procured (Indigenous)</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Procurement/Acquisition/Transfer of Ownership <span class="text-red-500">*</span></label>
+            <select name="procurement" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="procurement">
+                <option value="Yes" {% if form_data.procurement == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.procurement == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="procurement_details" class="{% if form_data.procurement != 'Yes' %}hidden{% endif %} mt-2">
+                <textarea name="procurement_details" {% if form_data.procurement == 'Yes' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Previous ownership, orbital slot/parameters, health parameters, remaining life">{{ form_data.procurement_details or '' }}</textarea>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Subsidiary/Joint Venture with Non-Indian Entity <span class="text-red-500">*</span></label>
+            <select name="subsidiary" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" id="subsidiary">
+                <option value="Yes" {% if form_data.subsidiary == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.subsidiary == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="subsidiary_consent" class="{% if form_data.subsidiary != 'Yes' %}hidden{% endif %} mt-2">
+                <label class="block text-base mb-1 text-gray-800">Consent Document <span class="text-red-500">*</span></label>
+                <input type="file" name="files" {% if form_data.subsidiary == 'Yes' %}required{% endif %} multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800">
+                {% for file in existing_files %}
+                    <p><a href="{{ url_for('module_4.download_file', file_id=file.id) }}">{{ file.filename }}</a></p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Tentative Schedule <span class="text-red-500">*</span></label>
+            <textarea name="tentative_schedule" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800" placeholder="Timeline with major milestones">{{ form_data.tentative_schedule or '' }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <button type="submit" name="previous" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</button>
+            <button type="submit" name="next" class="py-2 px-4 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white rounded-lg hover:scale-105">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("procurement").addEventListener("change", function() {
+        const detailsDiv = document.getElementById("procurement_details");
+        detailsDiv.classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#procurement_details textarea").required = this.value === "Yes";
+    });
+    document.getElementById("subsidiary").addEventListener("change", function() {
+        const consentDiv = document.getElementById("subsidiary_consent");
+        consentDiv.classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#subsidiary_consent input").required = this.value === "Yes";
+    });
+</script>
+{% endblock %}

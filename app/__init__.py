@@ -39,6 +39,10 @@ def create_app():
     from app.modules.module_2 import module_2 as module_2_bp
     from app.modules.module_3 import module_3 as module_3_bp
     from app.modules.module_4 import module_4 as module_4_bp
+    from app.modules.module_9 import module_9 as module_9_bp
+    from app.modules.module_10 import module_10 as module_10_bp
+    from app.modules.module_11 import module_11 as module_11_bp
+    from app.modules.module_12 import module_12 as module_12_bp
     from app.chat import chat as chat_bp
 
     app.register_blueprint(auth_bp)
@@ -51,6 +55,10 @@ def create_app():
     app.register_blueprint(module_2_bp)
     app.register_blueprint(module_3_bp)
     app.register_blueprint(module_4_bp)
+    app.register_blueprint(module_9_bp)
+    app.register_blueprint(module_10_bp)
+    app.register_blueprint(module_11_bp)
+    app.register_blueprint(module_12_bp)
     app.register_blueprint(chat_bp)
 
     # Log all requests
