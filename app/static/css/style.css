@@ -8,6 +8,7 @@ body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
+    background-color: #f3f4f6; /* Light gray background for consistency */
 }
 
 /* Navbar */
@@ -109,4 +110,102 @@ canvas {
 }
 
 /* Dashboard */
-.font-poppins { font-family: 'Poppins', sans-serif; }
+.font-poppins { 
+    font-family: 'Poppins', sans-serif; 
+}
+
+/* Flash Messages */
+.flash-message {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Assigner Dashboard */
+aside {
+    background-color: #1e3a8a; /* Deep blue for IN-SPACe branding */
+    color: #ffffff;
+}
+.sidebar-link {
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+.sidebar-link:hover, .sidebar-link.bg-blue-700 {
+    background-color: #1e40af; /* Slightly lighter blue on hover/active */
+}
+.tab-content {
+    transition: opacity 0.3s ease-in-out;
+}
+.tab-content.hidden {
+    opacity: 0;
+    display: none;
+}
+.card {
+    background-color: #eff6ff; /* Light blue card background */
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: box-shadow 0.3s ease;
+}
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Verifier Dashboard */
+.accordion-item {
+    border-radius: 8px;
+    overflow: hidden;
+}
+.accordion-header {
+    background-color: #ecfdf5; /* Light green background */
+    color: #047857; /* Dark green text */
+    transition: background-color 0.3s ease;
+}
+.accordion-header:hover {
+    background-color: #d1fae5; /* Lighter green on hover */
+}
+.accordion-content {
+    background-color: #ffffff;
+    transition: max-height 0.3s ease;
+}
+.accordion-header svg {
+    transition: transform 0.3s ease;
+}
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+th, td {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.75rem;
+}
+thead {
+    background-color: #ecfdf5; /* Match accordion header */
+    color: #047857;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    aside {
+        width: 100%;
+        max-width: 200px;
+    }
+    .sidebar-link {
+        font-size: 0.85rem;
+    }
+    .accordion-item {
+        font-size: 0.9rem;
+    }
+    table {
+        font-size: 0.85rem;
+    }
+    th, td {
+        padding: 0.5rem;
+    }
+}

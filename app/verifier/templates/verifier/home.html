@@ -2,76 +2,99 @@
 {% extends "base.html" %}
 {% block title %}Verifier Dashboard - IN-SPACe{% endblock %}
 {% block content %}
-<div class="p-6">
-    <h2 class="text-2xl font-bold text-gray-800 mb-4 animate__animated animate__fadeInDown">Verifier Dashboard ({{ role }})</h2>
-    <p class="text-gray-600 mb-6">Review and verify assigned applications.</p>
+<div class="p-8 bg-gray-100 min-h-screen">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6 animate__animated animate__fadeInDown">Verifier Dashboard ({{ role }})</h2>
+    <p class="text-gray-600 mb-8">Review and verify assigned applications.</p>
 
-    <!-- Navigation Tabs for Modules -->
-    <div class="border-b border-gray-200 mb-6">
-        <nav class="-mb-px flex space-x-8">
-            {% for module in ['module_1', 'module_2', 'module_3', 'module_4'] %}
-            <button class="tab-link px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 border-b-2 {% if loop.first %}text-blue-600 bg-blue-100 border-blue-600 font-bold{% else %}border-transparent{% endif %} focus:outline-none transition-all duration-200" data-tab="{{ module }}">{{ module|replace('_', ' ')|title }}</button>
-            {% endfor %}
-        </nav>
-    </div>
-
-    <!-- Module Sections -->
-    {% for module in ['module_1', 'module_2', 'module_3', 'module_4'] %}
-    <div id="{{ module }}" class="tab-content {% if not loop.first %}hidden{% endif %}">
-        <div class="bg-gray-50 border border-gray-200 shadow-lg rounded-lg p-6">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">{{ module|replace('_', ' ')|title }} Applications</h3>
-            {% if module_apps[module] %}
-            <ul class="space-y-4">
-                {% for app in module_apps[module] %}
-                <li class="p-4 bg-white rounded-lg shadow flex justify-between items-center transition-all duration-300 hover:bg-gray-100">
-                    <div>
-                        <h4 class="text-lg font-medium text-gray-900">{{ app.user.name }}</h4>
-                        <p class="text-sm text-gray-600">Module: {{ module|replace('_', ' ')|title }}</p>
-                        <p class="text-sm text-gray-500">Last Updated: {{ app.updated_at.strftime('%B %d, %Y') }}</p>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        {% if app.status == "Under Review" %}
-                            <span class="bg-yellow-100 text-yellow-700 text-xs font-medium px-3 py-1 rounded-lg">Under Review</span>
-                            <a href="{{ url_for('verifier.review', application_id=app.id) }}" class="text-blue-600 hover:underline text-sm font-semibold">Review</a>
-                        {% elif app.status == "Pending Secondary Approval" %}
-                            <span class="bg-blue-100 text-blue-700 text-xs font-medium px-3 py-1 rounded-lg">Pending Secondary</span>
-                            {% if current_user.role == "Secondary Verifier" %}
-                                <a href="{{ url_for('verifier.review', application_id=app.id) }}" class="text-blue-600 hover:underline text-sm font-semibold">Review</a>
-                            {% endif %}
-                        {% elif app.status == "Approved" %}
-                            <span class="bg-green-100 text-green-700 text-xs font-medium px-3 py-1 rounded-lg">Approved</span>
-                        {% elif app.status == "Rejected" %}
-                            <span class="bg-red-100 text-red-700 text-xs font-medium px-3 py-1 rounded-lg">Rejected</span>
-                        {% endif %}
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p class="text-gray-500 text-center">No {{ module|replace('_', ' ')|title }} applications assigned to you.</p>
-            {% endif %}
+    <!-- Accordion for Modules -->
+    <div class="space-y-4">
+        {% for module in ['module_1', 'module_2', 'module_3', 'module_4', 'module_5', 'module_6', 'module_7', 'module_8'] %}
+        <div class="accordion-item bg-white shadow-lg rounded-lg border border-green-200">
+            <button class="accordion-header w-full text-left p-4 bg-green-50 text-green-800 font-semibold text-lg flex justify-between items-center hover:bg-green-100 transition-colors duration-200">
+                {{ module|replace('_', ' ')|title }} Applications
+                <svg class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div class="accordion-content hidden p-6">
+                {% if module_apps[module] %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-green-100 text-green-800">
+                                <th class="p-3 font-semibold">ID</th>
+                                <th class="p-3 font-semibold">Applicant</th>
+                                <th class="p-3 font-semibold">Status</th>
+                                <th class="p-3 font-semibold">Last Updated</th>
+                                <th class="p-3 font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in module_apps[module] %}
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="p-3">{{ app.id }}</td>
+                                <td class="p-3">{{ app.user.name }}</td>
+                                <td class="p-3">
+                                    {% if app.status == "Under Review" %}
+                                        <span class="bg-yellow-100 text-yellow-700 text-xs font-medium px-3 py-1 rounded-lg">Under Review</span>
+                                    {% elif app.status == "Pending Secondary Approval" %}
+                                        <span class="bg-blue-100 text-blue-700 text-xs font-medium px-3 py-1 rounded-lg">Pending Secondary</span>
+                                    {% elif app.status == "Approved" %}
+                                        <span class="bg-green-100 text-green-700 text-xs font-medium px-3 py-1 rounded-lg">Approved</span>
+                                    {% elif app.status == "Rejected" %}
+                                        <span class="bg-red-100 text-red-700 text-xs font-medium px-3 py-1 rounded-lg">Rejected</span>
+                                    {% endif %}
+                                </td>
+                                <td class="p-3">{{ app.updated_at.strftime('%B %d, %Y') }}</td>
+                                <td class="p-3">
+                                    {% if app.status == "Under Review" or (app.status == "Pending Secondary Approval" and current_user.role == "Secondary Verifier") %}
+                                        <a href="{{ url_for('verifier.review', application_id=app.id) }}" class="text-green-600 hover:underline text-sm font-semibold">Review</a>
+                                    {% else %}
+                                        <span class="text-gray-500 text-sm">No Action</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center">No {{ module|replace('_', ' ')|title }} applications assigned to you.</p>
+                {% endif %}
+            </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const tabLinks = document.querySelectorAll(".tab-link");
-        const tabContents = document.querySelectorAll(".tab-content");
+document.addEventListener("DOMContentLoaded", function () {
+    const accordionHeaders = document.querySelectorAll(".accordion-header");
+    accordionHeaders.forEach(header => {
+        header.addEventListener("click", () => {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector("svg");
+            const isOpen = !content.classList.contains("hidden");
 
-        tabLinks.forEach(button => {
-            button.addEventListener("click", () => {
-                const tabId = button.getAttribute("data-tab");
-                tabLinks.forEach(btn => {
-                    btn.classList.remove("text-blue-600", "bg-blue-100", "border-blue-600", "font-bold");
-                    btn.classList.add("border-transparent");
-                });
-                tabContents.forEach(content => content.classList.add("hidden"));
-                button.classList.add("text-blue-600", "bg-blue-100", "border-blue-600", "font-bold");
-                document.getElementById(tabId).classList.remove("hidden");
-            });
+            // Close all other accordions
+            document.querySelectorAll(".accordion-content").forEach(c => c.classList.add("hidden"));
+            document.querySelectorAll(".accordion-header svg").forEach(i => i.classList.remove("rotate-180"));
+
+            // Toggle current accordion
+            if (!isOpen) {
+                content.classList.remove("hidden");
+                icon.classList.add("rotate-180");
+            }
         });
     });
+
+    // Open the first accordion by default
+    const firstContent = document.querySelector(".accordion-content");
+    const firstIcon = document.querySelector(".accordion-header svg");
+    if (firstContent && firstIcon) {
+        firstContent.classList.remove("hidden");
+        firstIcon.classList.add("rotate-180");
+    }
+});
 </script>
 {% endblock %}

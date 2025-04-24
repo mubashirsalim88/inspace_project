@@ -15,12 +15,12 @@ def home():
     applications = Application.query.filter_by(status="Submitted").all()
     assigned_applications = Application.query.filter_by(status="Under Review").join(ApplicationAssignment).filter(ApplicationAssignment.assigner_id == current_user.id).all()
     
-    # Group applications by module
-    module_apps = {"module_1": [], "module_2": [], "module_3": [], "module_4": []}
-    assigned_module_apps = {"module_1": [], "module_2": [], "module_3": [], "module_4": []}
+    # Group applications by module (all eight modules)
+    module_apps = {f"module_{i}": [] for i in range(1, 9)}
+    assigned_module_apps = {f"module_{i}": [] for i in range(1, 9)}
     
     for app in applications:
-        # Get the first module_name (assuming one primary module per app)
+        # Get the first module_name
         module_name = next((md.module_name for md in app.module_data if md.module_name in module_apps), None)
         if module_name:
             module_apps[module_name].append(app)
@@ -72,12 +72,12 @@ def assign(application_id):
 @role_required("Assigner")
 def view_assignment(application_id):
     assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first_or_404()
-    application = Application.query.get(application_id)  # Fetch the Application directly
+    application = Application.query.get(application_id)
     primary_verifier = User.query.get(assignment.primary_verifier_id)
     secondary_verifier = User.query.get(assignment.secondary_verifier_id)
     return render_template(
         "assigner/view_assignment.html",
-        application=application,  # Pass the Application object
+        application=application,
         primary_verifier=primary_verifier,
         secondary_verifier=secondary_verifier
     )

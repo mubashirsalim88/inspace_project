@@ -26,7 +26,8 @@ def home():
             applications.append(app)
             app_ids.add(app.id)
     
-    module_apps = {"module_1": [], "module_2": [], "module_3": [], "module_4": []}
+    # Group applications by module (all eight modules)
+    module_apps = {f"module_{i}": [] for i in range(1, 9)}
     for app in applications:
         module_name = next((md.module_name for md in app.module_data if md.module_name in module_apps), None)
         if module_name:
@@ -59,7 +60,7 @@ def review(application_id):
     secondary_verifier = User.query.get(assignment.secondary_verifier_id) if assignment.secondary_verifier_id else None
 
     module_name = next(
-        (md.module_name for md in application.module_data if md.module_name in ["module_1", "module_2", "module_3", "module_4"]),
+        (md.module_name for md in application.module_data if md.module_name in [f"module_{i}" for i in range(1, 9)]),
         None
     )
     if not module_name:
