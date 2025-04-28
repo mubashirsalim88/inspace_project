@@ -1,0 +1,43 @@
+<!-- app/modules/module_9/templates/module_9/data_mechanism.html -->
+{% extends "module_9/forms_base.html" %}
+{% block title %}Module 9 - Data Sourcing and Dissemination{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Data Source <span class="text-red-500">*</span></label>
+            <select name="data_source" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Satellite operator" {% if form_data.data_source == 'Satellite operator' %}selected{% endif %}>Satellite operator</option>
+                <option value="Authorized Data Disseminator" {% if form_data.data_source == 'Authorized Data Disseminator' %}selected{% endif %}>Authorized Data Disseminator</option>
+            </select>
+            <input type="text" name="source_name" value="{{ form_data.source_name or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name">
+            <textarea name="source_address" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Address">{{ form_data.source_address or '' }}</textarea>
+            <input type="text" name="source_contact" value="{{ form_data.source_contact or '' }}" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Contact Details">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Mode of Sourcing and Security Mechanism <span class="text-red-500">*</span></label>
+            <textarea name="sourcing_security" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.sourcing_security or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Data Archival & Retrieval Mechanism <span class="text-red-500">*</span></label>
+            <textarea name="archival_retrieval" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.archival_retrieval or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Data Storage and Security Measures <span class="text-red-500">*</span></label>
+            <textarea name="storage_security" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.storage_security or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Data Dissemination Mechanism <span class="text-red-500">*</span></label>
+            <textarea name="dissemination_mechanism" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.dissemination_mechanism or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Additional Information</label>
+            <textarea name="additional_info" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.additional_info or '' }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_9.fill_step', step='satellite_owner_part2', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

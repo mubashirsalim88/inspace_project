@@ -1,0 +1,98 @@
+<!-- app/modules/module_9/templates/module_9/undertaking.html -->
+{% extends "module_9/forms_base.html" %}
+{% block title %}Module 9 - Undertaking/Declaration{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form id="undertaking_form">
+        <div class="mb-4">
+            <label class="flex items-start space-x-2">
+                <input type="checkbox" name="authorization_affirmation" {% if form_data.authorization_affirmation %}checked{% endif %} required class="mt-1">
+                <span class="text-base text-gray-800">Affirm authorization by satellite operator/OEM/owner for selling/disseminating data, and undertake to inform IN-SPACe within 5 working days if authorization is withdrawn.</span>
+            </label>
+        </div>
+        <div class="mb-4">
+            <label class="flex items-start space-x-2">
+                <input type="checkbox" name="compliance_laws" {% if form_data.compliance_laws %}checked{% endif %} required class="mt-1">
+                <span class="text-base text-gray-800">Affirm compliance with existing laws, rules, regulations, policies, and commitment to remain compliant with amendments or new policies.</span>
+            </label>
+        </div>
+        <div class="mb-4">
+            <label class="flex items-start space-x-2">
+                <input type="checkbox" name="dst_guidelines" {% if form_data.dst_guidelines %}checked{% endif %} required class="mt-1">
+                <span class="text-base text-gray-800">Agree to abide by DST Guidelines and understand IN-SPACe’s right to terminate/suspend Authorization for violations.</span>
+            </label>
+        </div>
+        <div class="mb-4">
+            <label class="flex items-start space-x-2">
+                <input type="checkbox" name="user_credentials" {% if form_data.user_credentials %}checked{% endif %} required class="mt-1">
+                <span class="text-base text-gray-800">Undertake to verify user credentials, maintain dissemination records, and submit quarterly reports to IN-SPACe.</span>
+            </label>
+        </div>
+        <div class="mb-4">
+            <label class="flex items-start space-x-2">
+                <input type="checkbox" name="prevent_redissemination" {% if form_data.prevent_redissemination %}checked{% endif %} required class="mt-1">
+                <span class="text-base text-gray-800">Undertake to prevent re-dissemination and ensure secure custody of data, with IN-SPACe’s right to verify measures.</span>
+            </label>
+        </div>
+        <div class="mb-4">
+            <label class="flex items-start space-x-2">
+                <input type="checkbox" name="change_notification" {% if form_data.change_notification %}checked{% endif %} required class="mt-1">
+                <span class="text-base text-gray-800">Agree to inform IN-SPACe within 48 hours of changes in ownership, management, or satellite/constellation, and seek fresh/amended Authorization.</span>
+            </label>
+        </div>
+        <div class="mb-4">
+            <label class="flex items-start space-x-2">
+                <input type="checkbox" name="jurisdiction_notification" {% if form_data.jurisdiction_notification %}checked{% endif %} required class="mt-1">
+                <span class="text-base text-gray-800">Agree to inform IN-SPACe within 30 days of changes in jurisdiction/control per UN registration.</span>
+            </label>
+        </div>
+        <div class="mb-4">
+            <label class="flex items-start space-x-2">
+                <input type="checkbox" name="high_resolution_guidelines" {% if form_data.high_resolution_guidelines %}checked{% endif %} required class="mt-1">
+                <span class="text-base text-gray-800">Agree to abide by IN-SPACe guidelines on high-resolution data dissemination and understand consequences of non-compliance.</span>
+            </label>
+        </div>
+        <div class="mb-4">
+            <label class="flex items-start space-x-2">
+                <input type="checkbox" name="national_security_data" {% if form_data.national_security_data %}checked{% endif %} required class="mt-1">
+                <span class="text-base text-gray-800">Agree to provide Primary Data and Value-Added Products concerning national security to the Government on demand.</span>
+            </label>
+        </div>
+        <div class="mb-4">
+            <label class="flex items-start space-x-2">
+                <input type="checkbox" name="submission_authorization" {% if form_data.submission_authorization %}checked{% endif %} required class="mt-1">
+                <span class="text-base text-gray-800">Submission of application to IN-SPACe for authorization as Data Disseminator.</span>
+            </label>
+        </div>
+        <div class="mb-4">
+            <label class="flex items-start space-x-2">
+                <input type="checkbox" name="conformance_laws" {% if form_data.conformance_laws %}checked{% endif %} required class="mt-1">
+                <span class="text-base text-gray-800">Affirm that the application conforms to IN-SPACe conditions and applicable laws, policies, rules, and regulations.</span>
+            </label>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_9.fill_step', step='data_mechanism', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="button" onclick="saveUndertaking()" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Save and Proceed</button>
+        </div>
+    </form>
+</div>
+<script>
+    function saveUndertaking() {
+        const form = document.getElementById("undertaking_form");
+        const formData = new FormData(form);
+        fetch("{{ url_for('module_9.save_undertaking', application_id=application_id) }}", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                window.location.href = "{{ url_for('module_9.fill_step', step='annexure_a_section1', application_id=application_id) }}";
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => alert("Error saving form: " + error));
+    }
+</script>
+{% endblock %}

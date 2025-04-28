@@ -1,11 +1,11 @@
-# app/verifier/routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db, mail
-from app.models import Application, ApplicationAssignment, User, Notification
+from app.models import Application, ApplicationAssignment, User, Notification, ModuleData
 from app.utils import role_required
 from flask_mail import Message
 import logging
+from datetime import datetime, timedelta
 
 verifier = Blueprint("verifier", __name__, url_prefix="/verifier", template_folder="templates")
 
@@ -26,17 +26,31 @@ def home():
             applications.append(app)
             app_ids.add(app.id)
     
-    # Group applications by module (all eight modules)
-    module_apps = {f"module_{i}": [] for i in range(1, 9)}
+    # Group applications by module (all ten modules)
+    module_apps = {f"module_{i}": [] for i in range(1, 11)}
     for app in applications:
         module_name = next((md.module_name for md in app.module_data if md.module_name in module_apps), None)
         if module_name:
             module_apps[module_name].append(app)
 
+    # Define fixed module order
+    fixed_modules = [f"module_{i}" for i in range(1, 11)]
+
+    # Identify modules with actionable applications updated in the last 7 days
+    actionable_statuses = ["Under Review"] if current_user.role == "Primary Verifier" else ["Pending Secondary Approval"]
+    recent_actionable_modules = set()
+    for module in module_apps:
+        for app in module_apps[module]:
+            if app.status in actionable_statuses and (datetime.now() - app.updated_at).days <= 7:
+                recent_actionable_modules.add(module)
+
     return render_template(
         "verifier/home.html",
         module_apps=module_apps,
-        role=current_user.role
+        fixed_modules=fixed_modules,
+        recent_actionable_modules=recent_actionable_modules,
+        role=current_user.role,
+        datetime=datetime
     )
 
 @verifier.route("/review/<int:application_id>", methods=["GET", "POST"])
@@ -60,7 +74,7 @@ def review(application_id):
     secondary_verifier = User.query.get(assignment.secondary_verifier_id) if assignment.secondary_verifier_id else None
 
     module_name = next(
-        (md.module_name for md in application.module_data if md.module_name in [f"module_{i}" for i in range(1, 9)]),
+        (md.module_name for md in application.module_data if md.module_name in [f"module_{i}" for i in range(1, 11)]),
         None
     )
     if not module_name:

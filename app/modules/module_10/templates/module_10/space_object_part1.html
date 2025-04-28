@@ -1,0 +1,56 @@
+{% extends "module_10/forms_base.html" %}
+{% block title %}Module 10 - Space Object Information (Part 1){% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" action="{{ url_for('module_10.fill_step', step='space_object_part1', application_id=application_id) }}">
+        <div id="satellite_names_container" class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite Names <span class="text-red-500">*</span></label>
+            {% for name in form_data.get('satellite_names', ['']) %}
+            <div class="satellite_name_entry flex mb-2">
+                <input type="text" name="satellite_names" value="{{ name }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Satellite name">
+                <button type="button" class="remove_entry ml-2 py-1 px-3 bg-red-500 text-white rounded-lg hover:bg-red-600">Remove</button>
+            </div>
+            {% endfor %}
+            <button type="button" id="add_satellite_name" class="mt-2 py-1 px-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Add Satellite Name</button>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Payload Details <span class="text-red-500">*</span></label>
+            <textarea name="payload_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Details of the payload">{{ form_data.get('payload_details', '') }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Owner Name <span class="text-red-500">*</span></label>
+            <input type="text" name="owner_name" value="{{ form_data.get('owner_name', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name of the owner">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Contact Person <span class="text-red-500">*</span></label>
+            <input type="text" name="contact_person" value="{{ form_data.get('contact_person', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Contact person">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Owner Email <span class="text-red-500">*</span></label>
+            <input type="email" name="owner_email" value="{{ form_data.get('owner_email', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Owner email">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Owner Address <span class="text-red-500">*</span></label>
+            <textarea name="owner_address" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Owner address">{{ form_data.get('owner_address', '') }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_10.fill_step', step='general_info', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="action" value="save_and_next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById('add_satellite_name').addEventListener('click', function() {
+        const container = document.getElementById('satellite_names_container');
+        const template = container.querySelector('.satellite_name_entry').cloneNode(true);
+        template.querySelector('input').value = '';
+        container.insertBefore(template, document.getElementById('add_satellite_name'));
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove_entry') && document.querySelectorAll('.satellite_name_entry').length > 1) {
+            e.target.closest('.satellite_name_entry').remove();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 9 - Application Summary</title>
+    <script src="{{ url_for('static', filename='js/tailwind.js') }}"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: #374151;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section {
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 1rem;
+        }
+        .field {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .field-label {
+            font-weight: 500;
+            color: #4b5563;
+        }
+        .field-value {
+            color: #6b7280;
+        }
+        .download-btn, .dashboard-btn {
+            display: block;
+            width: fit-content;
+            margin: 1rem auto;
+            padding: 0.5rem 1rem;
+            color: white;
+            text-align: center;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .download-btn {
+            background-color: #1e40af;
+        }
+        .download-btn:hover {
+            background-color: #1e3a8a;
+        }
+        .dashboard-btn {
+            background-color: #10b981;
+        }
+        .dashboard-btn:hover {
+            background-color: #059669;
+        }
+        .flash-message {
+            margin: 1rem auto;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Application Summary - ID: {{ application_id }}</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {% if category == 'error' %}bg-red-500{% elif category == 'success' %}bg-green-500{% else %}bg-blue-500{% endif %} text-white">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% for md in all_module_data %}
+        <div class="section">
+            <h2>{{ md.step.replace('_', ' ').title() }}</h2>
+            {% for key, value in md.data.items() %}
+            {% if key not in ['documents', 'document_names', 'ownership_document', 'additional_document'] and value %}
+            <div class="field">
+                <span class="field-label">{{ key.replace('_', ' ').title() }}:</span>
+                <span class="field-value">{{ value }}</span>
+            </div>
+            {% elif key in ['ownership_document', 'additional_document'] and value %}
+            <div class="field">
+                <span class="field-label">{{ key.replace('_', ' ').title() }}:</span>
+                <span class="field-value">{{ value }}</span>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endfor %}
+        {% if application.status == 'Submitted' %}
+        <a href="{{ url_for('module_9.download_pdf', application_id=application_id) }}" class="download-btn">Download PDF</a>
+        {% endif %}
+        <a href="{{ url_for('applicant.home') }}" class="dashboard-btn">Return to Dashboard</a>
+    </div>
+</body>
+</html>

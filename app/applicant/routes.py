@@ -10,6 +10,8 @@ from app.modules.module_5.routes import STEPS as MODULE_5_STEPS
 from app.modules.module_6.routes import STEPS as MODULE_6_STEPS
 from app.modules.module_7.routes import STEPS as MODULE_7_STEPS
 from app.modules.module_8.routes import STEPS as MODULE_8_STEPS
+from app.modules.module_9.routes import STEPS as MODULE_9_STEPS
+from app.modules.module_10.routes import STEPS as MODULE_10_STEPS
 
 applicant = Blueprint("applicant", __name__, template_folder="templates")
 
@@ -20,24 +22,35 @@ def home():
         return redirect(url_for("index"))
     active_module = request.args.get("module", "module_1")
     applications = Application.query.filter_by(user_id=current_user.id).all()
-    module_tabs = {f"module_{i}": {"steps": {}, "completed": False} for i in range(1, 9)}
+    module_tabs = {f"module_{i}": {"steps": {}, "completed": False} for i in range(1, 11)}
     incomplete_apps = []
-    module_apps = {"module_1": [], "module_2": [], "module_3": [], "module_4": [], "module_5": [], "module_6": [], "module_7": [], "module_8": []}
+    module_apps = {
+        "module_1": [], "module_2": [], "module_3": [], "module_4": [], 
+        "module_5": [], "module_6": [], "module_7": [], "module_8": [], 
+        "module_9": [], "module_10": []
+    }
 
     for app in applications:
         module_1_completed = False
-        module_data_by_module = {"module_1": [], "module_2": [], "module_3": [], "module_4": [], "module_5": [], "module_6": [], "module_7": [], "module_8": []}
+        module_data_by_module = {
+            "module_1": [], "module_2": [], "module_3": [], "module_4": [], 
+            "module_5": [], "module_6": [], "module_7": [], "module_8": [], 
+            "module_9": [], "module_10": []
+        }
         for md in app.module_data:
             module_tabs[md.module_name]["steps"][md.step] = {"completed": md.completed}
             module_data_by_module[md.module_name].append(md)
             if md.module_name == "module_1":
-                required_steps = ["applicant_identity", "entity_details", "management_ownership",
-                                  "financial_credentials", "operational_contact", "declarations_submission"]
+                required_steps = [
+                    "applicant_identity", "entity_details", "management_ownership",
+                    "financial_credentials", "operational_contact", "declarations_submission"
+                ]
                 if all(any(md2.step == rs and md2.completed for md2 in app.module_data) for rs in required_steps):
                     module_1_completed = True
                     module_tabs["module_1"]["completed"] = True
 
-        for module in ["module_1", "module_2", "module_3", "module_4", "module_5", "module_6", "module_7", "module_8"]:
+        for module in ["module_1", "module_2", "module_3", "module_4", "module_5", 
+                       "module_6", "module_7", "module_8", "module_9", "module_10"]:
             if module_data_by_module[module] and app not in module_apps[module]:
                 module_apps[module].append(app)
 
@@ -85,8 +98,7 @@ def start_application():
             for app in all_user_apps
         )
         if not module_1_complete:
-            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 2.",
-                  "error")
+            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 2.", "error")
             redirect_url = url_for("applicant.home", module="module_1")
             success = False
         else:
@@ -103,8 +115,7 @@ def start_application():
             for app in all_user_apps
         )
         if not module_1_complete:
-            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 3.",
-                  "error")
+            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 3.", "error")
             redirect_url = url_for("applicant.home", module="module_1")
             success = False
         else:
@@ -121,8 +132,7 @@ def start_application():
             for app in all_user_apps
         )
         if not module_1_complete:
-            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 4.",
-                  "error")
+            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 4.", "error")
             redirect_url = url_for("applicant.home", module="module_1")
             success = False
         else:
@@ -139,8 +149,7 @@ def start_application():
             for app in all_user_apps
         )
         if not module_1_complete:
-            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 5.",
-                  "error")
+            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 5.", "error")
             redirect_url = url_for("applicant.home", module="module_1")
             success = False
         else:
@@ -157,8 +166,7 @@ def start_application():
             for app in all_user_apps
         )
         if not module_1_complete:
-            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 6.",
-                  "error")
+            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 6.", "error")
             redirect_url = url_for("applicant.home", module="module_1")
             success = False
         else:
@@ -175,8 +183,7 @@ def start_application():
             for app in all_user_apps
         )
         if not module_1_complete:
-            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 7.",
-                  "error")
+            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 7.", "error")
             redirect_url = url_for("applicant.home", module="module_1")
             success = False
         else:
@@ -193,12 +200,45 @@ def start_application():
             for app in all_user_apps
         )
         if not module_1_complete:
-            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 8.",
-                  "error")
+            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 8.", "error")
             redirect_url = url_for("applicant.home", module="module_1")
             success = False
         else:
             redirect_url = url_for("module_8.fill_step", step=steps[0], application_id=new_app.id)
+            success = True
+    elif module == "module_9":
+        steps = MODULE_9_STEPS
+        all_user_apps = Application.query.filter_by(user_id=current_user.id).all()
+        module_1_complete = any(
+            all(any(md.step == rs and md.completed for md in
+                    ModuleData.query.filter_by(application_id=app.id, module_name="module_1").all())
+                for rs in ["applicant_identity", "entity_details", "management_ownership", "financial_credentials",
+                           "operational_contact", "declarations_submission"])
+            for app in all_user_apps
+        )
+        if not module_1_complete:
+            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 9.", "error")
+            redirect_url = url_for("applicant.home", module="module_1")
+            success = False
+        else:
+            redirect_url = url_for("module_9.fill_step", step=steps[0], application_id=new_app.id)
+            success = True
+    elif module == "module_10":
+        steps = MODULE_10_STEPS
+        all_user_apps = Application.query.filter_by(user_id=current_user.id).all()
+        module_1_complete = any(
+            all(any(md.step == rs and md.completed for md in
+                    ModuleData.query.filter_by(application_id=app.id, module_name="module_1").all())
+                for rs in ["applicant_identity", "entity_details", "management_ownership", "financial_credentials",
+                           "operational_contact", "declarations_submission"])
+            for app in all_user_apps
+        )
+        if not module_1_complete:
+            flash("Please complete Module 1 (Basic Details) for at least one application before starting Module 10.", "error")
+            redirect_url = url_for("applicant.home", module="module_1")
+            success = False
+        else:
+            redirect_url = url_for("module_10.fill_step", step=steps[0], application_id=new_app.id)
             success = True
     else:
         steps = ["step_1"]

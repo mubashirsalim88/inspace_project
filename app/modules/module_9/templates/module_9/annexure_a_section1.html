@@ -1,0 +1,140 @@
+<!-- app/modules/module_9/templates/module_9/annexure_a_section1.html -->
+{% extends "module_9/forms_base.html" %}
+{% block title %}Module 9 - Annexure-A Section 1{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Data Usage <span class="text-red-500">*</span></label>
+            <select name="data_usage" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Self-consumption" {% if form_data.data_usage == 'Self-consumption' %}selected{% endif %}>Self-consumption</option>
+                <option value="Dissemination to other users" {% if form_data.data_usage == 'Dissemination to other users' %}selected{% endif %}>Dissemination to other users</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Entity Type <span class="text-red-500">*</span></label>
+            <select name="entity_type" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Government" {% if form_data.entity_type == 'Government' %}selected{% endif %}>Government</option>
+                <option value="PSU" {% if form_data.entity_type == 'PSU' %}selected{% endif %}>PSU</option>
+                <option value="Private" {% if form_data.entity_type == 'Private' %}selected{% endif %}>Private</option>
+                <option value="Other" {% if form_data.entity_type == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Legal Name</label>
+            <input type="text" name="legal_name" value="{{ form_data.legal_name or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Brand/Trade Name</label>
+            <input type="text" name="brand_name" value="{{ form_data.brand_name or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Address</label>
+            <textarea name="entity_address" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.entity_address or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Identification Copy</label>
+            <input type="file" name="identification_copy" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded Files:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}
+                        {% if file.field_name == "identification_copy" %}
+                        <li>
+                            <a href="{{ url_for('module_9.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">FDI/Management Details</label>
+            <textarea name="fdi_management" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.fdi_management or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Authorized Person Name <span class="text-red-500">*</span></label>
+            <input type="text" name="authorized_person" value="{{ form_data.authorized_person or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Authorized Person Contact <span class="text-red-500">*</span></label>
+            <input type="text" name="authorized_contact" value="{{ form_data.authorized_contact or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Project Name & End Use <span class="text-red-500">*</span></label>
+            <input type="text" name="project_name" value="{{ form_data.project_name or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Dissemination Date <span class="text-red-500">*</span></label>
+            <input type="date" name="dissemination_date" value="{{ form_data.dissemination_date or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Dissemination Time <span class="text-red-500">*</span></label>
+            <input type="time" name="dissemination_time" value="{{ form_data.dissemination_time or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite Name <span class="text-red-500">*</span></label>
+            <input type="text" name="satellite_name" value="{{ form_data.satellite_name or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Ground Footprint (KML)</label>
+            <input type="file" name="kml_file" multiple class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded Files:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}
+                        {% if file.field_name == "kml_file" %}
+                        <li>
+                            <a href="{{ url_for('module_9.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Footprint Area (sq km) <span class="text-red-500">*</span></label>
+            <input type="number" name="footprint_area" value="{{ form_data.footprint_area or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Data Source <span class="text-red-500">*</span></label>
+            <select name="data_source_type" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Archive" {% if form_data.data_source_type == 'Archive' %}selected{% endif %}>Archive</option>
+                <option value="Fresh tasking" {% if form_data.data_source_type == 'Fresh tasking' %}selected{% endif %}>Fresh tasking</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Acquisition Date <span class="text-red-500">*</span></label>
+            <input type="date" name="acquisition_date" value="{{ form_data.acquisition_date or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Acquisition Time <span class="text-red-500">*</span></label>
+            <input type="time" name="acquisition_time" value="{{ form_data.acquisition_time or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Orbit Path/Row Number <span class="text-red-500">*</span></label>
+            <input type="text" name="orbit_path" value="{{ form_data.orbit_path or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Payload/Sensor Type <span class="text-red-500">*</span></label>
+            <input type="text" name="payload_type" value="{{ form_data.payload_type or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Cloud Percentage <span class="text-red-500">*</span></label>
+            <input type="number" name="cloud_percentage" value="{{ form_data.cloud_percentage or '' }}" min="0" max="100" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Off Nadir Angle (degrees) <span class="text-red-500">*</span></label>
+            <input type="number" name="off_nadir_angle" value="{{ form_data.off_nadir_angle or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_9.fill_step', step='undertaking', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+<!-- app/modules/module_9/templates/module_9/satellite_owner_part2.html -->
+{% extends "module_9/forms_base.html" %}
+{% block title %}Module 9 - Satellite and Owner Information (Part 2){% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Shareholding Pattern <span class="text-red-500">*</span></label>
+            <textarea name="shareholding_pattern" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.shareholding_pattern or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Entities/Individuals with >10% Shareholding <span class="text-red-500">*</span></label>
+            <textarea name="significant_shareholders" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.significant_shareholders or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">UNOOSA Registration Details <span class="text-red-500">*</span></label>
+            <input type="text" name="unoosa_registration" value="{{ form_data.unoosa_registration or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Country of Registration <span class="text-red-500">*</span></label>
+            <input type="text" name="registration_country" value="{{ form_data.registration_country or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Operational In-Orbit? <span class="text-red-500">*</span></label>
+            <select name="is_operational" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="is_operational">
+                <option value="No" {% if form_data.is_operational == 'No' %}selected{% endif %}>No</option>
+                <option value="Yes" {% if form_data.is_operational == 'Yes' %}selected{% endif %}>Yes</option>
+            </select>
+            <div id="operational_life" class="{% if form_data.is_operational != 'Yes' %}hidden{% endif %} mt-2">
+                <input type="number" name="operational_life" {% if form_data.is_operational == 'Yes' %}required{% endif %} value="{{ form_data.operational_life or '' }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Estimated Life (Years)">
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Consent of Satellite Operator <span class="text-red-500">*</span></label>
+            <input type="file" name="consent_copy" multiple {% if not existing_files|selectattr('field_name', 'equalto', 'consent_copy')|list %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            <input type="date" name="consent_validity" required class="w-full p-3 mt-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" value="{{ form_data.consent_validity or '' }}">
+            {% if existing_files %}
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Previously Uploaded Files:</p>
+                <ul class="list-disc pl-5">
+                    {% for file in existing_files %}
+                        {% if file.field_name == "consent_copy" %}
+                        <li>
+                            <a href="{{ url_for('module_9.download_file', file_id=file.id) }}" class="text-blue-600 hover:underline" target="_blank">{{ file.filename }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_9.fill_step', step='satellite_owner_part1', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("is_operational").addEventListener("change", function() {
+        document.getElementById("operational_life").classList.toggle("hidden", this.value !== "Yes");
+        document.querySelector("#operational_life input").required = this.value === "Yes";
+    });
+</script>
+{% endblock %}

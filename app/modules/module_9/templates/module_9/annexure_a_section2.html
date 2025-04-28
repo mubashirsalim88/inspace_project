@@ -1,0 +1,27 @@
+{% extends "module_9/forms_base.html" %}
+{% block title %}Module 9 - Annexure A Section 2{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" action="{{ url_for('module_9.fill_step', step='annexure_a_section2', application_id=application_id) }}">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Technical Specifications <span class="text-red-500">*</span></label>
+            <textarea name="technical_specs" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Provide technical specifications of the satellite or system">{{ form_data.get('technical_specs', '') }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Compliance Details <span class="text-red-500">*</span></label>
+            <textarea name="compliance_details" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Describe compliance with regulatory requirements">{{ form_data.get('compliance_details', '') }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Additional Document (Optional)</label>
+            <input type="file" name="additional_document" accept=".pdf,.doc,.docx" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none">
+            {% if form_data.get('additional_document') %}
+            <p class="mt-2 text-sm text-gray-600">Current file: {{ form_data.get('additional_document') }}</p>
+            {% endif %}
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_9.fill_step', step='annexure_a_section1', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="action" value="save_and_next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "module_10/forms_base.html" %}
+{% block title %}Module 10 - Space Object Information Part 2{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" action="{{ url_for('module_10.fill_step', step='space_object_part2', application_id=application_id) }}" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">UNOOSA Registration Details <span class="text-red-500">*</span></label>
+            <input type="text" name="registration_details" value="{{ form_data.get('registration_details', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Registration details as per UNOOSA">
+            <input type="text" name="registration_country" value="{{ form_data.get('registration_country', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Country of registration">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Estimated Operational Life (Years) <span class="text-red-500">*</span></label>
+            <input type="number" name="operational_life" value="{{ form_data.get('operational_life', '') }}" required min="0" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter years">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Applicant is Satellite Operator/Owner <span class="text-red-500">*</span></label>
+            <select name="is_operator_owner" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Yes" {% if form_data.get('is_operator_owner') == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.get('is_operator_owner') == 'No' %}selected{% endif %}>No</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Data Source <span class="text-red-500">*</span></label>
+            <select name="data_source" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Satellite operator" {% if form_data.get('data_source') == 'Satellite operator' %}selected{% endif %}>Satellite operator</option>
+                <option value="Authorized Data Disseminator" {% if form_data.get('data_source') == 'Authorized Data Disseminator' %}selected{% endif %}>Authorized Data Disseminator</option>
+            </select>
+            <input type="text" name="source_name" value="{{ form_data.get('source_name', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name of entity">
+            <textarea name="source_address" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Address">{{ form_data.get('source_address', '') }}</textarea>
+            <input type="text" name="source_contact" value="{{ form_data.get('source_contact', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Contact details">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Consent of Satellite Operator <span class="text-red-500">*</span></label>
+            <input type="file" name="consent_copy" accept=".pdf,.doc,.docx" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none">
+            {% if form_data.get('consent_copy') %}
+            <p class="mt-2 text-sm text-gray-600">Current file: {{ form_data.get('consent_copy') }}</p>
+            {% endif %}
+            <input type="date" name="consent_validity" value="{{ form_data.get('consent_validity', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Validity date">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Additional Information</label>
+            <textarea name="additional_info" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Provide any additional details (optional)">{{ form_data.get('additional_info', '') }}</textarea>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_10.fill_step', step='space_object_part1', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="action" value="save_and_next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

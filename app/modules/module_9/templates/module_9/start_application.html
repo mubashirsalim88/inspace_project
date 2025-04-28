@@ -1,0 +1,12 @@
+<!-- app/modules/module_9/templates/module_9/start_application.html -->
+{% extends "module_9/forms_base.html" %}
+{% block title %}Module 9 - Start Application{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <h2 class="text-2xl font-semibold mb-4 text-gray-800">Start Module 9 Application</h2>
+    <p class="text-gray-600 mb-6">This module covers satellite data dissemination authorization. Click below to begin.</p>
+    <form method="POST">
+        <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Start Application</button>
+    </form>
+</div>
+{% endblock %}

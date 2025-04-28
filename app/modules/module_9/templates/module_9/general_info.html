@@ -1,0 +1,34 @@
+<!-- app/modules/module_9/templates/module_9/general_info.html -->
+{% extends "module_9/forms_base.html" %}
+{% block title %}Module 9 - General Information{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Previous Authorization Certificate by IN-SPACe (if any)</label>
+            <textarea name="previous_authorization" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.previous_authorization or '' }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Purpose of Application <span class="text-red-500">*</span></label>
+            <select name="application_purpose" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" id="application_purpose">
+                <option value="No change" {% if form_data.application_purpose == 'No change' %}selected{% endif %}>No change</option>
+                <option value="Renewal after expiry" {% if form_data.application_purpose == 'Renewal after expiry' %}selected{% endif %}>Renewal after expiry</option>
+                <option value="Change in ownership" {% if form_data.application_purpose == 'Change in ownership' %}selected{% endif %}>Change in ownership</option>
+            </select>
+            <div id="purpose_details" class="{% if form_data.application_purpose == 'No change' %}hidden{% endif %} mt-2">
+                <textarea name="purpose_details" {% if form_data.application_purpose != 'No change' %}required{% endif %} class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">{{ form_data.purpose_details or '' }}</textarea>
+            </div>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('applicant.home') }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Back to Dashboard</a>
+            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById("application_purpose").addEventListener("change", function() {
+        document.getElementById("purpose_details").classList.toggle("hidden", this.value === "No change");
+        document.querySelector("#purpose_details textarea").required = this.value !== "No change";
+    });
+</script>
+{% endblock %}

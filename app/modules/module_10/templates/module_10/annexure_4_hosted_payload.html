@@ -1,0 +1,159 @@
+{% extends "module_10/forms_base.html" %}
+{% block title %}Module 10 - Annexure-4: Hosted Payload Details{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" action="{{ url_for('module_10.fill_step', step='annexure_4_hosted_payload', application_id=application_id) }}" enctype="multipart/form-data">
+        <div class="mb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Part I: Indian Hosted Payload(s)</h3>
+            <input type="number" name="indian_number_of_payloads" value="{{ form_data.get('indian_number_of_payloads', '') }}" required min="0" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Number of Hosted Payloads">
+            <div id="indian_payload_names_container">
+                {% for name in form_data.get('indian_payload_names', ['']) %}
+                <input type="text" name="indian_payload_names" value="{{ name }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Payload Name">
+                {% endfor %}
+                <button type="button" id="add_indian_payload" class="mt-2 py-1 px-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Add Payload Name</button>
+            </div>
+            <textarea name="indian_objectives" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Objectives of Hosted Payload(s)">{{ form_data.get('indian_objectives', '') }}</textarea>
+            <input type="text" name="indian_owner_entity" value="{{ form_data.get('indian_owner_entity', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Entity Owning the Hosted Payload(s)">
+            <label class="block text-base mb-1 text-gray-800">Agreement/Contract Copy <span class="text-red-500">*</span></label>
+            <input type="file" name="indian_agreement_copy" accept=".pdf,.doc,.docx" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none">
+            {% if form_data.get('indian_agreement_copy') %}
+            <p class="mt-2 text-sm text-gray-600">Current file: {{ form_data.get('indian_agreement_copy') }}</p>
+            {% endif %}
+            <input type="text" name="indian_authorization_status" value="{{ form_data.get('indian_authorization_status', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Status of IN-SPACe Authorization">
+            <textarea name="indian_shared_resources" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Shared Resources/Systems of Host Space Object">{{ form_data.get('indian_shared_resources', '') }}</textarea>
+            <textarea name="indian_operation_mechanism" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Mechanism of Operations and Control">{{ form_data.get('indian_operation_mechanism', '') }}</textarea>
+            <label class="block text-base mb-1 text-gray-800">Operation Mechanism Diagram</label>
+            <input type="file" name="indian_operation_mechanism_file" accept=".pdf,.doc,.docx" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none">
+            {% if form_data.get('indian_operation_mechanism_file') %}
+            <p class="mt-2 text-sm text-gray-600">Current file: {{ form_data.get('indian_operation_mechanism_file') }}</p>
+            {% endif %}
+            <label class="block text-base mb-1 text-gray-800">Independent Operation <span class="text-red-500">*</span></label>
+            <select name="indian_independent_operation" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Yes" {% if form_data.get('indian_independent_operation') == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.get('indian_independent_operation') == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <label class="block text-base mb-1 text-gray-800">TT&C/MCC Usage <span class="text-red-500">*</span></label>
+            <select name="indian_ttc_mcc_usage" id="indian_ttc_mcc_usage" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Independent" {% if form_data.get('indian_ttc_mcc_usage') == 'Independent' %}selected{% endif %}>Independent</option>
+                <option value="Shared" {% if form_data.get('indian_ttc_mcc_usage') == 'Shared' %}selected{% endif %}>Shared</option>
+            </select>
+            <div id="indian_ttc_mcc_details_container" class="{% if form_data.get('indian_ttc_mcc_usage') != 'Shared' %}hidden{% endif %}">
+                <label class="block text-base mb-1 text-gray-800">Shared TT&C/MCC Details <span class="text-red-500">*</span></label>
+                <input type="text" name="indian_shared_ttc_mcc_details" value="{{ form_data.get('indian_shared_ttc_mcc_details', '') }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Details of Shared TT&C/MCC">
+            </div>
+        </div>
+        <div class="mb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Part II: Non-Indian Hosted Payload(s)</h3>
+            <input type="number" name="non_indian_number_of_payloads" value="{{ form_data.get('non_indian_number_of_payloads', '') }}" required min="0" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Number of Hosted Payloads">
+            <div id="non_indian_payload_names_container">
+                {% for name in form_data.get('non_indian_payload_names', ['']) %}
+                <input type="text" name="non_indian_payload_names" value="{{ name }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Payload Name">
+                {% endfor %}
+                <button type="button" id="add_non_indian_payload" class="mt-2 py-1 px-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Add Payload Name</button>
+            </div>
+            <textarea name="non_indian_objectives" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Objectives of Hosted Payload(s)">{{ form_data.get('non_indian_objectives', '') }}</textarea>
+            <input type="text" name="non_indian_owner_name" value="{{ form_data.get('non_indian_owner_name', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Owner Name">
+            <textarea name="non_indian_owner_address" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Owner Address">{{ form_data.get('non_indian_owner_address', '') }}</textarea>
+            <input type="text" name="non_indian_owner_contact" value="{{ form_data.get('non_indian_owner_contact', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Owner Contact Details">
+            <input type="text" name="non_indian_administration_details" value="{{ form_data.get('non_indian_administration_details', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Non-Indian Administration Details">
+            <label class="block text-base mb-1 text-gray-800">Authorization/Approval Copy <span class="text-red-500">*</span></label>
+            <input type="file" name="non_indian_authorization_copy" accept=".pdf,.doc,.docx" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none">
+            {% if form_data.get('non_indian_authorization_copy') %}
+            <p class="mt-2 text-sm text-gray-600">Current file: {{ form_data.get('non_indian_authorization_copy') }}</p>
+            {% endif %}
+            <textarea name="non_indian_payload_details" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Payload Details (Type, Mass, Dimensions, Operational Life, Specifications)">{{ form_data.get('non_indian_payload_details', '') }}</textarea>
+            <label class="block text-base mb-1 text-gray-800">Agreement/Contract Copy <span class="text-red-500">*</span></label>
+            <input type="file" name="non_indian_agreement_copy" accept=".pdf,.doc,.docx" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none">
+            {% if form_data.get('non_indian_agreement_copy') %}
+            <p class="mt-2 text-sm text-gray-600">Current file: {{ form_data.get('non_indian_agreement_copy') }}</p>
+            {% endif %}
+            <textarea name="non_indian_shared_resources" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Shared Resources/Systems of Host Space Object">{{ form_data.get('non_indian_shared_resources', '') }}</textarea>
+            <textarea name="non_indian_operation_mechanism" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Mechanism of Operations and Control">{{ form_data.get('non_indian_operation_mechanism', '') }}</textarea>
+            <label class="block text-base mb-1 text-gray-800">Operation Mechanism Diagram</label>
+            <input type="file" name="non_indian_operation_mechanism_file" accept=".pdf,.doc,.docx" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none">
+            {% if form_data.get('non_indian_operation_mechanism_file') %}
+            <p class="mt-2 text-sm text-gray-600">Current file: {{ form_data.get('non_indian_operation_mechanism_file') }}</p>
+            {% endif %}
+            <label class="block text-base mb-1 text-gray-800">Independent Operation <span class="text-red-500">*</span></label>
+            <select name="non_indian_independent_operation" id="non_indian_independent_operation" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Yes" {% if form_data.get('non_indian_independent_operation') == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.get('non_indian_independent_operation') == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="non_indian_ttc_mcc_container" class="{% if form_data.get('non_indian_independent_operation') != 'Yes' %}hidden{% endif %}">
+                <label class="block text-base mb-1 text-gray-800">TT&C/MCC Details <span class="text-red-500">*</span></label>
+                <input type="text" name="non_indian_ttc_mcc_details" value="{{ form_data.get('non_indian_ttc_mcc_details', '') }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="TT&C Stations, Mission Control Centre Details">
+            </div>
+            <label class="block text-base mb-1 text-gray-800">Services Over India <span class="text-red-500">*</span></label>
+            <select name="non_indian_services_over_india" id="non_indian_services_over_india" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Yes" {% if form_data.get('non_indian_services_over_india') == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.get('non_indian_services_over_india') == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="non_indian_services_details_container" class="{% if form_data.get('non_indian_services_over_india') != 'Yes' %}hidden{% endif %}">
+                <label class="block text-base mb-1 text-gray-800">Services Details <span class="text-red-500">*</span></label>
+                <input type="text" name="non_indian_services_details" value="{{ form_data.get('non_indian_services_details', '') }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Details of Services Over India">
+            </div>
+            <label class="block text-base mb-1 text-gray-800">Data Over Indian Territory <span class="text-red-500">*</span></label>
+            <select name="non_indian_data_over_india" id="non_indian_data_over_india" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Yes" {% if form_data.get('non_indian_data_over_india') == 'Yes' %}selected{% endif %}>Yes</option>
+                <option value="No" {% if form_data.get('non_indian_data_over_india') == 'No' %}selected{% endif %}>No</option>
+            </select>
+            <div id="non_indian_data_contract_container" class="{% if form_data.get('non_indian_data_over_india') != 'Yes' %}hidden{% endif %}">
+                <label class="block text-base mb-1 text-gray-800">Contract Details <span class="text-red-500">*</span></label>
+                <textarea name="non_indian_data_contract_details" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Contract Details for Data Over Indian Territory">{{ form_data.get('non_indian_data_contract_details', '') }}</textarea>
+            </div>
+            <input type="text" name="non_indian_itu_filing_details" value="{{ form_data.get('non_indian_itu_filing_details', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="ITU Filing Details (Administration, Name, Frequency, Status)">
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_10.fill_step', step='annexure_3_ssa_launch', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="action" value="save_and_next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById('add_indian_payload').addEventListener('click', function() {
+        const container = document.getElementById('indian_payload_names_container');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = 'indian_payload_names';
+        input.required = true;
+        input.className = 'w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500';
+        input.placeholder = 'Payload Name';
+        container.insertBefore(input, document.getElementById('add_indian_payload'));
+    });
+
+    document.getElementById('add_non_indian_payload').addEventListener('click', function() {
+        const container = document.getElementById('non_indian_payload_names_container');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = 'non_indian_payload_names';
+        input.required = true;
+        input.className = 'w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500';
+        input.placeholder = 'Payload Name';
+        container.insertBefore(input, document.getElementById('add_non_indian_payload'));
+    });
+
+    document.getElementById('indian_ttc_mcc_usage').addEventListener('change', function() {
+        const container = document.getElementById('indian_ttc_mcc_details_container');
+        container.classList.toggle('hidden', this.value !== 'Shared');
+        container.querySelector('input').required = this.value === 'Shared';
+    });
+
+    document.getElementById('non_indian_independent_operation').addEventListener('change', function() {
+        const container = document.getElementById('non_indian_ttc_mcc_container');
+        container.classList.toggle('hidden', this.value !== 'Yes');
+        container.querySelector('input').required = this.value === 'Yes';
+    });
+
+    document.getElementById('non_indian_services_over_india').addEventListener('change', function() {
+        const container = document.getElementById('non_indian_services_details_container');
+        container.classList.toggle('hidden', this.value !== 'Yes');
+        container.querySelector('input').required = this.value === 'Yes';
+    });
+
+    document.getElementById('non_indian_data_over_india').addEventListener('change', function() {
+        const container = document.getElementById('non_indian_data_contract_container');
+        container.classList.toggle('hidden', this.value !== 'Yes');
+        container.querySelector('textarea').required = this.value === 'Yes';
+    });
+</script>
+{% endblock %}

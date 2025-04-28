@@ -1,0 +1,116 @@
+{% extends "module_10/forms_base.html" %}
+{% block title %}Module 10 - Annexure-A: Data Dissemination Information{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" action="{{ url_for('module_10.fill_step', step='annexure_a', application_id=application_id) }}" enctype="multipart/form-data">
+        <div id="dissemination_entries">
+            {% for entry in form_data.get('dissemination_entries', [{}]) %}
+            <div class="mb-6 border-b pb-4 dissemination_entry">
+                <h3 class="text-lg font-medium text-gray-800 mb-2">Dissemination Entry</h3>
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">End User Type <span class="text-red-500">*</span></label>
+                    <select name="end_user_type" class="end_user_type w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <option value="Indian Entity" {% if entry.get('end_user_type') == 'Indian Entity' %}selected{% endif %}>Indian Entity</option>
+                        <option value="Non-Indian Entity" {% if entry.get('end_user_type') == 'Non-Indian Entity' %}selected{% endif %}>Non-Indian Entity</option>
+                    </select>
+                    <div class="country_of_origin_container {% if entry.get('end_user_type') != 'Non-Indian Entity' %}hidden{% endif %}">
+                        <label class="block text-base mb-1 text-gray-800">Country of Origin <span class="text-red-500">*</span></label>
+                        <input type="text" name="country_of_origin" value="{{ entry.get('country_of_origin', '') }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Country of origin">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Entity Type <span class="text-red-500">*</span></label>
+                    <select name="entity_type" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="Government" {% if entry.get('entity_type') == 'Government' %}selected{% endif %}>Government</option>
+                        <option value="PSU" {% if entry.get('entity_type') == 'PSU' %}selected{% endif %}>PSU</option>
+                        <option value="Private" {% if entry.get('entity_type') == 'Private' %}selected{% endif %}>Private</option>
+                        <option value="Other" {% if entry.get('entity_type') == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Legal Name of Entity <span class="text-red-500">*</span></label>
+                    <input type="text" name="legal_name" value="{{ entry.get('legal_name', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Legal name">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Brand & Trade Name (Optional)</label>
+                    <input type="text" name="brand_trade_name" value="{{ entry.get('brand_trade_name', '') }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Brand or trade name">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Address <span class="text-red-500">*</span></label>
+                    <textarea name="address" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Entity address">{{ entry.get('address', '') }}</textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Project Name & End Use <span class="text-red-500">*</span></label>
+                    <input type="text" name="project_name" value="{{ entry.get('project_name', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Project name and end use">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Satellite Name <span class="text-red-500">*</span></label>
+                    <input type="text" name="satellite_name" value="{{ entry.get('satellite_name', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Satellite name">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Ground Footprint (KML File) <span class="text-red-500">*</span></label>
+                    <input type="file" name="kml_file" accept=".kml" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none">
+                    {% if entry.get('kml_file') %}
+                    <p class="mt-2 text-sm text-gray-600">Current file: {{ entry.get('kml_file') }}</p>
+                    {% endif %}
+                </div>
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Area of Footprint (sq km) <span class="text-red-500">*</span></label>
+                    <input type="number" name="area_sq_km" value="{{ entry.get('area_sq_km', '') }}" required min="0" step="0.01" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Area in square kilometers">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Data Provision Type <span class="text-red-500">*</span></label>
+                    <select name="data_provision_type" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="Archive" {% if entry.get('data_provision_type') == 'Archive' %}selected{% endif %}>Archive</option>
+                        <option value="Fresh tasking" {% if entry.get('data_provision_type') == 'Fresh tasking' %}selected{% endif %}>Fresh tasking</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Acquisition Details <span class="text-red-500">*</span></label>
+                    <input type="date" name="acquisition_date" value="{{ entry.get('acquisition_date', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Date of acquisition">
+                    <input type="time" name="acquisition_time" value="{{ entry.get('acquisition_time', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Time of acquisition">
+                    <input type="text" name="orbit_path_row" value="{{ entry.get('orbit_path_row', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Orbit path/row number">
+                    <input type="text" name="payload_sensor" value="{{ entry.get('payload_sensor', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Payload/sensor and data type">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-base mb-1 text-gray-800">Dissemination Date and Time <span class="text-red-500">*</span></label>
+                    <input type="date" name="dissemination_date" value="{{ entry.get('dissemination_date', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Dissemination date">
+                    <input type="time" name="dissemination_time" value="{{ entry.get('dissemination_time', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Dissemination time">
+                </div>
+                <button type="button" class="remove_entry mt-2 py-1 px-3 bg-red-500 text-white rounded-lg hover:bg-red-600">Remove Entry</button>
+            </div>
+            {% endfor %}
+        </div>
+        <button type="button" id="add_entry" class="mb-4 py-1 px-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Add Dissemination Entry</button>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_10.fill_step', step='undertaking', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="action" value="save_and_next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById('add_entry').addEventListener('click', function() {
+        const container = document.getElementById('dissemination_entries');
+        const template = container.querySelector('.dissemination_entry').cloneNode(true);
+        template.querySelectorAll('input, select, textarea').forEach(el => {
+            el.value = '';
+            if (el.name === 'end_user_type') el.dispatchEvent(new Event('change'));
+        });
+        container.appendChild(template);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove_entry') && document.querySelectorAll('.dissemination_entry').length > 1) {
+            e.target.closest('.dissemination_entry').remove();
+        }
+    });
+
+    document.getElementById('dissemination_entries').addEventListener('change', function(e) {
+        if (e.target.classList.contains('end_user_type')) {
+            const container = e.target.closest('.dissemination_entry').querySelector('.country_of_origin_container');
+            container.classList.toggle('hidden', e.target.value !== 'Non-Indian Entity');
+            container.querySelector('input').required = e.target.value === 'Non-Indian Entity';
+        }
+    });
+</script>
+{% endblock %}

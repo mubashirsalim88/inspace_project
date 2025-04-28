@@ -1,0 +1,89 @@
+{% extends "module_10/forms_base.html" %}
+{% block title %}Module 10 - Annexure-2: SSA Proforma for Satellites{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" action="{{ url_for('module_10.fill_step', step='annexure_2_ssa_satellite', application_id=application_id) }}" enctype="multipart/form-data">
+        <div class="mb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Part A: General Information</h3>
+            <input type="text" name="satellite_name" value="{{ form_data.get('satellite_name', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name of Satellite/Constellation">
+            <input type="text" name="itu_filing" value="{{ form_data.get('itu_filing', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name of ITU Filing">
+            <input type="text" name="administration" value="{{ form_data.get('administration', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name of Administration">
+            <input type="text" name="owner_name" value="{{ form_data.get('owner_name', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Owner Name">
+            <textarea name="owner_address" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Owner Address">{{ form_data.get('owner_address', '') }}</textarea>
+            <input type="text" name="owner_contact" value="{{ form_data.get('owner_contact', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Owner Contact No/Email">
+            <input type="text" name="owner_registration" value="{{ form_data.get('owner_registration', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Company Registration Number with GSTIN">
+            <input type="text" name="authorized_operator" value="{{ form_data.get('authorized_operator', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name of Authorized Operator">
+            <input type="text" name="contact_name" value="{{ form_data.get('contact_name', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Point of Contact Name">
+            <input type="text" name="contact_designation" value="{{ form_data.get('contact_designation', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Contact Designation">
+            <input type="text" name="contact_phone" value="{{ form_data.get('contact_phone', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Contact Phone">
+            <input type="email" name="contact_email" value="{{ form_data.get('contact_email', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Contact Email">
+            <input type="text" name="launch_vehicle" value="{{ form_data.get('launch_vehicle', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Launch Vehicle Name">
+            <input type="text" name="launch_facility" value="{{ form_data.get('launch_facility', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Launch Facility">
+            <input type="text" name="launch_date_window" value="{{ form_data.get('launch_date_window', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Launch Date Window">
+        </div>
+        <div class="mb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Part B: Mission Related Information</h3>
+            <textarea name="mission_objectives" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Mission Objectives">{{ form_data.get('mission_objectives', '') }}</textarea>
+            <input type="text" name="spacecraft_dimensions" value="{{ form_data.get('spacecraft_dimensions', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Spacecraft Dimensions (Stowed, Post Deployment, Drag area, SRP area)">
+            <input type="text" name="mass_details" value="{{ form_data.get('mass_details', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Mass (Dry mass, Wet mass, Propulsion system, Total fuel)">
+            <label class="block text-base mb-1 text-gray-800">Safety Assessment Report <span class="text-red-500">*</span></label>
+            <input type="file" name="safety_report" accept=".pdf,.doc,.docx" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none">
+            {% if form_data.get('safety_report') %}
+            <p class="mt-2 text-sm text-gray-600">Current file: {{ form_data.get('safety_report') }}</p>
+            {% endif %}
+            <input type="text" name="payload_details" value="{{ form_data.get('payload_details', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Number of Payloads, Ownership, Configuration, TT&C Frequencies">
+            <textarea name="constellation_config" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Satellite/Constellation Configuration and Mission Profile">{{ form_data.get('constellation_config', '') }}</textarea>
+            <textarea name="trackability_plan" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Trackability Plan (Observational data, Ephemeris, Identifiability)">{{ form_data.get('trackability_plan', '') }}</textarea>
+            <textarea name="orbital_regime" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Orbital Regime(s) of Operation">{{ form_data.get('orbital_regime', '') }}</textarea>
+            <input type="text" name="ground_segment" value="{{ form_data.get('ground_segment', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ground Segment (TT&C Stations, Mission Control Centre)">
+            <label class="block text-base mb-1 text-gray-800">Ground Segment File (if self-owned)</label>
+            <input type="file" name="ground_segment_file" accept=".pdf,.doc,.docx" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none">
+            {% if form_data.get('ground_segment_file') %}
+            <p class="mt-2 text-sm text-gray-600">Current file: {{ form_data.get('ground_segment_file') }}</p>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Part C: Space Situational Awareness Related Information</h3>
+            <input type="text" name="in_orbit_lifetime" value="{{ form_data.get('in_orbit_lifetime', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Expected In-Orbit Lifetime (Mission life, Post-mission life)">
+            <input type="text" name="objects_released" value="{{ form_data.get('objects_released', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Total Number of Objects Released, List, Orbit at Release">
+            <textarea name="collision_risks" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Quantification of Collision Risks">{{ form_data.get('collision_risks', '') }}</textarea>
+            <textarea name="conjunction_assessment" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Conjunction Assessment/Spaceflight Safety (Plans, Orbital Elements, Agency, Ephemeris Sharing)">{{ form_data.get('conjunction_assessment', '') }}</textarea>
+            <input type="text" name="maneuverability" value="{{ form_data.get('maneuverability', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Maneuverability (Propulsion, Fuel Budgets)">
+            <textarea name="orbit_maintenance" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Plan for Orbit Maintenance and Notification">{{ form_data.get('orbit_maintenance', '') }}</textarea>
+            <textarea name="debris_mitigation" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Space Debris Mitigation Measures and PMD Completion Time">{{ form_data.get('debris_mitigation', '') }}</textarea>
+            <textarea name="design_reliability" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Overall Design Reliability">{{ form_data.get('design_reliability', '') }}</textarea>
+            <textarea name="failure_mode_analysis" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Plan for Failure Mode Effect Analysis">{{ form_data.get('failure_mode_analysis', '') }}</textarea>
+            <textarea name="post_mission_disposal" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Detailed Post Mission Disposal Plan">{{ form_data.get('post_mission_disposal', '') }}</textarea>
+            <textarea name="pmd_reliability" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Plans for Failure Mode Analysis and Reliability for PMD">{{ form_data.get('pmd_reliability', '') }}</textarea>
+            <input type="text" name="collision_avoidance" value="{{ form_data.get('collision_avoidance', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Collision Avoidance Capability and Maximum Delta-V">
+            <label class="block text-base mb-1 text-gray-800">Compliance with Guidelines <span class="text-red-500">*</span></label>
+            <select name="compliance_status" id="compliance_status" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Complied" {% if form_data.get('compliance_status') == 'Complied' %}selected{% endif %}>Complied</option>
+                <option value="Not complied" {% if form_data.get('compliance_status') == 'Not complied' %}selected{% endif %}>Not complied</option>
+                <option value="Not applicable" {% if form_data.get('compliance_status') == 'Not applicable' %}selected{% endif %}>Not applicable</option>
+            </select>
+            <div id="non_compliance_container" class="{% if form_data.get('compliance_status') != 'Not complied' %}hidden{% endif %}">
+                <label class="block text-base mb-1 text-gray-800">Reason for Non-Compliance <span class="text-red-500">*</span></label>
+                <textarea name="non_compliance_reason" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Provide reasons or non-compliance waiver">{{ form_data.get('non_compliance_reason', '') }}</textarea>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="flex items-start">
+                <input type="checkbox" name="undertaking" {% if form_data.get('undertaking') %}checked{% endif %} required class="mt-1 mr-2">
+                <span class="text-sm text-gray-800">I affirm the truth of the provided information, compliance with guidelines, and understand the consequences of false statements.</span>
+            </label>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_10.fill_step', step='annexure_1_security', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="action" value="save_and_next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById('compliance_status').addEventListener('change', function() {
+        const container = document.getElementById('non_compliance_container');
+        container.classList.toggle('hidden', this.value !== 'Not complied');
+        container.querySelector('textarea').required = this.value === 'Not complied';
+    });
+</script>
+{% endblock %}

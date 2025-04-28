@@ -1,0 +1,35 @@
+{% extends "module_10/forms_base.html" %}
+{% block title %}Module 10 - General Information{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" action="{{ url_for('module_10.fill_step', step='general_info', application_id=application_id) }}">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Previous Registration Certificate Details (if any)</label>
+            <textarea name="previous_registration" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Provide details of previous IN-SPACe registration (leave blank if none)">{{ form_data.get('previous_registration', '') }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Application Type <span class="text-red-500">*</span></label>
+            <select name="application_type" id="application_type" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="Renewal after expiry" {% if form_data.get('application_type') == 'Renewal after expiry' %}selected{% endif %}>Renewal after expiry</option>
+                <option value="Change in ownership" {% if form_data.get('application_type') == 'Change in ownership' %}selected{% endif %}>Change in ownership</option>
+                <option value="No change" {% if form_data.get('application_type') == 'No change' %}selected{% endif %}>No change</option>
+            </select>
+            <div id="application_type_details_container" class="mt-2 {% if form_data.get('application_type') not in ['Renewal after expiry', 'Change in ownership'] %}hidden{% endif %}">
+                <label class="block text-base mb-1 text-gray-800">Details of Renewal or Ownership Change <span class="text-red-500">*</span></label>
+                <textarea name="application_type_details" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Provide details of renewal or change in ownership/management">{{ form_data.get('application_type_details', '') }}</textarea>
+            </div>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('applicant.home') }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Back to Dashboard</a>
+            <button type="submit" name="action" value="save_and_next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById('application_type').addEventListener('change', function() {
+        const container = document.getElementById('application_type_details_container');
+        container.classList.toggle('hidden', this.value === 'No change');
+        container.querySelector('textarea').required = this.value !== 'No change';
+    });
+</script>
+{% endblock %}

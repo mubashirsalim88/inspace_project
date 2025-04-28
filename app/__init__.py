@@ -1,10 +1,10 @@
-# app/__init__.py
+import os
 from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
-from config import Config
+from config import Config  # Import Config from root config.py
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -23,13 +23,16 @@ def create_app():
 
     login_manager.login_view = "auth.login"
 
+    # Register custom Jinja filter
+    app.jinja_env.filters['basename'] = lambda x: os.path.basename(x)
+
     # Register blueprints
     from app.auth import auth as auth_bp
     from app.applicant import applicant as applicant_bp
     from app.assigner import assigner as assigner_bp
     from app.verifier import verifier as verifier_bp
     from app.director import director as director_bp
-    from app.admin import admin as admin_bp  # Add admin blueprint import
+    from app.admin import admin as admin_bp
     from app.modules.module_1 import module_1 as module_1_bp
     from app.modules.module_2 import module_2 as module_2_bp
     from app.modules.module_3 import module_3 as module_3_bp
@@ -38,6 +41,8 @@ def create_app():
     from app.modules.module_6 import module_6 as module_6_bp
     from app.modules.module_7 import module_7 as module_7_bp
     from app.modules.module_8 import module_8 as module_8_bp
+    from app.modules.module_9 import module_9 as module_9_bp
+    from app.modules.module_10 import module_10 as module_10_bp
     from app.chat import chat as chat_bp
 
     app.register_blueprint(auth_bp)
@@ -45,7 +50,7 @@ def create_app():
     app.register_blueprint(assigner_bp)
     app.register_blueprint(verifier_bp)
     app.register_blueprint(director_bp)
-    app.register_blueprint(admin_bp)  # Register admin blueprint
+    app.register_blueprint(admin_bp)
     app.register_blueprint(module_1_bp)
     app.register_blueprint(module_2_bp)
     app.register_blueprint(module_3_bp)
@@ -54,6 +59,8 @@ def create_app():
     app.register_blueprint(module_6_bp)
     app.register_blueprint(module_7_bp)
     app.register_blueprint(module_8_bp)
+    app.register_blueprint(module_9_bp)
+    app.register_blueprint(module_10_bp)
     app.register_blueprint(chat_bp)
 
     # Add homepage route with role-based redirection
@@ -67,10 +74,19 @@ def create_app():
             elif current_user.role in ["Primary Verifier", "Secondary Verifier"]:
                 return redirect(url_for('verifier.home'))
             elif current_user.role == "admin":
-                return redirect(url_for('admin.dashboard'))  # Redirect admin to dashboard
+                return redirect(url_for('admin.dashboard'))
             else:
                 return "Role not implemented yet", 501
         return redirect(url_for('auth.login'))
+
+    # Test database connection route
+    @app.route('/test_db')
+    def test_db():
+        try:
+            db.session.execute('SELECT 1')
+            return "Database connection successful!"
+        except Exception as e:
+            return f"Database connection failed: {str(e)}"
 
     return app
 

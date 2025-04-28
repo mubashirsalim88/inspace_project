@@ -1,9 +1,9 @@
-# app/assigner/routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app import db
 from app.models import Application, ApplicationAssignment, User
 from app.utils import role_required
+from datetime import datetime, timedelta
 
 assigner = Blueprint("assigner", __name__, url_prefix="/assigner", template_folder="templates")
 
@@ -15,9 +15,9 @@ def home():
     applications = Application.query.filter_by(status="Submitted").all()
     assigned_applications = Application.query.filter_by(status="Under Review").join(ApplicationAssignment).filter(ApplicationAssignment.assigner_id == current_user.id).all()
     
-    # Group applications by module (all eight modules)
-    module_apps = {f"module_{i}": [] for i in range(1, 9)}
-    assigned_module_apps = {f"module_{i}": [] for i in range(1, 9)}
+    # Group applications by module (all ten modules)
+    module_apps = {f"module_{i}": [] for i in range(1, 11)}
+    assigned_module_apps = {f"module_{i}": [] for i in range(1, 11)}
     
     for app in applications:
         # Get the first module_name
@@ -30,10 +30,19 @@ def home():
         if module_name:
             assigned_module_apps[module_name].append(app)
 
+    # Identify modules with unassigned submitted applications updated in the last 7 days
+    recent_modules = set()
+    for module in module_apps:
+        for app in module_apps[module]:
+            if (datetime.now() - app.updated_at).days <= 7:
+                recent_modules.add(module)
+
     return render_template(
         "assigner/home.html",
         module_apps=module_apps,
-        assigned_module_apps=assigned_module_apps
+        assigned_module_apps=assigned_module_apps,
+        recent_modules=recent_modules,
+        datetime=datetime
     )
 
 @assigner.route("/assign/<int:application_id>", methods=["GET", "POST"])

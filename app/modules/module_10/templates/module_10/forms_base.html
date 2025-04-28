@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Module 10 - IN-SPACe{% endblock %}</title>
+    <script src="{{ url_for('static', filename='js/tailwind.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js" defer></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+        }
+        #progress-bar {
+            background: linear-gradient(to bottom, #1e3a8a, #1e40af);
+            color: white;
+            width: 16rem;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .progress-item {
+            padding: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s;
+        }
+        .progress-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        .progress-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background-color: #e5e7eb;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #10b981, #34d399);
+            transition: width 0.3s ease;
+        }
+        .form-container {
+            max-height: calc(100vh - 8rem);
+            overflow-y: auto;
+        }
+        .navbar {
+            background-color: white;
+            color: #1e3a8a;
+            position: relative;
+        }
+    </style>
+    <script id="progress-data" type="application/json">
+        {
+            "totalSteps": {{ steps|length }},
+            "currentStepIndex": {{ steps.index(current_step) }}
+        }
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const progressData = JSON.parse(document.getElementById("progress-data").textContent);
+            const totalSteps = progressData.totalSteps;
+            const currentStepIndex = progressData.currentStepIndex;
+            const progressPercentage = ((currentStepIndex + 1) / totalSteps) * 100;
+            const progressFill = document.querySelector(".progress-fill");
+            progressFill.style.width = `${progressPercentage}%`;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("bgCanvas"), alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const particleCount = 200;
+            const particles = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const velocities = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount; i++) {
+                const theta = Math.random() * 2 * Math.PI;
+                const radius = 300 + Math.random() * 200;
+                positions[i * 3] = radius * Math.cos(theta);
+                positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
+                positions[i * 3 + 2] = radius * Math.sin(theta);
+                velocities[i * 3] = 0.01 * (Math.random() - 0.5);
+                velocities[i * 3 + 1] = 0.01 * (Math.random() - 0.5);
+                velocities[i * 3 + 2] = 0.01 * (Math.random() - 0.5);
+            }
+
+            particles.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+            const particleMaterial = new THREE.PointsMaterial({ color: 0xFFFFFF, size: 2 });
+            const particleSystem = new THREE.Points(particles, particleMaterial);
+            scene.add(particleSystem);
+
+            camera.position.z = 600;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                const positions = particleSystem.geometry.attributes.position.array;
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] += velocities[i * 3];
+                    positions[i * 3 + 1] += velocities[i * 3 + 1];
+                    positions[i * 3 + 2] += velocities[i * 3 + 2];
+                    const distance = Math.sqrt(positions[i * 3] ** 2 + positions[i * 3 + 2] ** 2);
+                    if (distance > 500) {
+                        const theta = Math.random() * 2 * Math.PI;
+                        positions[i * 3] = 300 * Math.cos(theta);
+                        positions[i * 3 + 2] = 300 * Math.sin(theta);
+                    }
+                }
+                particleSystem.geometry.attributes.position.needsUpdate = true;
+                particleSystem.rotation.y += 0.001;
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener("resize", () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        });
+    </script>
+</head>
+<body class="flex h-screen bg-gray-100 m-0 p-0">
+    <div class="flex w-full">
+        <!-- Progress Bar -->
+        <div id="progress-bar" class="shadow-lg h-screen w-64 text-white">
+            <div class="p-4 border-b border-indigo-700">
+                <h3 class="text-lg font-semibold">Application Progress</h3>
+            </div>
+            <div class="p-4 space-y-2">
+                {% for step in steps %}
+                <a href="{{ url_for('module_10.fill_step', step=step, application_id=application_id) }}">
+                    <div class="progress-item flex items-center space-x-2 {% if step == current_step %}active{% endif %}">
+                        <span class="progress-icon">
+                            {% for md in all_module_data if md.step == step %}
+                                {% if md.completed %}✅{% else %}⬜{% endif %}
+                            {% endfor %}
+                        </span>
+                        <span class="progress-text">{{ step.replace('_', ' ').title() }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+                <p class="text-sm mt-2">Step {{ steps.index(current_step) + 1 }} of {{ steps|length }}</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-content" class="flex-1 bg-white relative" style="margin-left: 16rem;">
+            <canvas id="bgCanvas" class="absolute inset-0 z-0 opacity-20"></canvas>
+            <div class="navbar shadow-md p-4 flex justify-between items-center w-full">
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('applicant.home') }}">
+                        <img src="{{ url_for('static', filename='images/IN-SPACe_Logo.png') }}" alt="Logo" class="h-8">
+                    </a>
+                </div>
+                <div class="flex-1 text-center font-medium text-xl text-gray-800">
+                    Module 10 - {{ current_step.replace('_', ' ').title() }}
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-800">{{ current_user.name }}</span>
+                    <a href="{{ url_for('auth.logout') }}">
+                        <button class="py-2 px-4 rounded bg-red-500 text-white hover:bg-red-700 transition-all duration-300">
+                            Logout
+                        </button>
+                    </a>
+                </div>
+            </div>
+            <!-- Progress Bar under Navbar -->
+            <div class="progress-container">
+                <div class="progress-fill"></div>
+            </div>
+            <!-- Flash Messages -->
+            <div class="p-6">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message mb-4 p-4 rounded-lg text-white {% if category == 'error' %}bg-red-500{% elif category == 'success' %}bg-green-500{% else %}bg-blue-500{% endif %} animate__animated animate__fadeIn">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+            <div class="p-6 form-container relative z-10">
+                {% block form_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

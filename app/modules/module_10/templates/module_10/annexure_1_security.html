@@ -1,0 +1,130 @@
+{% extends "module_10/forms_base.html" %}
+{% block title %}Module 10 - Annexure-1: Security Clearance Proforma{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" action="{{ url_for('module_10.fill_step', step='annexure_1_security', application_id=application_id) }}">
+        <div class="mb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">I. Company/Firm Details</h3>
+            <input type="text" name="company_name" value="{{ form_data.get('company_name', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Full Name of Company">
+            <input type="text" name="foreign_collaborators" value="{{ form_data.get('foreign_collaborators', '') }}" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Foreign Collaborators (if any)">
+            <input type="text" name="registration_date" value="{{ form_data.get('registration_date', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Date of Registration">
+            <textarea name="head_office_address" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Head Office Address">{{ form_data.get('head_office_address', '') }}</textarea>
+            <textarea name="regional_offices" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Regional Offices">{{ form_data.get('regional_offices', '') }}</textarea>
+            <textarea name="registered_office" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Registered Office">{{ form_data.get('registered_office', '') }}</textarea>
+            <input type="text" name="previous_name" value="{{ form_data.get('previous_name', '') }}" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Previous Name (if any)">
+            <textarea name="earlier_approvals" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Details of Earlier Approvals">{{ form_data.get('earlier_approvals', '') }}</textarea>
+            <textarea name="proposed_activities" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Proposed Activities">{{ form_data.get('proposed_activities', '') }}</textarea>
+        </div>
+        <div class="mb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">II. Director/Key Executives Details</h3>
+            <div id="directors_container">
+                {% for director in form_data.get('directors', [{}]) %}
+                <div class="director_entry mb-4 border-b pb-2">
+                    <input type="text" name="director_full_name" value="{{ director.get('full_name', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Full Name">
+                    <input type="text" name="director_position_held" value="{{ director.get('position_held', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Position Held">
+                    <input type="text" name="director_date_of_birth" value="{{ director.get('date_of_birth', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Date of Birth">
+                    <input type="text" name="director_parentage" value="{{ director.get('parentage', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Parentage">
+                    <textarea name="director_present_address" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Present Address">{{ director.get('present_address', '') }}</textarea>
+                    <textarea name="director_permanent_address" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Permanent Address">{{ director.get('permanent_address', '') }}</textarea>
+                    <input type="text" name="director_nationality" value="{{ director.get('nationality', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nationality">
+                    <input type="text" name="director_passport_no" value="{{ director.get('passport_no', '') }}" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Passport No. and Issue Date">
+                    <input type="text" name="director_contact_details" value="{{ director.get('contact_details', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Contact Address & Telephone">
+                    <button type="button" class="remove_director mt-2 py-1 px-3 bg-red-500 text-white rounded-lg hover:bg-red-600">Remove Director</button>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" id="add_director" class="mt-2 py-1 px-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Add Director</button>
+        </div>
+        <div class="mb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">III. Shareholders (>10% Shareholding)</h3>
+            <div id="shareholders_container">
+                {% for shareholder in form_data.get('shareholders', [{}]) %}
+                <div class="shareholder_entry mb-4 border-b pb-2">
+                    <input type="text" name="shareholder_full_name" value="{{ shareholder.get('full_name', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Full Name">
+                    <input type="text" name="shareholder_parentage" value="{{ shareholder.get('parentage', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Parentage">
+                    <input type="text" name="shareholder_date_of_birth" value="{{ shareholder.get('date_of_birth', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Date of Birth">
+                    <textarea name="shareholder_permanent_address" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Permanent Address">{{ shareholder.get('permanent_address', '') }}</textarea>
+                    <textarea name="shareholder_present_address" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Present Address">{{ shareholder.get('present_address', '') }}</textarea>
+                    <input type="text" name="shareholder_position_held" value="{{ shareholder.get('position_held', '') }}" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Position Held">
+                    <input type="text" name="shareholder_nationality" value="{{ shareholder.get('nationality', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nationality">
+                    <input type="number" name="shareholder_share_percentage" value="{{ shareholder.get('share_percentage', '') }}" required min="10" step="0.01" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="% of Shares Held">
+                    <button type="button" class="remove_shareholder mt-2 py-1 px-3 bg-red-500 text-white rounded-lg hover:bg-red-600">Remove Shareholder</button>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" id="add_shareholder" class="mt-2 py-1 px-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Add Shareholder</button>
+        </div>
+        <div class="mb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">IV. Criminal Case Details</h3>
+            <input type="text" name="criminal_company_name" value="{{ form_data.get('criminal_company_name', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Company Name">
+            <textarea name="criminal_company_address" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Company Address">{{ form_data.get('criminal_company_address', '') }}</textarea>
+            <input type="text" name="criminal_registration_number" value="{{ form_data.get('criminal_registration_number', '') }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Registration Number">
+            <div id="owners_directors_container">
+                {% for owner in form_data.get('owners_directors', ['']) %}
+                <input type="text" name="owners_directors" value="{{ owner }}" required class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name & Address of Owner/Director">
+                {% endfor %}
+                <button type="button" id="add_owner_director" class="mt-2 py-1 px-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Add Owner/Director</button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-base mb-1 text-gray-800">Criminal Proceedings <span class="text-red-500">*</span></label>
+                <select name="criminal_proceedings" id="criminal_proceedings" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="No" {% if form_data.get('criminal_proceedings') == 'No' %}selected{% endif %}>No</option>
+                    <option value="Yes" {% if form_data.get('criminal_proceedings') == 'Yes' %}selected{% endif %}>Yes</option>
+                </select>
+                <div id="criminal_details_container" class="{% if form_data.get('criminal_proceedings') != 'Yes' %}hidden{% endif %}">
+                    <input type="text" name="case_fir_number" value="{{ form_data.get('case_fir_number', '') }}" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Case/FIR Number">
+                    <input type="text" name="detention_warrant" value="{{ form_data.get('detention_warrant', '') }}" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Detention/Warrant Number">
+                    <input type="text" name="police_station" value="{{ form_data.get('police_station', '') }}" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Police Station/District/Agency">
+                    <input type="text" name="sections_of_law" value="{{ form_data.get('sections_of_law', '') }}" class="w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Sections of Law">
+                    <input type="text" name="court_details" value="{{ form_data.get('court_details', '') }}" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name and Place of Court">
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_10.fill_step', step='annexure_a', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="action" value="save_and_next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById('add_director').addEventListener('click', function() {
+        const container = document.getElementById('directors_container');
+        const template = container.querySelector('.director_entry').cloneNode(true);
+        template.querySelectorAll('input, textarea').forEach(el => el.value = '');
+        container.appendChild(template);
+    });
+
+    document.getElementById('add_shareholder').addEventListener('click', function() {
+        const container = document.getElementById('shareholders_container');
+        const template = container.querySelector('.shareholder_entry').cloneNode(true);
+        template.querySelectorAll('input, textarea').forEach(el => el.value = '');
+        container.appendChild(template);
+    });
+
+    document.getElementById('add_owner_director').addEventListener('click', function() {
+        const container = document.getElementById('owners_directors_container');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = 'owners_directors';
+        input.required = true;
+        input.className = 'w-full p-3 mb-2 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500';
+        input.placeholder = 'Name & Address of Owner/Director';
+        container.insertBefore(input, document.getElementById('add_owner_director'));
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove_director') && document.querySelectorAll('.director_entry').length > 1) {
+            e.target.closest('.director_entry').remove();
+        }
+        if (e.target.classList.contains('remove_shareholder') && document.querySelectorAll('.shareholder_entry').length > 1) {
+            e.target.closest('.shareholder_entry').remove();
+        }
+    });
+
+    document.getElementById('criminal_proceedings').addEventListener('change', function() {
+        const container = document.getElementById('criminal_details_container');
+        container.classList.toggle('hidden', this.value !== 'Yes');
+        container.querySelectorAll('input').forEach(el => el.required = this.value === 'Yes');
+    });
+</script>
+{% endblock %}

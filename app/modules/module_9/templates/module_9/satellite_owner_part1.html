@@ -1,0 +1,31 @@
+{% extends "module_9/forms_base.html" %}
+{% block title %}Module 9 - Satellite Owner Part 1{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" action="{{ url_for('module_9.fill_step', step='satellite_owner_part1', application_id=application_id) }}">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite Owner Name <span class="text-red-500">*</span></label>
+            <input type="text" name="owner_name" value="{{ form_data.get('owner_name', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter owner name or organization">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Owner Contact Email <span class="text-red-500">*</span></label>
+            <input type="email" name="owner_email" value="{{ form_data.get('owner_email', '') }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter owner contact email">
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Satellite Names <span class="text-red-500">*</span></label>
+            <textarea name="satellite_names" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="List satellite names (one per line)">{{ form_data.get('satellite_names', '') }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Ownership Document (Optional)</label>
+            <input type="file" name="ownership_document" accept=".pdf,.doc,.docx" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none">
+            {% if form_data.get('ownership_document') %}
+            <p class="mt-2 text-sm text-gray-600">Current file: {{ form_data.get('ownership_document') }}</p>
+            {% endif %}
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_9.fill_step', step='general_info', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" name="action" value="save_and_next" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

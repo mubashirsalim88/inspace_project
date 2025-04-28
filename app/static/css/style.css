@@ -151,23 +151,28 @@ aside {
 }
 
 /* Verifier Dashboard */
-.accordion-item {
+.collapsible-section {
     border-radius: 8px;
     overflow: hidden;
+    transition: box-shadow 0.3s ease;
 }
-.accordion-header {
+.collapsible-section:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.collapsible-header {
     background-color: #ecfdf5; /* Light green background */
     color: #047857; /* Dark green text */
+    padding: 1.25rem;
     transition: background-color 0.3s ease;
 }
-.accordion-header:hover {
+.collapsible-header:hover {
     background-color: #d1fae5; /* Lighter green on hover */
 }
-.accordion-content {
+.collapsible-content {
     background-color: #ffffff;
-    transition: max-height 0.3s ease;
+    padding: 1.5rem;
 }
-.accordion-header svg {
+.collapsible-header svg {
     transition: transform 0.3s ease;
 }
 table {
@@ -177,11 +182,11 @@ table {
 }
 th, td {
     border-bottom: 1px solid #e5e7eb;
-    padding: 0.75rem;
+    padding: 1rem;
 }
 thead {
-    background-color: #ecfdf5; /* Match accordion header */
-    color: #047857;
+    background-color: #ecfdf5; /* Light green background */
+    color: #047857; /* Dark green text */
 }
 
 /* Animations */
@@ -199,13 +204,19 @@ thead {
     .sidebar-link {
         font-size: 0.85rem;
     }
-    .accordion-item {
+    .collapsible-section {
         font-size: 0.9rem;
+    }
+    .collapsible-header {
+        padding: 1rem;
+    }
+    .collapsible-content {
+        padding: 1rem;
     }
     table {
         font-size: 0.85rem;
     }
     th, td {
-        padding: 0.5rem;
+        padding: 0.75rem;
     }
 }

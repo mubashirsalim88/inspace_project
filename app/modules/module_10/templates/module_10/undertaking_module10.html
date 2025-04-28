@@ -1,0 +1,54 @@
+{% extends "module_10/forms_base.html" %}
+{% block title %}Module 10 - Undertaking/Declaration{% endblock %}
+{% block form_content %}
+<div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <form method="POST" action="{{ url_for('module_10.fill_step', step='undertaking', application_id=application_id) }}">
+        <input type="hidden" name="action" value="save_and_next">
+        <div class="mb-4">
+            <label class="block text-base mb-1 text-gray-800">Undertakings <span class="text-red-500">*</span></label>
+            <div class="space-y-2">
+                <label class="flex items-start">
+                    <input type="checkbox" name="authorization_affirmation" {% if form_data.get('authorization_affirmation') %}checked{% endif %} required class="mt-1 mr-2">
+                    <span class="text-sm text-gray-800">Affirmation of authorization by satellite operator/OEM/owner for selling/disseminating data, and undertaking to inform IN-SPACe within 5 working days if authorization is withdrawn</span>
+                </label>
+                <label class="flex items-start">
+                    <input type="checkbox" name="compliance_laws" {% if form_data.get('compliance_laws') %}checked{% endif %} required class="mt-1 mr-2">
+                    <span class="text-sm text-gray-800">Affirmation of compliance with existing laws, rules, regulations, policies, and commitment to remain compliant with amendments or new policies</span>
+                </label>
+                <label class="flex items-start">
+                    <input type="checkbox" name="dst_guidelines" {% if form_data.get('dst_guidelines') %}checked{% endif %} required class="mt-1 mr-2">
+                    <span class="text-sm text-gray-800">Agreement to abide by DST Guidelines and understanding of termination/suspension of registration for violations</span>
+                </label>
+                <label class="flex items-start">
+                    <input type="checkbox" name="records_submission" {% if form_data.get('records_submission') %}checked{% endif %} required class="mt-1 mr-2">
+                    <span class="text-sm text-gray-800">Undertaking to maintain records and provide intimation to IN-SPACe for commercial transactions per Annexure-A, with quarterly submissions</span>
+                </label>
+                <label class="flex items-start">
+                    <input type="checkbox" name="data_guidelines" {% if form_data.get('data_guidelines') %}checked{% endif %} required class="mt-1 mr-2">
+                    <span class="text-sm text-gray-800">Agreement to abide by IN-SPACe guidelines on data dissemination and understanding of non-compliance consequences</span>
+                </label>
+                <label class="flex items-start">
+                    <input type="checkbox" name="national_security_data" {% if form_data.get('national_security_data') %}checked{% endif %} required class="mt-1 mr-2">
+                    <span class="text-sm text-gray-800">Agreement to provide Primary Data and Value-Added Products concerning national security to the Government on demand</span>
+                </label>
+                <label class="flex items-start">
+                    <input type="checkbox" name="registration_termination" {% if form_data.get('registration_termination') %}checked{% endif %} required class="mt-1 mr-2">
+                    <span class="text-sm text-gray-800">Understanding that registration can be terminated/suspended due to national security, conflict, natural disasters, or emergencies</span>
+                </label>
+                <label class="flex items-start">
+                    <input type="checkbox" name="submission_authorization" {% if form_data.get('submission_authorization') %}checked{% endif %} required class="mt-1 mr-2">
+                    <span class="text-sm text-gray-800">Submission of application to IN-SPACe for registration as Data Disseminator</span>
+                </label>
+                <label class="flex items-start">
+                    <input type="checkbox" name="conformance_laws" {% if form_data.get('conformance_laws') %}checked{% endif %} required class="mt-1 mr-2">
+                    <span class="text-sm text-gray-800">Affirmation that the application conforms to IN-SPACe conditions and applicable laws, policies, rules, and regulations</span>
+                </label>
+            </div>
+        </div>
+        <div class="flex justify-between">
+            <a href="{{ url_for('module_10.fill_step', step='space_object_part2', application_id=application_id) }}" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Previous</a>
+            <button type="submit" class="py-2 px-4 bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] text-white rounded-lg hover:scale-105 transition-transform">Next</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
