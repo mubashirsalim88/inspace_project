@@ -43,3 +43,4 @@ config_by_name = {
 
 current_config = os.getenv("FLASK_ENV", "development")
 ConfigClass = config_by_name.get(current_config, DevelopmentConfig)
+#

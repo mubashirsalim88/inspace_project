@@ -1,3 +1,4 @@
+<!-- app/modules/module_7/templates/module_7/summary.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,6 +51,14 @@
         .field-value {
             color: #6b7280;
         }
+        .document-link {
+            color: #1e40af;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .document-link:hover {
+            color: #1e3a8a;
+        }
         .download-btn, .dashboard-btn {
             display: block;
             width: fit-content;
@@ -98,12 +107,22 @@
         <div class="section">
             <h2>{{ md.step.replace('_', ' ').title() }}</h2>
             {% for key, value in md.data.items() %}
-            {% if value %}
+            {% if key not in ['documents', 'document_names'] and value %}
             <div class="field">
                 <span class="field-label">{{ key.replace('_', ' ').title() }}:</span>
                 <span class="field-value">
                     {% if value is iterable and value is not string %}
-                        {{ value|join(', ') }}
+                        {% for item in value %}
+                            {% if item is mapping and 'display_name' in item %}
+                                {% if file_id_map[item.display_name] is defined %}
+                                    <a href="{{ url_for('module_7.download_file', file_id=file_id_map[item.display_name]) }}" class="document-link">{{ item.display_name }}</a>{% if not loop.last %}, {% endif %}
+                                {% else %}
+                                    {{ item.display_name }}{% if not loop.last %}, {% endif %}
+                                {% endif %}
+                            {% else %}
+                                {{ item }}{% if not loop.last %}, {% endif %}
+                            {% endif %}
+                        {% endfor %}
                     {% else %}
                         {{ value }}
                     {% endif %}
@@ -114,7 +133,7 @@
         </div>
         {% endfor %}
         {% if application.status == 'Submitted' %}
-        <a href="{{ url_for('module_7.download_pdf', application_id=application_id) }}" class="download-btn">Download PDF</a>
+        <a href="{{ url_for('module_7_pdf.download_pdf', application_id=application_id) }}" class="download-btn">Download PDF</a>
         {% endif %}
         <a href="{{ url_for('applicant.home') }}" class="dashboard-btn">Return to Dashboard</a>
     </div>

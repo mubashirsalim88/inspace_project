@@ -3,10 +3,11 @@
 {% block title %}Module 1 - Applicant Identity{% endblock %}
 {% block form_content %}
 <div class="bg-white bg-opacity-90 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
-    <form method="POST">
+    <form method="POST" onsubmit="return validateForm()">
         <div class="mb-4">
             <label class="block text-base mb-1 text-gray-800">Legal Name <span class="text-red-500">*</span></label>
-            <input type="text" name="legal_name" value="{{ form_data.legal_name or '' }}" required class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            <input type="text" name="legal_name" id="legal_name" value="{{ form_data.legal_name or '' }}" required pattern="[a-zA-Z\s\-\'&]+" title="Legal Name must contain only letters, spaces, hyphens, apostrophes, or ampersands" class="w-full p-3 border rounded-md bg-gray-100 text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500">
+            <span id="legal_name_error" class="text-red-500 text-sm hidden">Legal Name must contain only letters, spaces, hyphens, apostrophes, or ampersands.</span>
         </div>
         <div class="mb-4">
             <label class="block text-base mb-1 text-gray-800">Trade/Brand Name (if any)</label>
@@ -48,6 +49,17 @@
     </form>
 </div>
 <script>
+    function validateForm() {
+        const legalName = document.getElementById("legal_name").value;
+        const legalNameError = document.getElementById("legal_name_error");
+        const regex = /^[a-zA-Z\s\-\'&]+$/;
+        if (!regex.test(legalName)) {
+            legalNameError.classList.remove("hidden");
+            return false;
+        }
+        legalNameError.classList.add("hidden");
+        return true;
+    }
     document.getElementById("previous_rejection").addEventListener("change", function() {
         document.getElementById("rejection_details").classList.toggle("hidden", this.value !== "Yes");
         document.querySelector("#rejection_details textarea").required = this.value === "Yes";

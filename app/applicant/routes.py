@@ -257,3 +257,55 @@ def start_application():
         "redirect_url": redirect_url,
         "message": f"Please complete Module 1 (Basic Details) for at least one application before starting {module.replace('_', ' ').title()}." if not success else None
     })
+
+@applicant.route("/edit_application/<int:application_id>", methods=["GET"])
+@login_required
+def edit_application(application_id):
+    if current_user.role != "user":
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("index"))
+    
+    application = Application.query.get_or_404(application_id)
+    if application.user_id != current_user.id:
+        flash("You are not authorized to edit this application.", "error")
+        return redirect(url_for("applicant.home"))
+    
+    if not application.editable or application.status != "Pending":
+        flash("This application is not currently editable.", "error")
+        return redirect(url_for("applicant.home"))
+
+    # Find the module associated with the application
+    module_name = next(
+        (md.module_name for md in application.module_data if md.module_name in [f"module_{i}" for i in range(1, 11)]),
+        None
+    )
+    if not module_name:
+        flash("No valid module found for this application.", "error")
+        return redirect(url_for("applicant.home"))
+
+    # Redirect to the appropriate module's fill_step route
+    if module_name == "module_1":
+        redirect_url = url_for("module_1.fill_step", step="applicant_identity", application_id=application_id)
+    elif module_name == "module_2":
+        redirect_url = url_for("module_2.fill_step", step="satellite_overview", application_id=application_id)
+    elif module_name == "module_3":
+        redirect_url = url_for("module_3.fill_step", step="renewal_and_provisioning", application_id=application_id)
+    elif module_name == "module_4":
+        redirect_url = url_for("module_4.fill_step", step="extension_and_orbit", application_id=application_id)
+    elif module_name == "module_5":
+        redirect_url = url_for("module_5.fill_step", step="host_space_object_details", application_id=application_id)
+    elif module_name == "module_6":
+        redirect_url = url_for("module_6.fill_step", step="itu_filing_details", application_id=application_id)
+    elif module_name == "module_7":
+        redirect_url = url_for("module_7.fill_step", step="previous_authorization", application_id=application_id)
+    elif module_name == "module_8":
+        redirect_url = url_for("module_8.fill_step", step="renewal_and_extension_details", application_id=application_id)
+    elif module_name == "module_9":
+        redirect_url = url_for("module_9.fill_step", step="general_info", application_id=application_id)
+    elif module_name == "module_10":
+        redirect_url = url_for("module_10.fill_step", step="general_info", application_id=application_id)
+    else:
+        flash("Invalid module configuration.", "error")
+        return redirect(url_for("applicant.home"))
+
+    return redirect(redirect_url)

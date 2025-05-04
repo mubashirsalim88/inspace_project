@@ -1,31 +1,11 @@
 # app/modules/module_4/routes.py
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, jsonify, abort
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Application, ModuleData, UploadedFile, ApplicationAssignment
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch
+from app.models import Application, ModuleData, UploadedFile, EditRequest, ApplicationAssignment, Notification
+from datetime import datetime
 import os
 import logging
-import tempfile
-from pypdf import PdfReader, PdfWriter
-from pypdf.generic import (
-    ArrayObject,
-    DictionaryObject,
-    NameObject,
-    NumberObject,
-    TextStringObject,
-    create_string_object,
-)
-from reportlab.lib.pagesizes import letter as reportlab_letter
-from PIL import Image
-import io
-from docx2pdf import convert
-
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -44,7 +24,7 @@ STEPS = [
     "miscellaneous_and_declarations"
 ]
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "uploads")
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Uploads")
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
@@ -74,19 +54,19 @@ def fill_step(step):
         db.session.commit()
 
     existing_files = UploadedFile.query.filter_by(application_id=app_id, module_name="module_4", step=step).all()
-    logger.debug(f"Step: {step}, Existing Files: {[(f.id, f.filename) for f in existing_files]}")
+    logger.debug(f"Step: {step}, Existing Files: {[(f.id, f.filename, f.field_name, f.filepath) for f in existing_files]}")
 
     if request.method == "POST" and step != "miscellaneous_and_declarations":
         form_data = request.form.to_dict()
         file_fields = {
-            "extension_and_orbit": [],
-            "satellite_details": [],
-            "configuration_and_safety": [],
-            "manufacturing_and_procurement": [],
-            "payload_details": [],
-            "ground_segment": [],
-            "itu_and_regulatory": [],
-            "launch_and_insurance": [],
+            "extension_and_orbit": ["orbit_plans"],
+            "satellite_details": ["design_documents", "technical_specs"],
+            "configuration_and_safety": ["safety_assessments"],
+            "manufacturing_and_procurement": ["manufacturing_contracts", "procurement_agreements"],
+            "payload_details": ["payload_specs", "payload_agreements"],
+            "ground_segment": ["ground_station_plans"],
+            "itu_and_regulatory": ["authorization_files", "interference_files"],
+            "launch_and_insurance": ["launch_contracts", "insurance_policies"],
             "miscellaneous_and_declarations": ["official_seal"]
         }
 
@@ -99,7 +79,7 @@ def fill_step(step):
                         filename = f"{app_id}_{step}_{field}_{f.filename}"
                         file_path = os.path.join(UPLOAD_FOLDER, filename)
                         f.save(file_path)
-                        relative_path = os.path.join("uploads", filename)
+                        relative_path = os.path.join("Uploads", filename)
                         uploaded_file = UploadedFile(
                             application_id=app_id,
                             module_name="module_4",
@@ -110,15 +90,23 @@ def fill_step(step):
                         )
                         db.session.add(uploaded_file)
                         file_paths.append(relative_path)
-                        logger.debug(f"Uploaded {field}: {f.filename} to {file_path}")
+                        logger.debug(f"Uploaded {field}: {f.filename} to {file_path}, stored as {relative_path}")
                     form_data[field] = file_paths
                 else:
                     form_data[field] = module_data.data.get(field, [])
                     logger.debug(f"No new upload for {field}, retaining: {form_data[field]}")
+            logger.debug(f"Step {step} form_data: {form_data}")
 
         module_data.data = form_data
         module_data.completed = True
-        db.session.commit()
+        try:
+            db.session.commit()
+            logger.debug(f"Saved ModuleData for step {step}: {module_data.data}")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error saving ModuleData for step {step}: {str(e)}")
+            flash(f"Error saving data: {str(e)}", "error")
+            return redirect(url_for("module_4.fill_step", step=step, application_id=app_id))
 
         next_step_idx = STEPS.index(step) + 1
         if next_step_idx < len(STEPS):
@@ -128,17 +116,54 @@ def fill_step(step):
     if step == "summary":
         all_module_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_4").all()
         processed_module_data = []
+        uploaded_files = []
+        file_fields = {
+            "extension_and_orbit": ["orbit_plans"],
+            "satellite_details": ["design_documents", "technical_specs"],
+            "configuration_and_safety": ["safety_assessments"],
+            "manufacturing_and_procurement": ["manufacturing_contracts", "procurement_agreements"],
+            "payload_details": ["payload_specs", "payload_agreements"],
+            "ground_segment": ["ground_station_plans"],
+            "itu_and_regulatory": ["authorization_files", "interference_files"],
+            "launch_and_insurance": ["launch_contracts", "insurance_policies"],
+            "miscellaneous_and_declarations": ["official_seal", "additional_documents"],
+        }
         for md in all_module_data:
             data_copy = md.data.copy()
             for key, value in data_copy.items():
+                if key in sum(file_fields.values(), []) and isinstance(value, list) and all(isinstance(v, str) for v in value):
+                    for file_path in value:
+                        if os.path.exists(os.path.join(os.path.dirname(__file__), "..", file_path)):
+                            uploaded_files.append({
+                                "step": md.step,
+                                "field": key,
+                                "filename": os.path.basename(file_path)
+                            })
+                            logger.debug(f"Summary - Added file from ModuleData: Step: {md.step}, Field: {key}, File: {os.path.basename(file_path)}")
                 if isinstance(value, list) and all(isinstance(v, str) for v in value):
                     data_copy[key] = [os.path.basename(doc) for doc in value]
             processed_module_data.append({"step": md.step, "data": data_copy, "completed": md.completed})
+
+        # Fetch from UploadedFile as fallback
+        uploaded_file_entries = UploadedFile.query.filter_by(application_id=app_id, module_name="module_4").all()
+        existing_files = {os.path.join(os.path.dirname(__file__), "..", f.filepath) for f in uploaded_file_entries}
+        for f in uploaded_file_entries:
+            absolute_path = os.path.join(os.path.dirname(__file__), "..", f.filepath)
+            if absolute_path in existing_files and os.path.exists(absolute_path):
+                if not any(uf["filename"] == f.filename for uf in uploaded_files):
+                    uploaded_files.append({
+                        "step": f.step,
+                        "field": f.field_name,
+                        "filename": f.filename
+                    })
+                    logger.debug(f"Summary - Added file from UploadedFile: Step: {f.step}, Field: {f.field_name}, File: {f.filename}")
+
         return render_template(
             "module_4/summary.html",
             all_module_data=processed_module_data,
             application_id=app_id,
-            application=application
+            application=application,
+            uploaded_files=uploaded_files
         )
 
     all_module_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_4").all()
@@ -169,7 +194,7 @@ def save_miscellaneous_and_declarations(application_id):
         return jsonify({"status": "error", "message": "Unauthorized or already submitted"}), 403
 
     form_data = request.form.to_dict()
-    file_fields = ["official_seal"]
+    file_fields = ["official_seal", "additional_documents"]
     for field in file_fields:
         files = request.files.getlist(field)
         if files and files[0].filename:
@@ -178,7 +203,7 @@ def save_miscellaneous_and_declarations(application_id):
                 filename = f"{application_id}_miscellaneous_and_declarations_{field}_{f.filename}"
                 file_path = os.path.join(UPLOAD_FOLDER, filename)
                 f.save(file_path)
-                relative_path = os.path.join("uploads", filename)
+                relative_path = os.path.join("Uploads", filename)
                 uploaded_file = UploadedFile(
                     application_id=application_id,
                     module_name="module_4",
@@ -189,9 +214,11 @@ def save_miscellaneous_and_declarations(application_id):
                 )
                 db.session.add(uploaded_file)
                 file_paths.append(relative_path)
+                logger.debug(f"Uploaded {field}: {f.filename} to {file_path}, stored as {relative_path}")
             form_data[field] = file_paths
         else:
             form_data[field] = form_data.get(field, [])
+            logger.debug(f"No new upload for {field}, retaining: {form_data[field]}")
 
     for decl in ['coord_agreement', 'cease_emission', 'dst_compliance', 'change_notification', 'gov_control', 'app_submission', 'compliance_affirmation']:
         form_data[decl] = decl in request.form
@@ -205,9 +232,11 @@ def save_miscellaneous_and_declarations(application_id):
     module_data.completed = True
     try:
         db.session.commit()
+        logger.debug(f"Saved ModuleData for miscellaneous_and_declarations: {module_data.data}")
         return jsonify({"status": "success", "message": "Form saved successfully"})
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Error saving ModuleData for miscellaneous_and_declarations: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @module_4.route("/submit_application/<int:application_id>", methods=["POST"])
@@ -228,11 +257,50 @@ def submit_application(application_id):
         flash("Please complete all required steps.", "error")
         return redirect(url_for("module_4.fill_step", step="miscellaneous_and_declarations", application_id=application_id))
 
-    application.status = "Submitted"
-    application.editable = False
-    db.session.commit()
-    flash("Application submitted successfully!", "success")
-    return redirect(url_for("module_4.fill_step", step="summary", application_id=application_id))
+    try:
+        # Check for EditRequest and ApplicationAssignment
+        edit_request = EditRequest.query.filter_by(application_id=application_id, status="Active").first()
+        assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first()
+
+        if edit_request and assignment:
+            # Reuse existing assignment
+            application.status = "Under Review"
+            application.editable = False
+            edit_request.status = "Completed"
+            edit_request.completed_at = datetime.utcnow()
+
+            # Notify original verifiers
+            primary_verifier_id = assignment.primary_verifier_id
+            secondary_verifier_id = assignment.secondary_verifier_id
+
+            notification = Notification(
+                user_id=primary_verifier_id,
+                content=f"Application #{application_id} (Module 4) has been resubmitted after edits. Please review.",
+                timestamp=datetime.utcnow()
+            )
+            db.session.add(notification)
+
+            if secondary_verifier_id:
+                notification = Notification(
+                    user_id=secondary_verifier_id,
+                    content=f"Application #{application_id} (Module 4) has been resubmitted after edits. Please review.",
+                    timestamp=datetime.utcnow()
+                )
+                db.session.add(notification)
+
+            flash("Application resubmitted successfully!", "success")
+        else:
+            # New submission
+            application.status = "Submitted"
+            application.editable = False
+            flash("Application submitted for verification.", "success")
+
+        db.session.commit()
+        return redirect(url_for("module_4.fill_step", step="summary", application_id=application_id))
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error submitting application: {str(e)}", "error")
+        return redirect(url_for("module_4.fill_step", step="miscellaneous_and_declarations", application_id=application_id))
 
 @module_4.route("/download_file/<int:file_id>")
 @login_required
@@ -245,370 +313,3 @@ def download_file(file_id):
     if not os.path.exists(full_path):
         return f"File not found: {full_path}", 404
     return send_file(full_path, as_attachment=True, download_name=uploaded_file.filename)
-
-@module_4.route("/download_pdf/<application_id>", methods=["GET"])
-@login_required
-def download_pdf(application_id):
-    application = Application.query.get_or_404(application_id)
-    
-    # Allow Applicant or Verifiers assigned to the application
-    assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first()
-    allowed_users = [application.user_id]
-    if assignment:
-        allowed_users.extend([assignment.primary_verifier_id, assignment.secondary_verifier_id])
-    
-    if current_user.id not in allowed_users or application.status not in ["Submitted", "Under Review"]:
-        return "Unauthorized or invalid application", 403
-
-    # Fetch all module data
-    all_module_data = ModuleData.query.filter_by(
-        application_id=application_id, module_name="module_4"
-    ).all()
-    processed_module_data = []
-    for md in all_module_data:
-        data_copy = md.data.copy()
-        for key, value in data_copy.items():
-            if isinstance(value, list) and all(isinstance(v, str) for v in value):
-                data_copy[key] = value
-        processed_module_data.append(
-            {"step": md.step, "data": data_copy, "completed": md.completed}
-        )
-
-    # Create a temporary file for the PDF
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
-        pdf_path = temp_file.name
-
-        # Define custom styles
-        styles = getSampleStyleSheet()
-        title_style = ParagraphStyle(
-            "CustomTitle",
-            parent=styles["Title"],
-            fontSize=18,
-            textColor=colors.HexColor("#1A5276"),
-            spaceAfter=16,
-            alignment=1,
-        )
-        heading_style = ParagraphStyle(
-            "CustomHeading",
-            parent=styles["Heading2"],
-            fontSize=14,
-            textColor=colors.HexColor("#2874A6"),
-            spaceBefore=12,
-            spaceAfter=6,
-        )
-        normal_style = ParagraphStyle(
-            "CustomNormal",
-            parent=styles["Normal"],
-            fontSize=11,
-            leading=14,
-            spaceBefore=2,
-            spaceAfter=2,
-        )
-        label_style = ParagraphStyle(
-            "CustomLabel",
-            parent=styles["Normal"],
-            fontSize=11,
-            leading=14,
-            textColor=colors.HexColor("#34495E"),
-            fontName="Helvetica-Bold",
-        )
-        attachment_style = ParagraphStyle(
-            "AttachmentLink",
-            parent=styles["Normal"],
-            fontSize=11,
-            leading=14,
-            textColor=colors.HexColor("#2E86C1"),
-            fontName="Helvetica",
-        )
-
-        # Generate the summary PDF
-        doc = SimpleDocTemplate(
-            pdf_path,
-            pagesize=letter,
-            leftMargin=36,
-            rightMargin=36,
-            topMargin=72,
-            bottomMargin=36,
-        )
-
-        def header_footer(canvas, doc):
-            canvas.saveState()
-            width, height = letter
-            logo_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "static/images/company_logo.png",
-            )
-            if os.path.exists(logo_path):
-                canvas.drawImage(
-                    logo_path,
-                    36,
-                    height - 54,
-                    width=120,
-                    height=40,
-                    preserveAspectRatio=True,
-                )
-            else:
-                canvas.setFont("Helvetica-Bold", 12)
-                canvas.setFillColor(colors.HexColor("#1A5276"))
-                canvas.drawString(36, height - 36, "Company Name")
-
-            canvas.setStrokeColor(colors.HexColor("#AED6F1"))
-            canvas.line(36, height - 60, width - 36, height - 60)
-            canvas.setFont("Helvetica", 10)
-            canvas.setFillColor(colors.HexColor("#34495E"))
-            canvas.drawRightString(
-                width - 36, height - 36, f"Application ID: {application_id}"
-            )
-            canvas.setFont("Helvetica", 8)
-            canvas.setFillColor(colors.gray)
-            canvas.drawCentredString(width / 2, 20, "CONFIDENTIAL")
-            canvas.drawRightString(width - 36, 20, "Page %d" % doc.page)
-            canvas.setStrokeColor(colors.HexColor("#AED6F1"))
-            canvas.line(36, 30, width - 36, 30)
-            canvas.restoreState()
-
-        story = []
-        story.append(Paragraph("Module 4: Additional Satellite Form Summary", title_style))
-        story.append(Spacer(1, 0.25 * inch))
-
-        metadata_content = [
-            ["Application ID:", application_id],
-            ["Date Submitted:", application.submitted_date.strftime("%B %d, %Y") if hasattr(application, "submitted_date") and application.submitted_date else "N/A"],
-            ["Status:", application.status],
-            ["Applicant:", current_user.username],
-        ]
-        metadata_table = Table(metadata_content, colWidths=[120, 300])
-        metadata_table.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#EBF5FB")),
-                ("TEXTCOLOR", (0, 0), (0, -1), colors.HexColor("#2874A6")),
-                ("ALIGN", (0, 0), (0, -1), "RIGHT"),
-                ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("LEFTPADDING", (0, 0), (0, -1), 10),
-                ("RIGHTPADDING", (0, 0), (0, -1), 10),
-                ("LEFTPADDING", (1, 0), (1, -1), 10),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D6EAF8")),
-            ])
-        )
-        story.append(metadata_table)
-        story.append(Spacer(1, 0.3 * inch))
-
-        story.append(Paragraph("Table of Contents", heading_style))
-        toc_items = []
-        for i, md in enumerate(processed_module_data):
-            toc_items.append([f"{i+1}.", md["step"].replace("_", " ").title()])
-        toc_table = Table(toc_items, colWidths=[30, 390])
-        toc_table.setStyle(
-            TableStyle([
-                ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-                ("TOPPADDING", (0, 0), (-1, -1), 3),
-                ("RIGHTPADDING", (0, 0), (0, -1), 0),
-                ("LEFTPADDING", (1, 0), (1, -1), 5),
-            ])
-        )
-        story.append(toc_table)
-        story.append(Spacer(1, 0.3 * inch))
-        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#AED6F1"), spaceAfter=0.2 * inch))
-
-        attachment_files = []
-        attachment_positions = {}
-        for i, md in enumerate(processed_module_data):
-            story.append(Paragraph(f"{i+1}. {md['step'].replace('_', ' ').title()}", heading_style))
-            data_items = []
-            for key, value in md["data"].items():
-                if key not in ["documents", "document_names"] and value:
-                    if isinstance(value, list):
-                        story.append(Paragraph(f"{key.replace('_', ' ').title()}:", label_style))
-                        for idx, file_path in enumerate(value):
-                            filename = os.path.basename(file_path)
-                            attachment_positions[filename] = len(story)
-                            story.append(Paragraph(f"• Attachment: {filename} (Click to view)", attachment_style))
-                            attachment_files.append((filename, file_path))
-                    else:
-                        data_items.append([Paragraph(f"{key.replace('_', ' ').title()}:", label_style), Paragraph(f"{value}", normal_style)])
-            if data_items:
-                data_table = Table(data_items, colWidths=[150, 360])
-                data_table.setStyle(
-                    TableStyle([
-                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                        ("LEFTPADDING", (0, 0), (0, -1), 0),
-                        ("RIGHTPADDING", (0, 0), (0, -1), 10),
-                        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-                        ("TOPPADDING", (0, 0), (-1, -1), 5),
-                    ])
-                )
-                story.append(data_table)
-            story.append(Spacer(1, 0.2 * inch))
-            if i < len(processed_module_data) - 1:
-                story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#D6EAF8"), spaceBefore=0.1 * inch, spaceAfter=0.1 * inch))
-
-        doc.build(story, onFirstPage=header_footer, onLaterPages=header_footer)
-
-        writer = PdfWriter()
-        summary_pdf = PdfReader(pdf_path)
-        for page in summary_pdf.pages:
-            writer.add_page(page)
-
-        page_height = reportlab_letter[1]
-        attachment_destinations = {}
-        for filename, file_path in attachment_files:
-            absolute_file_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", file_path))
-            if not os.path.exists(absolute_file_path):
-                print(f"File not found: {absolute_file_path}")
-                continue
-
-            attachment_page = len(writer.pages)
-            attachment_destinations[filename] =-attachment_page
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as separator_file:
-                c = canvas.Canvas(separator_file.name, pagesize=reportlab_letter)
-                width, height = reportlab_letter
-                logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static/images/company_logo.png")
-                if os.path.exists(logo_path):
-                    c.drawImage(logo_path, 36, height - 54, width=120, height=40, preserveAspectRatio=True)
-                else:
-                    c.setFont("Helvetica-Bold", 12)
-                    c.setFillColorRGB(0.1, 0.32, 0.46)
-                    c.drawString(36, height - 36, "Company Name")
-                c.setStrokeColorRGB(0.68, 0.85, 0.95)
-                c.line(36, height - 60, width - 36, height - 60)
-                c.setFont("Helvetica", 10)
-                c.setFillColorRGB(0.18, 0.47, 0.7)
-                c.drawString(36, height - 80, "← Back to Summary")
-                c.setStrokeColorRGB(0.18, 0.47, 0.7)
-                c.rect(32, height - 92, 105, 20, stroke=1, fill=0)
-                c.setFillColorRGB(0.95, 0.95, 0.95)
-                c.rect(36, height - 150, width - 72, 50, stroke=0, fill=1)
-                c.setFillColorRGB(0.1, 0.32, 0.46)
-                c.setFont("Helvetica-Bold", 14)
-                c.drawCentredString(width / 2, height - 120, "Attachment:")
-                c.setFont("Helvetica", 12)
-                c.drawCentredString(width / 2, height - 140, filename)
-                c.setFont("Helvetica", 8)
-                c.setFillColorRGB(0.5, 0.5, 0.5)
-                c.drawCentredString(width / 2, 20, "CONFIDENTIAL")
-                c.drawRightString(width - 36, 20, f"Application ID: {application_id}")
-                c.setStrokeColorRGB(0.68, 0.85, 0.95)
-                c.line(36, 30, width - 36, 30)
-                c.save()
-
-                separator_pdf = PdfReader(separator_file.name)
-                writer.add_page(separator_pdf.pages[0])
-
-            file_ext = os.path.splitext(absolute_file_path)[1].lower()
-            if file_ext == ".pdf":
-                try:
-                    attachment_pdf = PdfReader(absolute_file_path)
-                    for page in attachment_pdf.pages:
-                        writer.add_page(page)
-                except Exception as e:
-                    print(f"Error reading PDF {absolute_file_path}: {str(e)}")
-                    continue
-            elif file_ext == ".docx":
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
-                    try:
-                        convert(absolute_file_path, temp_pdf.name)
-                        attachment_pdf = PdfReader(temp_pdf.name)
-                        for page in attachment_pdf.pages:
-                            writer.add_page(page)
-                        os.remove(temp_pdf.name)
-                    except Exception as e:
-                        print(f"Error converting DOCX {absolute_file_path}: {str(e)}")
-                        continue
-            elif file_ext in [".jpg", ".jpeg", ".png"]:
-                try:
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_img_pdf:
-                        img = Image.open(absolute_file_path)
-                        c = canvas.Canvas(temp_img_pdf.name, pagesize=reportlab_letter)
-                        width, height = reportlab_letter
-                        c.setFont("Helvetica-Bold", 10)
-                        c.setFillColorRGB(0.1, 0.32, 0.46)
-                        c.drawString(36, height - 30, f"Attachment: {filename}")
-                        img_width, img_height = img.size
-                        max_width = width - 72
-                        max_height = height - 120
-                        if img_width > max_width or img_height > max_height:
-                            ratio = min(max_width / img_width, max_height / img_height)
-                            display_width = img_width * ratio
-                            display_height = img_height * ratio
-                        else:
-                            display_width = img_width
-                            display_height = img_height
-                        x_pos = (width - display_width) / 2
-                        y_pos = (height - display_height) / 2
-                        c.setStrokeColorRGB(0.8, 0.8, 0.8)
-                        c.rect(x_pos - 5, y_pos - 5, display_width + 10, display_height + 10, stroke=1, fill=0)
-                        c.drawImage(absolute_file_path, x_pos, y_pos, width=display_width, height=display_height)
-                        c.setFont("Helvetica", 8)
-                        c.setFillColorRGB(0.5, 0.5, 0.5)
-                        c.drawString(36, 20, f"File: {filename}")
-                        c.drawRightString(width - 36, 20, f"Application ID: {application_id}")
-                        c.save()
-
-                        img_pdf = PdfReader(temp_img_pdf.name)
-                        for page in img_pdf.pages:
-                            writer.add_page(page)
-                        os.remove(temp_img_pdf.name)
-                except Exception as e:
-                    print(f"Error processing image {absolute_file_path}: {str(e)}")
-                    continue
-            else:
-                print(f"Unsupported file type: {absolute_file_path}")
-                continue
-
-        for filename, page_position in attachment_positions.items():
-            if filename not in attachment_destinations:
-                continue
-            items_per_page = 25
-            page_index = min(page_position // items_per_page, len(summary_pdf.pages) - 1)
-            page = writer.pages[page_index]
-            position_on_page = page_position % items_per_page
-            y_offset = page_height - 180 - (position_on_page * 20)
-            action = DictionaryObject({
-                NameObject("/S"): NameObject("/GoTo"),
-                NameObject("/D"): ArrayObject([NumberObject(attachment_destinations[filename]), NameObject("/Fit")]),
-            })
-            link = DictionaryObject({
-                NameObject("/Type"): NameObject("/Annot"),
-                NameObject("/Subtype"): NameObject("/Link"),
-                NameObject("/Rect"): ArrayObject([NumberObject(60), NumberObject(y_offset - 10), NumberObject(450), NumberObject(y_offset + 10)]),
-                NameObject("/A"): action,
-                NameObject("/Border"): ArrayObject([NumberObject(0), NumberObject(0), NumberObject(0)]),
-            })
-            if NameObject("/Annots") not in page:
-                page[NameObject("/Annots")] = ArrayObject()
-            annots = page[NameObject("/Annots")]
-            annots.append(writer._add_object(link))
-
-        for filename, page_num in attachment_destinations.items():
-            page = writer.pages[page_num]
-            return_action = DictionaryObject({
-                NameObject("/S"): NameObject("/GoTo"),
-                NameObject("/D"): ArrayObject([NumberObject(0), NameObject("/Fit")]),
-            })
-            back_link = DictionaryObject({
-                NameObject("/Type"): NameObject("/Annot"),
-                NameObject("/Subtype"): NameObject("/Link"),
-                NameObject("/Rect"): ArrayObject([NumberObject(32), NumberObject(page_height - 92), NumberObject(137), NumberObject(page_height - 72)]),
-                NameObject("/A"): return_action,
-                NameObject("/Border"): ArrayObject([NumberObject(0), NumberObject(0), NumberObject(0)]),
-            })
-            if NameObject("/Annots") not in page:
-                page[NameObject("/Annots")] = ArrayObject()
-            annots = page[NameObject("/Annots")]
-            annots.append(writer._add_object(back_link))
-
-        with open(pdf_path, "wb") as f:
-            writer.write(f)
-
-        return send_file(
-            pdf_path,
-            as_attachment=True,
-            download_name=f"application_{application_id}_module_4_summary.pdf",
-            mimetype="application/pdf",
-        )

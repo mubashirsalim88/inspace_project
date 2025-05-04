@@ -4,6 +4,9 @@
 <div class="p-6 max-w-4xl mx-auto">
     <h2 class="text-3xl font-bold text-gray-800 mb-6">Review Application #{{ application.id }} ({{ role }})</h2>
     
+    <!-- Flash Message Container -->
+    <div id="flash-messages" class="mb-4"></div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white shadow-lg rounded-lg p-6">
         <!-- Left Column: Details -->
         <div class="space-y-6">
@@ -48,6 +51,7 @@
             <!-- Review Form -->
             <form method="POST" class="space-y-4">
                 <input type="hidden" name="action" value="review">
+                <input type="hidden" name="csrf_token" value="{% if csrf_token is callable %}{{ csrf_token() }}{% else %}{{ csrf_token }}{% endif %}">
                 <div>
                     <label class="block text-gray-700 font-medium mb-1">Decision</label>
                     <select name="decision" class="w-full p-3 border rounded-md bg-gray-50 focus:ring-2 focus:ring-blue-500" required>
@@ -74,42 +78,93 @@
     </div>
 </div>
 
+<!-- Enable Edit Modal -->
+<div id="enable-edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Enable Edit for Applicant</h3>
+        <form id="enable-edit-form">
+            <input type="hidden" name="csrf_token" value="{% if csrf_token is callable %}{{ csrf_token() }}{% else %}{{ csrf_token }}{% endif %}">
+            <input type="hidden" name="action" value="enable_edit">
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-1">Comments (Required)</label>
+                <textarea name="comments" class="w-full p-3 border rounded-md bg-gray-50 focus:ring-2 focus:ring-blue-500" rows="4" placeholder="Explain what needs to be edited" required></textarea>
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" id="cancel-edit-btn" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Cancel</button>
+                <button type="submit" id="submit-edit-btn" class="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700">Confirm</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const enableEditBtn = document.getElementById('enable-edit-btn');
+    const enableEditModal = document.getElementById('enable-edit-modal');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const enableEditForm = document.getElementById('enable-edit-form');
+    const submitEditBtn = document.getElementById('submit-edit-btn');
+
     enableEditBtn.addEventListener('click', () => {
+        enableEditModal.classList.remove('hidden');
+    });
+
+    cancelEditBtn.addEventListener('click', () => {
+        enableEditModal.classList.add('hidden');
+        enableEditForm.reset();
+    });
+
+    enableEditForm.addEventListener('submit', (e) => {
+        e.preventDefault();
         const applicationId = enableEditBtn.getAttribute('data-app-id');
-        enableEditBtn.disabled = true;
-        enableEditBtn.textContent = 'Processing...';
+        submitEditBtn.disabled = true;
+        submitEditBtn.textContent = 'Processing...';
+
+        const formData = new FormData(enableEditForm);
+        // Include CSRF token in headers
+        const csrfToken = formData.get('csrf_token');
 
         fetch(`/verifier/review/${applicationId}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'X-CSRF-Token': csrfToken
             },
-            body: JSON.stringify({ action: 'enable_edit' })
+            body: formData
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
+            console.log('Response status:', response.status);
+            return response.json().catch(err => {
+                throw new Error(`Failed to parse JSON: ${err.message}`);
+            });
         })
         .then(data => {
+            console.log('Response data:', data);
             if (data.status === 'success') {
-                alert(data.message);
-                window.location.reload();
+                // Add flash message at the top
+                const flashDiv = document.createElement('div');
+                flashDiv.className = 'flash-message mb-4 p-4 rounded-lg text-white bg-green-500 animate__animated animate__fadeIn';
+                flashDiv.textContent = data.message;
+                const flashContainer = document.getElementById('flash-messages');
+                flashContainer.prepend(flashDiv);
+                // Update button state
+                enableEditBtn.disabled = true;
+                enableEditBtn.textContent = 'Edit Enabled';
+                enableEditBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                enableEditBtn.classList.add('bg-gray-400');
+                // Close modal
+                enableEditModal.classList.add('hidden');
+                enableEditForm.reset();
             } else {
-                throw new Error(data.message);
+                alert(data.message);
             }
         })
         .catch(error => {
             console.error('Error enabling edit:', error);
-            alert(`Failed to enable edit: ${error.message}`);
+            alert('Failed to enable edit. Please try again.');
         })
         .finally(() => {
-            enableEditBtn.disabled = false;
-            enableEditBtn.textContent = 'Enable Edit for Applicant';
+            submitEditBtn.disabled = false;
+            submitEditBtn.textContent = 'Confirm';
         });
     });
 });

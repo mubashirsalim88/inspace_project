@@ -43,12 +43,41 @@
         <div class="mb-4">
             <label class="block text-base mb-1 text-gray-800">Undertaking/Declaration <span class="text-red-500">*</span></label>
             <div class="space-y-4">
-                {% for decl in ['compliance_laws', 'accuracy_info', 'criminal_declaration', 'financial_stability', 'change_notification'] %}
                 <div class="flex items-start">
-                    <input type="checkbox" name="{{ decl }}" required class="mt-1 mr-2" {% if form_data[decl] %}checked{% endif %}>
-                    <p class="text-gray-700 text-sm">{{ { 'compliance_laws': 'A. Compliance with Laws', 'accuracy_info': 'B. Accuracy of Information', 'criminal_declaration': 'C. Criminal Declaration', 'financial_stability': 'D. Financial Stability', 'change_notification': 'E. Change Notification' }[decl] }}</p>
+                    <input type="checkbox" name="compliance_laws" required class="mt-1 mr-2" {% if form_data.compliance_laws %}checked{% endif %}>
+                    <p class="text-gray-700 text-sm">
+                        <strong>A. Compliance with Laws</strong><br>
+                        We hereby undertake that we comply with all applicable laws, rules, regulations, and guidelines, including but not limited to the Indian Space Policy 2023, and any amendments thereof.
+                    </p>
                 </div>
-                {% endfor %}
+                <div class="flex items-start">
+                    <input type="checkbox" name="accuracy_info" required class="mt-1 mr-2" {% if form_data.accuracy_info %}checked{% endif %}>
+                    <p class="text-gray-700 text-sm">
+                        <strong>B. Accuracy of Information</strong><br>
+                        We certify that all information provided in this application is true, complete, and accurate to the best of our knowledge. We undertake to inform IN-SPACe immediately of any changes to the information provided.
+                    </p>
+                </div>
+                <div class="flex items-start">
+                    <input type="checkbox" name="criminal_declaration" required class="mt-1 mr-2" {% if form_data.criminal_declaration %}checked{% endif %}>
+                    <p class="text-gray-700 text-sm">
+                        <strong>C. Criminal Declaration</strong><br>
+                        We declare that no criminal proceedings are pending against the applicant, its directors, or key personnel, and no convictions exist under the Indian Penal Code, Companies Act, or other applicable laws.
+                    </p>
+                </div>
+                <div class="flex items-start">
+                    <input type="checkbox" name="financial_stability" required class="mt-1 mr-2" {% if form_data.financial_stability %}checked{% endif %}>
+                    <p class="text-gray-700 text-sm">
+                        <strong>D. Financial Stability</strong><br>
+                        We certify that the applicant is financially stable, not bankrupt, and has no insolvency proceedings pending against it.
+                    </p>
+                </div>
+                <div class="flex items-start">
+                    <input type="checkbox" name="change_notification" required class="mt-1 mr-2" {% if form_data.change_notification %}checked{% endif %}>
+                    <p class="text-gray-700 text-sm">
+                        <strong>E. Change Notification</strong><br>
+                        We undertake to notify IN-SPACe immediately of any material changes to the information provided, including but not limited to changes in management, ownership, or financial status.
+                    </p>
+                </div>
             </div>
         </div>
         <div class="mb-4">
@@ -88,7 +117,6 @@
         const form = document.getElementById('declarations-form');
         const formData = new FormData(form);
 
-        // First, save the form data
         fetch("{{ url_for('module_1.save_declarations', application_id=application_id) }}", {
             method: 'POST',
             body: formData
@@ -96,7 +124,6 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                // Show SweetAlert2 popup
                 Swal.fire({
                     title: "Ready to Submit?",
                     text: "Before submitting finally, you can review your application if you want or submit it now. Once submitted, you cannot edit it.",
@@ -108,9 +135,8 @@
                     cancelButtonText: "Review"
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        form.submit(); // Proceed with final submission
+                        form.submit();
                     } else {
-                        // Redirect to Step 1 (Applicant Identity)
                         window.location.href = "{{ url_for('module_1.fill_step', step='applicant_identity', application_id=application_id) }}";
                     }
                 });

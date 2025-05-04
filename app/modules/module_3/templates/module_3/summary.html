@@ -115,7 +115,7 @@
         </div>
         {% endfor %}
         {% if application.status == 'Submitted' %}
-        <a href="{{ url_for('module_3.download_pdf', application_id=application_id) }}" class="download-btn">Download PDF</a>
+        <a href="{{ url_for('module_3_pdf.download_pdf', application_id=application_id) }}" class="download-btn">Download PDF</a>
         {% endif %}
         <a href="{{ url_for('applicant.home') }}" class="dashboard-btn">Return to Dashboard</a>
     </div>

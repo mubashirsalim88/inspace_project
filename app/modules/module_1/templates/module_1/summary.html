@@ -15,7 +15,7 @@
         }
         .container {
             max-width: 800px;
-            margin: 0 auto;
+            margin: personally owned auto;
             padding: 2rem;
             background: white;
             border-radius: 0.75rem;
@@ -114,7 +114,7 @@
         </div>
         {% endfor %}
         {% if application.status == 'Submitted' %}
-        <a href="{{ url_for('module_1.download_pdf', application_id=application_id) }}" class="download-btn">Download PDF</a>
+        <a href="{{ url_for('module_1_pdf.download_pdf', application_id=application_id) }}" class="download-btn">Download PDF</a>
         {% endif %}
         <a href="{{ url_for('applicant.home') }}" class="dashboard-btn">Return to Dashboard</a>
     </div>
