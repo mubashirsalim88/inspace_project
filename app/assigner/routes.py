@@ -11,16 +11,15 @@ assigner = Blueprint("assigner", __name__, url_prefix="/assigner", template_fold
 @login_required
 @role_required("Assigner")
 def home():
-    # Fetch all submitted applications
-    applications = Application.query.filter_by(status="Submitted").all()
-    assigned_applications = Application.query.filter_by(status="Under Review").join(ApplicationAssignment).filter(ApplicationAssignment.assigner_id == current_user.id).all()
+    # Fetch all applications, grouped by status
+    applications = Application.query.all()
+    assigned_applications = Application.query.join(ApplicationAssignment).filter(ApplicationAssignment.assigner_id == current_user.id).all()
     
     # Group applications by module (all ten modules)
     module_apps = {f"module_{i}": [] for i in range(1, 11)}
     assigned_module_apps = {f"module_{i}": [] for i in range(1, 11)}
     
     for app in applications:
-        # Get the first module_name
         module_name = next((md.module_name for md in app.module_data if md.module_name in module_apps), None)
         if module_name:
             module_apps[module_name].append(app)
@@ -34,7 +33,7 @@ def home():
     recent_modules = set()
     for module in module_apps:
         for app in module_apps[module]:
-            if (datetime.now() - app.updated_at).days <= 7:
+            if app.status == "Submitted" and (datetime.now() - app.updated_at).days <= 7:
                 recent_modules.add(module)
 
     return render_template(

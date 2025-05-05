@@ -24,19 +24,34 @@ def home():
     assignments_as_secondary = ApplicationAssignment.query.filter_by(secondary_verifier_id=current_user.id).all()
     
     applications = []
+    completed_applications = []
     app_ids = set()
+    completed_app_ids = set()
+    
+    # Fetch actionable applications
     for assignment in assignments_as_primary + assignments_as_secondary:
         app = Application.query.get(assignment.application_id)
-        if app and app.id not in app_ids:
-            applications.append(app)
-            app_ids.add(app.id)
+        if app and app.id not in app_ids and app.id not in completed_app_ids:
+            if app.status in ["Approved", "Rejected"]:
+                completed_applications.append(app)
+                completed_app_ids.add(app.id)
+            else:
+                applications.append(app)
+                app_ids.add(app.id)
     
     # Group applications by module (all ten modules)
     module_apps = {f"module_{i}": [] for i in range(1, 11)}
+    completed_module_apps = {f"module_{i}": [] for i in range(1, 11)}
+    
     for app in applications:
         module_name = next((md.module_name for md in app.module_data if md.module_name in module_apps), None)
         if module_name:
             module_apps[module_name].append(app)
+    
+    for app in completed_applications:
+        module_name = next((md.module_name for md in app.module_data if md.module_name in completed_module_apps), None)
+        if module_name:
+            completed_module_apps[module_name].append(app)
 
     # Define fixed module order
     fixed_modules = [f"module_{i}" for i in range(1, 11)]
@@ -52,11 +67,12 @@ def home():
     return render_template(
         "verifier/home.html",
         module_apps=module_apps,
+        completed_module_apps=completed_module_apps,
         fixed_modules=fixed_modules,
         recent_actionable_modules=recent_actionable_modules,
         role=current_user.role,
         datetime=datetime,
-        csrf_token=generate_csrf()
+        csrf_token=generate_csrf
     )
 
 @verifier.route("/review/<int:application_id>", methods=["GET", "POST"])
@@ -129,15 +145,24 @@ def review(application_id):
 
             if decision == "approve":
                 if not assignment.secondary_verifier_id:  # Only one verifier
-                    application.status = "Approved"
-                    flash("Application approved.", "success")
+                    application.status = "Pending Director Approval"
+                    flash("Application approved. Awaiting Director approval.", "success")
                     notification = Notification(
                         user_id=application.user_id,
-                        content=f"Your application #{application.id} has been approved. Comments: {comments or 'None'}",
+                        content=f"Your application #{application.id} has been verified and is awaiting Director approval. Comments: {comments or 'None'}",
                         timestamp=datetime.utcnow()
                     )
                     db.session.add(notification)
-                    logger.info(f"Application {application_id} approved, notification created")
+                    # Notify all Directors
+                    directors = User.query.filter_by(role="Director").all()
+                    for director in directors:
+                        notification = Notification(
+                            user_id=director.id,
+                            content=f"Application #{application.id} is awaiting your final approval.",
+                            timestamp=datetime.utcnow()
+                        )
+                        db.session.add(notification)
+                    logger.info(f"Application {application_id} approved, awaiting Director, notifications sent")
                 else:  # Two verifiers
                     if current_user.role == "Primary Verifier" and application.status == "Under Review":
                         application.status = "Pending Secondary Approval"
@@ -151,22 +176,31 @@ def review(application_id):
                             db.session.add(notification)
                             logger.info(f"Application {application_id} approved by Primary Verifier, notification sent to Secondary Verifier")
                     elif current_user.role == "Secondary Verifier" and application.status == "Pending Secondary Approval":
-                        application.status = "Approved"
-                        flash("Application fully approved.", "success")
+                        application.status = "Pending Director Approval"
+                        flash("Application verified. Awaiting Director approval.", "success")
                         notification = Notification(
                             user_id=application.user_id,
-                            content=f"Your application #{application.id} has been approved by both verifiers. Comments: {comments or 'None'}",
+                            content=f"Your application #{application.id} has been verified by both verifiers and is awaiting Director approval. Comments: {comments or 'None'}",
                             timestamp=datetime.utcnow()
                         )
                         db.session.add(notification)
-                        if other_verifier_id:
+                        # Notify all Directors
+                        directors = User.query.filter_by(role="Director").all()
+                        for director in directors:
                             notification = Notification(
-                                user_id=other_verifier_id,
-                                content=f"Application #{application.id} has been fully approved.",
+                                user_id=director.id,
+                                content=f"Application #{application.id} is awaiting your final approval.",
                                 timestamp=datetime.utcnow()
                             )
                             db.session.add(notification)
-                            logger.info(f"Application {application_id} fully approved, notifications sent")
+                        if other_verifier_id:
+                            notification = Notification(
+                                user_id=other_verifier_id,
+                                content=f"Application #{application.id} has been verified and is awaiting Director approval.",
+                                timestamp=datetime.utcnow()
+                            )
+                            db.session.add(notification)
+                            logger.info(f"Application {application_id} verified, notifications sent to Directors and Primary Verifier")
             else:  # Reject
                 application.status = "Rejected"
                 flash(f"Application rejected. Comments: {comments}", "success")
@@ -179,11 +213,11 @@ def review(application_id):
                 if other_verifier_id:
                     notification = Notification(
                         user_id=other_verifier_id,
-                        content=f"{current_user.username} rejected application #{application.id}. Comments: {comments}",
-                        timestamp=datetime.utcnow()
-                    )
-                    db.session.add(notification)
-                    logger.info(f"Application {application_id} rejected, notifications sent")
+                    content=f"{current_user.username} rejected application #{application.id}. Comments: {comments}",
+                    timestamp=datetime.utcnow()
+                )
+                db.session.add(notification)
+                logger.info(f"Application {application_id} rejected, notifications sent")
 
             try:
                 db.session.commit()
