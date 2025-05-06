@@ -1,2 +1,5 @@
-# app/chat/__init__.py
-from .routes import chat
+from flask import Blueprint
+
+chat = Blueprint("chat", __name__, template_folder="templates")
+
+from . import routes

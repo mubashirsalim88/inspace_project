@@ -22,7 +22,7 @@ module_4_pdf = Blueprint(
 )
 
 # Setup logging
-logging.basicConfig(level=logging.DEBUG)  # Increased to DEBUG for detailed tracing
+logging.basicConfig(level=logging.WARNING)  # Aligned with other modules
 logger = logging.getLogger(__name__)
 
 def clean_filename(filename):
@@ -61,14 +61,19 @@ def download_pdf(application_id):
     ).first()
     allowed_users = [application.user_id]
     if assignment:
-        allowed_users.extend(
-            [assignment.primary_verifier_id, assignment.secondary_verifier_id]
-        )
+        if assignment.primary_verifier_id:
+            allowed_users.append(assignment.primary_verifier_id)
+        if assignment.secondary_verifier_id:
+            allowed_users.append(assignment.secondary_verifier_id)
 
-    if current_user.id not in allowed_users or application.status not in [
-        "Submitted",
-        "Under Review",
-    ]:
+    # Allow Directors to access the PDF
+    if current_user.role == "Director":
+        allowed_users.append(current_user.id)
+
+    # Allow access for relevant application statuses
+    allowed_statuses = ["Submitted", "Under Review", "Pending Secondary Approval", "Pending Director Approval", "Approved", "Rejected"]
+    if current_user.id not in allowed_users or application.status not in allowed_statuses:
+        logger.warning(f"Unauthorized access to PDF for application {application_id} by user {current_user.id}, status: {application.status}")
         return "Unauthorized or invalid application", 403
 
     # Fetch Module 4 data

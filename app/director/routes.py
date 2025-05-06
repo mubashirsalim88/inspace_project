@@ -85,7 +85,8 @@ def review(application_id):
         flash("No valid module found for this application.", "error")
         return redirect(url_for("director.home"))
     
-    pdf_download_url = url_for(f"{module_name}_pdf.download_pdf", application_id=application_id)
+    # Ensure correct endpoint for PDF download
+    pdf_download_url = url_for(f"{module_name}_pdf.download_pdf", application_id=application_id, _external=True)
 
     if request.method == "POST":
         logger.debug(f"Processing POST request for application {application_id}, content-type: {request.content_type}")
@@ -198,6 +199,7 @@ def review(application_id):
         primary_verifier=primary_verifier,
         secondary_verifier=secondary_verifier,
         pdf_download_url=pdf_download_url,
+        module_name=module_name,
         role=current_user.role,
         csrf_token=generate_csrf
     )

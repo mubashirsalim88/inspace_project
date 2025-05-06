@@ -38,16 +38,11 @@ def ensure_white_background(image_path):
     """Ensure the image has a white background by removing transparency."""
     try:
         img = Image.open(image_path)
-        # Convert image to RGBA if it isn't already
         if img.mode != 'RGBA':
             img = img.convert('RGBA')
-        # Create a white background image
         white_background = Image.new('RGBA', img.size, (255, 255, 255, 255))
-        # Composite the image onto the white background
         img = Image.alpha_composite(white_background, img)
-        # Convert back to RGB for ReportLab compatibility
         img = img.convert('RGB')
-        # Save to a temporary file
         temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
         img.save(temp_file.name, 'PNG')
         return temp_file.name
@@ -66,14 +61,19 @@ def download_pdf(application_id):
     ).first()
     allowed_users = [application.user_id]
     if assignment:
-        allowed_users.extend(
-            [assignment.primary_verifier_id, assignment.secondary_verifier_id]
-        )
+        if assignment.primary_verifier_id:
+            allowed_users.append(assignment.primary_verifier_id)
+        if assignment.secondary_verifier_id:
+            allowed_users.append(assignment.secondary_verifier_id)
 
-    if current_user.id not in allowed_users or application.status not in [
-        "Submitted",
-        "Under Review",
-    ]:
+    # Allow Directors to access the PDF
+    if current_user.role == "Director":
+        allowed_users.append(current_user.id)
+
+    # Allow access for relevant application statuses
+    allowed_statuses = ["Submitted", "Under Review", "Pending Secondary Approval", "Pending Director Approval", "Approved", "Rejected"]
+    if current_user.id not in allowed_users or application.status not in allowed_statuses:
+        logger.warning(f"Unauthorized access to PDF for application {application_id} by user {current_user.id}, status: {application.status}")
         return "Unauthorized or invalid application", 403
 
     # Fetch module data and exclude 'summary' step
@@ -83,7 +83,7 @@ def download_pdf(application_id):
     processed_module_data = [
         {"step": md.step, "data": md.data.copy(), "completed": md.completed}
         for md in all_module_data
-        if md.step.lower() != "summary"  # Exclude 'summary' step
+        if md.step.lower() != "summary"
     ]
 
     # Fetch uploaded files
@@ -182,7 +182,6 @@ def download_pdf(application_id):
         logo_to_use = logo_path
         temp_logo = None
         if os.path.exists(logo_path):
-            # Ensure the logo has a white background
             temp_logo_path = ensure_white_background(logo_path)
             logo_to_use = temp_logo_path
             canvas.drawImage(
@@ -201,25 +200,21 @@ def download_pdf(application_id):
             canvas.setFillColor(colors.black)
             canvas.drawString(40, height - 36, "IN-SPACe")
 
-        # Draw Application ID on the right
         canvas.setFont("Helvetica", 10)
         canvas.setFillColor(colors.black)
         canvas.drawRightString(
             width - 36, height - 50, f"Application ID: {application_id}"
         )
 
-        # Draw header line below both logo and Application ID
         canvas.setStrokeColor(colors.gray)
         canvas.line(36, height - 60, width - 36, height - 60)
 
-        # Footer with page number
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(colors.gray)
         canvas.drawRightString(width - 36, 24, f"Page {doc.page}")
         canvas.line(36, 24, width - 36, 24)
 
         canvas.restoreState()
-        # Clean up temporary logo file if created
         if temp_logo and os.path.exists(temp_logo):
             os.unlink(temp_logo)
 
@@ -243,8 +238,8 @@ def download_pdf(application_id):
             ("TOPPADDING", (0, 0), (-1, -1), 8),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("GRID", (0, 0), (-1, -1), 0.25, colors.gray),  # Added grid for a proper table look
-            ("BOX", (0, 0), (-1, -1), 0.5, colors.black),  # Added border around the table
+            ("GRID", (0, 0), (-1, -1), 0.25, colors.gray),
+            ("BOX", (0, 0), (-1, -1), 0.5, colors.black),
         ]
     )
     summary_flowables.append(summary_table)
@@ -284,19 +279,15 @@ def download_pdf(application_id):
                 if isinstance(value, list):
                     for file_path in value:
                         filename = os.path.basename(file_path)
-                        display_name = clean_filename(filename)  # e.g., "Official Seal Or Stamp"
-                        # Store the position for linking
+                        display_name = clean_filename(filename)
                         attachment_positions[filename] = len(story) + len(section_flowables)
-                        # Label (e.g., "Recognition Certificate:") in black, bold
                         label_text = f"{key_clean}:"
-                        # Document name (e.g., "Official Seal Or Stamp") in blue, clickable
                         link_text = display_name
                         data_table.append([
-                            Paragraph(label_text, label_style),  # Black, bold, not clickable
-                            Paragraph(link_text, link_style),    # Blue, clickable
+                            Paragraph(label_text, label_style),
+                            Paragraph(link_text, link_style),
                         ])
                 else:
-                    # Non-list values remain as is
                     data_table.append([
                         Paragraph(f"{key_clean}:", label_style),
                         Paragraph(str(value), normal_style),
@@ -307,7 +298,7 @@ def download_pdf(application_id):
                 [
                     ("FONTSIZE", (0, 0), (-1, -1), 11),
                     ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                    ("TOPPADING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("GRID", (0, 0), (-1, -1), 0.25, colors.gray),

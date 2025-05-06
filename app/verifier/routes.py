@@ -1,9 +1,8 @@
-# app/verifier/routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from app import db, mail
-from app.models import Application, ApplicationAssignment, User, Notification, ModuleData, EditRequest
+from app.models import Application, ApplicationAssignment, User, Notification, ModuleData, EditRequest, ChatMessage
 from app.utils import role_required
 from flask_mail import Message
 import logging
@@ -27,11 +26,21 @@ def home():
     completed_applications = []
     app_ids = set()
     completed_app_ids = set()
+    unread_messages = {}
+    app_has_secondary_verifier = {}
     
-    # Fetch actionable applications
+    # Fetch applications and unread message counts
     for assignment in assignments_as_primary + assignments_as_secondary:
         app = Application.query.get(assignment.application_id)
         if app and app.id not in app_ids and app.id not in completed_app_ids:
+            # Count unread messages for this application (from applicant or other verifier)
+            unread_count = ChatMessage.query.filter_by(
+                application_id=app.id,
+                receiver_id=current_user.id,
+                read=False
+            ).count()
+            unread_messages[app.id] = unread_count
+            app_has_secondary_verifier[app.id] = bool(assignment.secondary_verifier_id)
             if app.status in ["Approved", "Rejected"]:
                 completed_applications.append(app)
                 completed_app_ids.add(app.id)
@@ -72,7 +81,9 @@ def home():
         recent_actionable_modules=recent_actionable_modules,
         role=current_user.role,
         datetime=datetime,
-        csrf_token=generate_csrf
+        csrf_token=generate_csrf,
+        unread_messages=unread_messages,
+        app_has_secondary_verifier=app_has_secondary_verifier
     )
 
 @verifier.route("/review/<int:application_id>", methods=["GET", "POST"])
@@ -107,7 +118,16 @@ def review(application_id):
         flash("No valid module found for this application.", "error")
         return redirect(url_for("verifier.home"))
     
-    pdf_download_url = url_for(f"{module_name}_pdf.download_pdf", application_id=application_id)
+    pdf_download_url = url_for(f"{module_name}_pdf.download_pdf", application_id=application_id, _external=True)
+
+    # Compute unread messages for this application
+    unread_messages = {}
+    unread_count = ChatMessage.query.filter_by(
+        application_id=application.id,
+        receiver_id=current_user.id,
+        read=False
+    ).count()
+    unread_messages[application.id] = unread_count
 
     if request.method == "POST":
         logger.debug(f"Processing POST request for application {application_id}, content-type: {request.content_type}")
@@ -213,10 +233,10 @@ def review(application_id):
                 if other_verifier_id:
                     notification = Notification(
                         user_id=other_verifier_id,
-                    content=f"{current_user.username} rejected application #{application.id}. Comments: {comments}",
-                    timestamp=datetime.utcnow()
-                )
-                db.session.add(notification)
+                        content=f"{current_user.username} rejected application #{application.id}. Comments: {comments}",
+                        timestamp=datetime.utcnow()
+                    )
+                    db.session.add(notification)
                 logger.info(f"Application {application_id} rejected, notifications sent")
 
             try:
@@ -338,5 +358,6 @@ def review(application_id):
         secondary_verifier=secondary_verifier,
         pdf_download_url=pdf_download_url,
         role=current_user.role,
-        csrf_token=generate_csrf
+        csrf_token=generate_csrf,
+        unread_messages=unread_messages
     )

@@ -60,7 +60,7 @@ def create_app():
     app.register_blueprint(applicant_bp)
     app.register_blueprint(assigner_bp)
     app.register_blueprint(verifier_bp)
-    app.register_blueprint(director_bp)  # Added Director blueprint
+    app.register_blueprint(director_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(module_1_bp)
     app.register_blueprint(module_1_pdf_bp)
@@ -95,7 +95,7 @@ def create_app():
             elif current_user.role in ["Primary Verifier", "Secondary Verifier"]:
                 return redirect(url_for('verifier.home'))
             elif current_user.role == "Director":
-                return redirect(url_for('director.home'))  # Added Director redirect
+                return redirect(url_for('director.home'))
             elif current_user.role == "admin":
                 return redirect(url_for('admin.dashboard'))
             else:

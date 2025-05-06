@@ -1,0 +1,145 @@
+{% extends "chat_base.html" %}
+{% block title %}Chat - Application #{{ application.id }} - IN-SPACe{% endblock %}
+{% block chat_header %}
+<div class="bg-gradient-to-r from-indigo-600 to-blue-500 p-4 flex justify-between items-center">
+    <h2 class="text-xl font-semibold text-white">Chat for Application #{{ application.id }}</h2>
+    <a href="{{ url_for('verifier.review' if current_user.role in ['Primary Verifier', 'Secondary Verifier'] else 'applicant.home', application_id=application.id) }}" class="text-white hover:text-gray-200 text-sm font-medium flex items-center">
+        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Back
+    </a>
+</div>
+{% endblock %}
+{% block chat_messages %}
+<div id="chat-messages" class="space-y-4">
+    {% for msg in messages %}
+        <div class="flex {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}">
+            <div class="flex items-start space-x-2 max-w-md">
+                {% if msg.sender_id != current_user.id %}
+                    <div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700 font-semibold">
+                        {{ msg.sender.username[0]|upper }}
+                    </div>
+                {% endif %}
+                <div class="{% if msg.sender_id == current_user.id %}bg-indigo-500 text-white{% else %}bg-gray-100 text-gray-800{% endif %} p-4 rounded-lg shadow-md">
+                    <p class="font-semibold text-sm">
+                        {{ msg.sender.username }} ({{ 'Applicant' if msg.sender_id == applicant.id else 'Primary Verifier' if msg.sender_id == primary_verifier.id else 'Secondary Verifier' }})
+                    </p>
+                    {% if msg.image_path %}
+                        <img src="{{ url_for('static', filename=msg.image_path) }}" class="mt-2 max-w-full h-auto rounded annotatable" data-id="{{ msg.id }}" alt="Chat image">
+                    {% endif %}
+                    {% if msg.message %}
+                        <p class="mt-1">{{ msg.message }}</p>
+                    {% endif %}
+                    <p class="text-xs {% if msg.sender_id == current_user.id %}text-indigo-100{% else %}text-gray-500{% endif %} mt-2">{{ msg.timestamp.strftime('%b %d, %Y %I:%M %p') }}</p>
+                </div>
+                {% if msg.sender_id == current_user.id %}
+                    <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-semibold">
+                        {{ msg.sender.username[0]|upper }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+{% block chat_input %}
+<div class="bg-white p-4 shadow-inner">
+    <form id="chat-form" method="POST" enctype="multipart/form-data" class="flex flex-col space-y-4">
+        <div class="flex space-x-4">
+            <textarea name="message" class="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" rows="3" placeholder="Type your message..."></textarea>
+            <select name="receiver_id" class="p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white min-w-[150px]" required>
+                <option value="" disabled selected>Select recipient</option>
+                {% for recipient in recipients %}
+                    <option value="{{ recipient.id }}">{{ recipient.username }} ({{ recipient.role }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="flex items-center space-x-4">
+            <label class="cursor-pointer flex items-center">
+                <input type="file" id="image-input" name="image" accept="image/*" class="hidden">
+                <svg class="w-6 h-6 text-gray-600 hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <span class="ml-2 text-sm text-gray-600">Attach Image</span>
+            </label>
+            <div id="image-preview" class="flex items-center space-x-2 hidden">
+                <img id="preview-img" src="" class="w-12 h-12 object-cover rounded" alt="Selected image">
+                <span id="preview-filename" class="text-sm text-gray-600 truncate max-w-xs"></span>
+                <button type="button" id="clear-image" class="text-red-500 hover:text-red-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <button type="submit" class="py-2 px-6 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Send</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block content %}
+    {{ super() }}
+    <script src="https://cdn.jsdelivr.net/npm/@annotorious/annotorious@2.7.13/dist/annotorious.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@annotorious/annotorious@2.7.13/dist/annotorious.min.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Image preview functionality
+            const imageInput = document.getElementById('image-input');
+            const imagePreview = document.getElementById('image-preview');
+            const previewImg = document.getElementById('preview-img');
+            const previewFilename = document.getElementById('preview-filename');
+            const clearImageBtn = document.getElementById('clear-image');
+            const chatForm = document.getElementById('chat-form');
+
+            imageInput.addEventListener('change', () => {
+                if (imageInput.files && imageInput.files[0]) {
+                    const file = imageInput.files[0];
+                    previewFilename.textContent = file.name;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        previewImg.src = e.target.result;
+                        imagePreview.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            clearImageBtn.addEventListener('click', () => {
+                imageInput.value = '';
+                imagePreview.classList.add('hidden');
+                previewImg.src = '';
+                previewFilename.textContent = '';
+            });
+
+            chatForm.addEventListener('submit', () => {
+                // Reset preview after form submission
+                imagePreview.classList.add('hidden');
+                previewImg.src = '';
+                previewFilename.textContent = '';
+            });
+
+            // Annotorious initialization for image annotations
+            document.querySelectorAll('.annotatable').forEach(img => {
+                const anno = Annotorious.init({
+                    image: img,
+                    disableEditor: false,
+                    formatter: (annotation) => {
+                        return { style: 'stroke: #ff0000; stroke-width: 2' };
+                    }
+                });
+                anno.loadAnnotations(`/api/annotations/${img.dataset.id}`).catch(err => console.error('Failed to load annotations:', err));
+                anno.on('createAnnotation', annotation => {
+                    fetch(`/api/annotations/${img.dataset.id}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(annotation)
+                    }).catch(err => console.error('Failed to save annotation:', err));
+                });
+            });
+
+            // Auto-scroll to the bottom of the chat
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+    </script>
+{% endblock %}

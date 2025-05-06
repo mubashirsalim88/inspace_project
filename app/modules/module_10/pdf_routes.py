@@ -69,15 +69,19 @@ def download_pdf(application_id):
     ).first()
     allowed_users = [application.user_id]
     if assignment:
-        allowed_users.extend(
-            [assignment.primary_verifier_id, assignment.secondary_verifier_id]
-        )
+        if assignment.primary_verifier_id:
+            allowed_users.append(assignment.primary_verifier_id)
+        if assignment.secondary_verifier_id:
+            allowed_users.append(assignment.secondary_verifier_id)
 
-    if current_user.id not in allowed_users or application.status not in [
-        "Submitted",
-        "Under Review",
-    ]:
-        logger.warning(f"Unauthorized PDF download by user {current_user.id}, app {application_id}")
+    # Allow Directors to access the PDF
+    if current_user.role == "Director":
+        allowed_users.append(current_user.id)
+
+    # Allow access for relevant application statuses
+    allowed_statuses = ["Submitted", "Under Review", "Pending Secondary Approval", "Pending Director Approval", "Approved", "Rejected"]
+    if current_user.id not in allowed_users or application.status not in allowed_statuses:
+        logger.warning(f"Unauthorized access to PDF for application {application_id} by user {current_user.id}, status: {application.status}")
         return "Unauthorized or invalid application", 403
 
     # Fetch Module 10 data
@@ -90,15 +94,32 @@ def download_pdf(application_id):
         if md.step.lower() != "summary"
     ]
 
-    # Fetch uploaded files for Module 10
+    # Fetch uploaded files for Module 10 from UploadedFile
     uploaded_files_module_10 = UploadedFile.query.filter_by(
         application_id=application_id, module_name="module_10"
     ).all()
-    attachment_files = [
-        (f.filename, os.path.join(os.path.dirname(__file__), "..", f.filepath))
-        for f in uploaded_files_module_10
-        if os.path.exists(os.path.join(os.path.dirname(__file__), "..", f.filepath))
-    ]
+    uploaded_file_paths = {}
+    for f in uploaded_files_module_10:
+        absolute_path = os.path.join(os.path.dirname(__file__), "..", f.filepath)
+        if os.path.exists(absolute_path):
+            uploaded_file_paths[absolute_path] = (f.filename, absolute_path)
+        logger.debug(f"UploadedFile: {f.filename}, Step: {f.step}, Field: {f.field_name}, Path: {absolute_path}, Exists: {os.path.exists(absolute_path)}")
+
+    # Fetch file paths from ModuleData.data
+    module_data_file_paths = {}
+    for md in processed_module_10_data:
+        for key, value in md["data"].items():
+            if key not in ["documents", "document_names"] and isinstance(value, list) and all(isinstance(v, str) for v in value):
+                for file_path in value:
+                    absolute_path = os.path.join(os.path.dirname(__file__), "..", file_path)
+                    if os.path.exists(absolute_path):
+                        module_data_file_paths[absolute_path] = (os.path.basename(file_path), absolute_path)
+                    logger.debug(f"ModuleData: Step: {md['step']}, Field: {key}, File: {os.path.basename(file_path)}, Path: {absolute_path}, Exists: {os.path.exists(absolute_path)}")
+
+    # Combine and deduplicate file paths
+    all_file_paths = {**uploaded_file_paths, **module_data_file_paths}
+    attachment_files = list(all_file_paths.values())
+    logger.debug(f"Combined attachment files: {attachment_files}")
 
     # Create temporary files for Module 10 PDF
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as summary_file:
@@ -194,7 +215,7 @@ def download_pdf(application_id):
                 height - 50,
                 width=100,
                 height=35,
-                preserveAspectRatio=True
+                preserveAspectRatio=True,
             )
             if temp_logo_path != logo_path:
                 temp_logo = temp_logo_path
@@ -286,21 +307,25 @@ def download_pdf(application_id):
         step_title = md["step"].replace("_", " ").title()
         section_flowables.append(Paragraph(f"{section_index}. {step_title}", heading_style))
         data_table = []
+        files_added = set()  # Track file paths to avoid duplicates
         for key, value in md["data"].items():
             if key not in ["documents", "document_names"] and value:
                 key_clean = key.replace("_", " ").title()
                 if isinstance(value, list) and all(isinstance(v, str) for v in value):
                     for file_path in value:
-                        filename = os.path.basename(file_path)
-                        display_name = clean_filename(filename)
-                        attachment_positions[filename] = len(story) + len(section_flowables)
-                        label_text = f"{key_clean}:"
-                        link_text = display_name
-                        data_table.append([
-                            Paragraph(label_text, label_style),
-                            Paragraph(link_text, link_style),
-                        ])
-                    attachment_files.append((filename, file_path))
+                        absolute_path = os.path.join(os.path.dirname(__file__), "..", file_path)
+                        if absolute_path not in files_added and os.path.exists(absolute_path):
+                            filename = os.path.basename(file_path)
+                            display_name = clean_filename(filename)
+                            attachment_positions[absolute_path] = len(story) + len(section_flowables)
+                            label_text = f"{key_clean}:"
+                            link_text = display_name
+                            data_table.append([
+                                Paragraph(label_text, label_style),
+                                Paragraph(link_text, link_style),
+                            ])
+                            files_added.add(absolute_path)
+                            logger.debug(f"Added {filename} from ModuleData.data[{key}] for step {md['step']}")
                 elif isinstance(value, list):
                     for item in value:
                         if isinstance(item, dict):
@@ -314,6 +339,20 @@ def download_pdf(application_id):
                         Paragraph(f"{key_clean}:", label_style),
                         Paragraph(str(value), normal_style),
                     ])
+        # Fallback to UploadedFile for any missed files
+        step_files = [f for f in uploaded_files_module_10 if f.step == md["step"]]
+        for f in step_files:
+            absolute_path = os.path.join(os.path.dirname(__file__), "..", f.filepath)
+            if absolute_path not in files_added and os.path.exists(absolute_path):
+                field_name = f.field_name.replace('_', ' ').title()
+                display_name = clean_filename(f.filename)
+                attachment_positions[absolute_path] = len(story) + len(section_flowables)
+                data_table.append([
+                    Paragraph(f"{field_name}:", label_style),
+                    Paragraph(display_name, link_style),
+                ])
+                files_added.add(absolute_path)
+                logger.debug(f"Added {f.filename} from UploadedFile for step {md['step']}, field {f.field_name}")
         if data_table:
             table = Table(data_table, colWidths=[150, 360])
             table.setStyle(
@@ -341,9 +380,11 @@ def download_pdf(application_id):
     uploaded_flowables = []
     uploaded_flowables.append(Paragraph("Uploaded Documents (Module 10)", heading_style))
     doc_list = []
-    for filename, _ in attachment_files:
+    for _, file_path in attachment_files:
+        absolute_path = file_path
+        filename = os.path.basename(file_path)
         display_name = clean_filename(filename)
-        attachment_positions[filename] = len(story) + len(uploaded_flowables)
+        attachment_positions[absolute_path] = len(story) + len(uploaded_flowables)
         doc_list.append([Paragraph(display_name, link_style)])
     if doc_list:
         doc_table = Table(doc_list, colWidths=[510])
@@ -376,8 +417,8 @@ def download_pdf(application_id):
     attachment_page_numbers = {}
     current_page = module_10_page_count
 
-    for filename, file_path in attachment_files:
-        absolute_path = os.path.abspath(file_path)
+    for _, file_path in attachment_files:
+        absolute_path = file_path
         if not os.path.exists(absolute_path):
             logger.warning(f"Attachment file not found: {absolute_path}")
             continue
@@ -387,7 +428,7 @@ def download_pdf(application_id):
             width=final_doc[0].rect.width, height=final_doc[0].rect.height
         )
         page_width = final_doc[0].rect.width
-        display_name = clean_filename(filename)
+        display_name = clean_filename(os.path.basename(absolute_path))
         separator_page.insert_text(
             (page_width / 2 - fitz.get_text_length("Attachment (Module 10)", fontname="helv", fontsize=14) / 2, 100),
             "Attachment (Module 10)",
@@ -410,7 +451,7 @@ def download_pdf(application_id):
             color=(0, 0, 1),
         )
 
-        attachment_page_numbers[filename] = current_page
+        attachment_page_numbers[absolute_path] = current_page
         current_page += 1
 
         # Add file content
@@ -458,9 +499,9 @@ def download_pdf(application_id):
                     os.unlink(temp_pdf)
 
     # Add links for Module 10
-    for filename in attachment_positions:
-        if filename in attachment_page_numbers:
-            display_name = clean_filename(filename)
+    for file_path in attachment_positions:
+        if file_path in attachment_page_numbers:
+            display_name = clean_filename(os.path.basename(file_path))
             page_num = 0
             while page_num < module_10_page_count:
                 page = final_doc[page_num]
@@ -472,13 +513,13 @@ def download_pdf(application_id):
                                 "kind": fitz.LINK_GOTO,
                                 "from": rect,
                                 "to": fitz.Point(0, 0),
-                                "page": attachment_page_numbers[filename],
+                                "page": attachment_page_numbers[file_path],
                             }
                         )
                 page_num += 1
 
     # Add back links for Module 10 attachments
-    for filename, page_num in attachment_page_numbers.items():
+    for file_path, page_num in attachment_page_numbers.items():
         if page_num < len(final_doc):
             page = final_doc[page_num]
             instances = page.search_for("Back to Summary")

@@ -1,4 +1,3 @@
-# app/models.py
 from flask_login import UserMixin
 from app import db
 from datetime import datetime
@@ -83,6 +82,7 @@ class ChatMessage(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     message = db.Column(db.Text, nullable=False)
+    image_path = db.Column(db.String(200), nullable=True)  # Added to store image paths
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
     # Relationships

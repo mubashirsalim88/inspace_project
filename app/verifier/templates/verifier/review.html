@@ -35,16 +35,16 @@
 
         <!-- Right Column: Actions -->
         <div class="space-y-6">
-            <!-- Chat Buttons -->
+            <!-- Chat Button -->
             <div>
                 <h3 class="text-lg font-semibold text-gray-700">Chat</h3>
                 <div class="flex flex-col space-y-2">
-                    {% if current_user.role == 'Primary Verifier' and secondary_verifier %}
-                        <a href="{{ url_for('chat.verifier_chat', application_id=application.id) }}" class="py-2 px-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-center">Chat with Secondary Verifier</a>
-                    {% elif current_user.role == 'Secondary Verifier' %}
-                        <a href="{{ url_for('chat.verifier_chat', application_id=application.id) }}" class="py-2 px-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-center">Chat with Primary Verifier</a>
-                    {% endif %}
-                    <a href="{{ url_for('chat.applicant_chat', application_id=application.id) }}" class="py-2 px-4 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-center">Chat with Applicant</a>
+                    <a href="{{ url_for('chat.chat_view', application_id=application.id) }}" class="relative py-2 px-4 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-center">
+                        Chat
+                        {% if unread_messages.get(application.id, 0) > 0 %}
+                            <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-white bg-red-600 rounded-full">{{ unread_messages[application.id] }}</span>
+                        {% endif %}
+                    </a>
                 </div>
             </div>
 
