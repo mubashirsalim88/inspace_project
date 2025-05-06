@@ -1,0 +1,126 @@
+{% extends "chat_base.html" %}
+{% block title %}Notifications - IN-SPACe{% endblock %}
+{% block chat_header %}
+<div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 shadow-md flex justify-between items-center">
+    <h2 class="text-2xl font-bold text-white tracking-tight">Notifications</h2>
+    <a href="{{ url_for('applicant.home' if current_user.role == 'user' else 'verifier.home') }}" class="flex items-center text-white hover:text-blue-100 transition-colors duration-200">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Back to Dashboard
+    </a>
+</div>
+{% endblock %}
+{% block chat_messages %}
+<div id="notifications" class="w-full">
+    {% if error %}
+        <div class="text-center text-red-600 py-8">
+            <p class="text-lg font-medium">{{ error }}</p>
+        </div>
+    {% else %}
+        {% if notifications is defined and notifications %}
+            <div class="space-y-2">
+                {% for notification in notifications %}
+                    <div class="flex items-center py-3 px-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors duration-200 animate__animated animate__fadeIn" data-notification-id="{{ notification.id }}">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-base mr-4">
+                            {{ notification.user.username[0]|upper }}
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-gray-800 text-sm leading-relaxed">{{ notification.content }}</p>
+                            {% if notification.message_id %}
+                                <a href="{{ url_for('chat.chat_view', application_id=notification.message.application_id, message_id=notification.message_id) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium underline mark-read-link inline-block mt-1" data-notification-id="{{ notification.id }}">
+                                    View Message
+                                </a>
+                            {% endif %}
+                            <p class="text-xs text-gray-500 mt-1">{{ notification.timestamp.strftime('%b %d, %Y %I:%M %p') }}</p>
+                        </div>
+                        <div class="ml-4">
+                            {% if not notification.read %}
+                                <button class="mark-read-btn text-sm text-blue-600 hover:text-blue-800 font-medium px-3 py-1 rounded hover:bg-blue-100 transition-colors duration-200" data-notification-id="{{ notification.id }}">Mark as Read</button>
+                            {% else %}
+                                <span class="text-sm text-gray-500 font-medium px-3 py-1">Read</span>
+                            {% endif %}
+                        </div>
+                        {% if not notification.read %}
+                            <div class="w-2 h-2 rounded-full bg-blue-500 ml-4"></div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center text-gray-600 py-8">
+                <p class="text-lg font-medium">No notifications found.</p>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+{% block chat_input %}
+<!-- No input section for notifications page -->
+{% endblock %}
+{% block content %}
+<div class="main">
+    {{ super() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Mark notification as read via button
+            document.querySelectorAll('.mark-read-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const notificationId = btn.dataset.notificationId;
+                    fetch(`/notification/mark_notification_read/${notificationId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const notificationDiv = btn.closest('[data-notification-id]');
+                            const unreadIndicator = notificationDiv.querySelector('.bg-blue-500');
+                            if (unreadIndicator) unreadIndicator.remove();
+                            btn.replaceWith(Object.assign(document.createElement('span'), {
+                                className: 'text-sm text-gray-500 font-medium px-3 py-1',
+                                textContent: 'Read'
+                            }));
+                            document.dispatchEvent(new Event('messageRead'));
+                        } else {
+                            console.error('Failed to mark notification as read:', data.message);
+                        }
+                    })
+                    .catch(err => console.error('Error marking notification as read:', err));
+                });
+            });
+
+            // Mark notification as read when clicking "View Message" link
+            document.querySelectorAll('.mark-read-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const notificationId = link.dataset.notificationId;
+                    fetch(`/notification/mark_notification_read/${notificationId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const notificationDiv = link.closest('[data-notification-id]');
+                            const unreadIndicator = notificationDiv.querySelector('.bg-blue-500');
+                            if (unreadIndicator) unreadIndicator.remove();
+                            const btn = notificationDiv.querySelector('.mark-read-btn');
+                            if (btn) {
+                                btn.replaceWith(Object.assign(document.createElement('span'), {
+                                    className: 'text-sm text-gray-500 font-medium px-3 py-1',
+                                    textContent: 'Read'
+                                }));
+                            }
+                            document.dispatchEvent(new Event('messageRead'));
+                        } else {
+                            console.error('Failed to mark notification as read:', data.message);
+                        }
+                    })
+                    .catch(err => console.error('Error marking notification as read:', err));
+                    // Continue with navigation
+                });
+            });
+        });
+    </script>
+</div>
+{% endblock %}

@@ -30,7 +30,7 @@
             {% if module_apps[module] %}
             <ul class="space-y-4">
                 {% for application in module_apps[module] %}
-                <li class="p-4 {% if module == 'module_1' %}bg-blue-100 hover:bg-blue-200{% elif module == 'module_2' %}bg-green-100 hover:bg-green-200{% elif module == 'module_3' %}bg-purple-100 hover:bg-purple-200{% elif module == 'module_4' %}bg-indigo-100 hover:bg-indigo-200{% elif module == 'module_5' %}bg-pink-100 hover:bg-pink-200{% elif module == 'module_6' %}bg-yellow-100 hover:bg-yellow-200{% elif module == 'module_7' %}bg-orange-100 hover:bg-orange-200{% elif module == 'module_8' %}bg-teal-100 hover:bg-teal-200{% elif module == 'module_9' %}bg-cyan-100 hover:bg-cyan-200{% elif module == 'module_10' %}bg-red-100 hover:bg-red-200{% endif %} rounded-lg shadow flex justify-between items-center for transition-all duration-300">
+                <li class="p-4 {% if module == 'module_1' %}bg-blue-100 hover:bg-blue-200{% elif module == 'module_2' %}bg-green-100 hover:bg-green-200{% elif module == 'module_3' %}bg-purple-100 hover:bg-purple-200{% elif module == 'module_4' %}bg-indigo-100 hover:bg-indigo-200{% elif module == 'module_5' %}bg-pink-100 hover:bg-pink-200{% elif module == 'module_6' %}bg-yellow-100 hover:bg-yellow-200{% elif module == 'module_7' %}bg-orange-100 hover:bg-orange-200{% elif module == 'module_8' %}bg-teal-100 hover:bg-teal-200{% elif module == 'module_9' %}bg-cyan-100 hover:bg-cyan-200{% elif module == 'module_10' %}bg-red-100 hover:bg-red-200{% endif %} rounded-lg shadow flex justify-between items-center transition-all duration-300">
                     <div>
                         <h4 class="text-lg font-medium text-gray-900">{{ application.user.name }}</h4>
                         <p class="text-sm {% if module == 'module_1' %}text-blue-600{% elif module == 'module_2' %}text-green-600{% elif module == 'module_3' %}text-purple-600{% elif module == 'module_4' %}text-indigo-600{% elif module == 'module_5' %}text-pink-600{% elif module == 'module_6' %}text-yellow-600{% elif module == 'module_7' %}text-orange-600{% elif module == 'module_8' %}text-teal-600{% elif module == 'module_9' %}text-cyan-600{% elif module == 'module_10' %}text-red-600{% endif %}">{{ module|replace('_', ' ')|title }}</p>
@@ -67,7 +67,11 @@
                         </span>
                         {% endif %}
                         {% if application.status in ['Under Review', 'Pending Secondary Approval', 'Pending Director Approval', 'Rejected', 'Approved'] %}
-                        <a href="{{ url_for('chat.applicant_chat', application_id=application.id) }}" class="py-1 px-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm font-semibold">Chat</a>
+                        {% if application.id %}
+                            <a href="{{ url_for('chat.chat_view', application_id=application.id) }}" class="py-1 px-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 text-sm font-semibold">Chat</a>
+                        {% else %}
+                            <span class="py-1 px-3 bg-gray-500 text-white rounded-lg text-sm font-semibold">Chat Unavailable</span>
+                        {% endif %}
                         {% endif %}
                     </div>
                 </li>

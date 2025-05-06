@@ -55,6 +55,7 @@ def create_app():
     from app.modules.module_10 import module_10 as module_10_bp
     from app.modules.module_10.pdf_routes import module_10_pdf as module_10_pdf_bp
     from app.chat import chat as chat_bp
+    from app.notification import notification as notification_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(applicant_bp)
@@ -83,6 +84,7 @@ def create_app():
     app.register_blueprint(module_10_bp)
     app.register_blueprint(module_10_pdf_bp)
     app.register_blueprint(chat_bp)
+    app.register_blueprint(notification_bp, url_prefix="/notification")
 
     # Add homepage route with role-based redirection
     @app.route('/')

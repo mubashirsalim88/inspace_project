@@ -12,9 +12,9 @@
 </div>
 {% endblock %}
 {% block chat_messages %}
-<div id="chat-messages" class="space-y-4">
+<div id="chat-messages" class="space-y-4" data-current-user-id="{{ current_user.id }}">
     {% for msg in messages %}
-        <div class="flex {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}">
+        <div class="flex {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}" data-message-id="{{ msg.id }}">
             <div class="flex items-start space-x-2 max-w-md">
                 {% if msg.sender_id != current_user.id %}
                     <div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700 font-semibold">
@@ -112,13 +112,12 @@
             });
 
             chatForm.addEventListener('submit', () => {
-                // Reset preview after form submission
                 imagePreview.classList.add('hidden');
                 previewImg.src = '';
                 previewFilename.textContent = '';
             });
 
-            // Annotorious initialization for image annotations
+            // Annotorious initialization
             document.querySelectorAll('.annotatable').forEach(img => {
                 const anno = Annotorious.init({
                     image: img,
@@ -137,9 +136,30 @@
                 });
             });
 
-            // Auto-scroll to the bottom of the chat
+            // Auto-scroll to the bottom
             const chatMessages = document.getElementById('chat-messages');
             chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Mark messages as read when viewed
+            const messages = document.querySelectorAll('[data-message-id]');
+            const senderId = parseInt(chatMessages.dataset.currentUserId);
+            messages.forEach(msg => {
+                const messageId = msg.dataset.messageId;
+                if (msg.querySelector('.bg-gray-100')) { // Incoming message
+                    fetch(`/chat/mark_notification_read/${messageId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // Trigger custom event to update unread count
+                            document.dispatchEvent(new Event('messageRead'));
+                        }
+                    })
+                    .catch(err => console.error('Error marking message as read:', err));
+                }
+            });
         });
     </script>
 {% endblock %}

@@ -8,11 +8,10 @@ import logging
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
-from . import chat  # Import the chat blueprint from __init__.py
+from . import chat
 
 logger = logging.getLogger(__name__)
 
-# Ensure upload folder exists
 UPLOAD_FOLDER = 'app/static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -24,12 +23,11 @@ def allowed_file(filename):
 
 @chat.route("/chat/<int:application_id>", methods=["GET", "POST"])
 @login_required
-def chat_view(application_id):  # Renamed from 'chat' to 'chat_view' to avoid naming conflict
+def chat_view(application_id):
     logger.info(f"User {current_user.id} (role: {current_user.role}) accessing /chat/{application_id}")
     application = Application.query.get_or_404(application_id)
     assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first_or_404()
 
-    # Define allowed users
     allowed_users = [application.user_id, assignment.primary_verifier_id]
     if assignment.secondary_verifier_id:
         allowed_users.append(assignment.secondary_verifier_id)
@@ -39,7 +37,6 @@ def chat_view(application_id):  # Renamed from 'chat' to 'chat_view' to avoid na
         flash("Unauthorized access.", "error")
         return redirect(url_for("applicant.home" if current_user.role == "user" else "verifier.home"))
 
-    # Mark message as read if message_id is provided
     message_id = request.args.get("message_id", type=int)
     if message_id:
         message = ChatMessage.query.get_or_404(message_id)
@@ -109,7 +106,6 @@ def chat_view(application_id):  # Renamed from 'chat' to 'chat_view' to avoid na
         flash("Message sent successfully.", "success")
         return redirect(url_for("chat.chat_view", application_id=application_id))
 
-    # Fetch all messages related to the application for the current user
     messages = ChatMessage.query.filter_by(application_id=application_id).filter(
         ((ChatMessage.sender_id == current_user.id) & (ChatMessage.receiver_id.in_(allowed_users))) |
         ((ChatMessage.sender_id.in_(allowed_users)) & (ChatMessage.receiver_id == current_user.id))
@@ -119,7 +115,6 @@ def chat_view(application_id):  # Renamed from 'chat' to 'chat_view' to avoid na
     secondary_verifier = User.query.get(assignment.secondary_verifier_id) if assignment.secondary_verifier_id else None
     applicant = User.query.get(application.user_id)
 
-    # Determine available recipients
     recipients = []
     if current_user.id != applicant.id:
         recipients.append({"id": applicant.id, "username": applicant.username, "role": "Applicant"})
@@ -179,46 +174,3 @@ def enable_edit(application_id):
         logger.error(f"Error enabling edit for application {application_id}: {str(e)}")
         db.session.rollback()
         return jsonify({"status": "error", "message": f"Server error: {str(e)}"}), 500
-
-@chat.route("/notifications")
-@login_required
-def notifications():
-    logger.info(f"START /chat/notifications - User ID: {current_user.id}, Role: {current_user.role}, Authenticated: {current_user.is_authenticated}")
-    try:
-        logger.info(f"User details - Username: {current_user.username}, Email: {current_user.email}")
-        logger.info("Rendering notifications.html with empty notifications list")
-        return render_template("chat/notifications.html", notifications=[])
-    except Exception as e:
-        logger.error(f"ERROR in /chat/notifications for user {current_user.id}: {str(e)}")
-        flash("Failed to load notifications. Please try again.", "error")
-        return redirect(url_for("applicant.home" if current_user.role == "user" else "verifier.home"))
-
-@chat.route("/notifications_new")
-@login_required
-def notifications_new():
-    logger.info(f"START /notifications_new - User ID: {current_user.id}, Role: {current_user.role}, Authenticated: {current_user.is_authenticated}")
-    try:
-        logger.info(f"Querying notifications for user {current_user.id}")
-        notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).all()
-        logger.info(f"Retrieved {len(notifications)} notifications for user {current_user.id}")
-        return render_template("chat/notifications.html", notifications=notifications)
-    except Exception as e:
-        logger.error(f"ERROR in /notifications_new for user {current_user.id}: {str(e)}")
-        flash("Unable to load notifications.", "error")
-        return redirect(url_for("applicant.home" if current_user.role == "user" else "verifier.home"))
-
-@chat.route("/mark_notification_read/<int:notification_id>", methods=["POST"])
-@login_required
-def mark_notification_read(notification_id):
-    logger.info(f"User {current_user.id} marking notification {notification_id} as read")
-    notification = Notification.query.get_or_404(notification_id)
-    if notification.user_id != current_user.id:
-        logger.warning(f"Unauthorized attempt by user {current_user.id} to mark notification {notification_id}")
-        return jsonify({"status": "error", "message": "Unauthorized"}), 403
-    if not notification.read:
-        notification.read = True
-        if notification.message_id:
-            notification.message.read = True
-        db.session.commit()
-        logger.info(f"Notification {notification_id} marked as read for user {current_user.id}")
-    return jsonify({"status": "success", "message": "Notification marked as read"})
