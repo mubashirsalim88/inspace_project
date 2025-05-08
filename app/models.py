@@ -8,7 +8,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(20), default="user", nullable=False)  # Added Director role support
+    role = db.Column(db.String(20), default="user", nullable=False)
     name = db.Column(db.String(100), nullable=False)
     # Relationships
     applications = db.relationship("Application", back_populates="user", lazy=True)
@@ -24,7 +24,7 @@ class Application(db.Model):
     __tablename__ = "applications"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    status = db.Column(db.String(50), default="Pending", nullable=False)  # Added Pending Director Approval
+    status = db.Column(db.String(50), default="Pending", nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     editable = db.Column(db.Boolean, default=False)
@@ -82,7 +82,8 @@ class ChatMessage(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     message = db.Column(db.Text, nullable=False)
-    image_path = db.Column(db.String(200), nullable=True)  # Added to store image paths
+    image_path = db.Column(db.String(200), nullable=True)
+    annotations = db.Column(db.JSON, nullable=True)  # Store annotations as JSON
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
     # Relationships
@@ -111,7 +112,7 @@ class EditRequest(db.Model):
     comments = db.Column(db.Text, nullable=False)
     requested_at = db.Column(db.DateTime, default=datetime.utcnow)
     deadline = db.Column(db.DateTime, nullable=False)
-    status = db.Column(db.String(20), default="Active")  # Active, Completed, Expired
+    status = db.Column(db.String(20), default="Active")
     # Relationships
     application = db.relationship("Application", back_populates="edit_requests")
     verifier = db.relationship("User", back_populates="edit_requests")
