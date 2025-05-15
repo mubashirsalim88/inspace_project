@@ -1,30 +1,86 @@
 {% extends "admin/base_admin.html" %}
 {% block title %}Overview{% endblock %}
 {% block content %}
-<h2 class="text-2xl font-bold mb-6">Overview</h2>
-<p class="text-gray-600 mb-6">Current Time: {{ current_time.strftime('%Y-%m-%d %H:%M:%S UTC') }}</p>
+<div class="container mx-auto p-6">
+    <h2 class="text-2xl font-bold mb-6">Overview</h2>
+    <p class="text-gray-600 mb-6">Current Time: {{ current_time.strftime('%Y-%m-%d %H:%M:%S UTC') }}</p>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-    <div class="p-4 bg-blue-100 rounded-lg text-center">
-        <h3 class="text-lg font-semibold">Total Users</h3>
-        <p class="text-2xl font-bold">{{ total_users }}</p>
-        <p class="text-sm text-gray-600">(Excluding Admins)</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div class="p-4 bg-blue-100 rounded-lg text-center">
+            <h3 class="text-lg font-semibold">Total Users</h3>
+            <p class="text-2xl font-bold">{{ total_users }}</p>
+            <p class="text-sm text-gray-600">(Excluding Admins)</p>
+        </div>
+        <div class="p-4 bg-green-100 rounded-lg text-center">
+            <h3 class="text-lg font-semibold">Total Applications</h3>
+            <p class="text-2xl font-bold">{{ total_applications }}</p>
+        </div>
+        <div class="p-4 bg-yellow-100 rounded-lg text-center">
+            <h3 class="text-lg font-semibold">Total Assignments</h3>
+            <p class="text-2xl font-bold">{{ total_assignments }}</p>
+        </div>
+        <div class="p-4 bg-purple-100 rounded-lg text-center">
+            <h3 class="text-lg font-semibold">Total Messages</h3>
+            <p class="text-2xl font-bold">{{ total_messages }}</p>
+        </div>
+        <div class="p-4 bg-pink-100 rounded-lg text-center">
+            <h3 class="text-lg font-semibold">Total Notifications</h3>
+            <p class="text-2xl font-bold">{{ total_notifications }}</p>
+        </div>
     </div>
-    <div class="p-4 bg-green-100 rounded-lg text-center">
-        <h3 class="text-lg font-semibold">Total Applications</h3>
-        <p class="text-2xl font-bold">{{ total_applications }}</p>
-    </div>
-    <div class="p-4 bg-yellow-100 rounded-lg text-center">
-        <h3 class="text-lg font-semibold">Total Assignments</h3>
-        <p class="text-2xl font-bold">{{ total_assignments }}</p>
-    </div>
-    <div class="p-4 bg-purple-100 rounded-lg text-center">
-        <h3 class="text-lg font-semibold">Total Messages</h3>
-        <p class="text-2xl font-bold">{{ total_messages }}</p>
-    </div>
-    <div class="p-4 bg-pink-100 rounded-lg text-center">
-        <h3 class="text-lg font-semibold">Total Notifications</h3>
-        <p class="text-2xl font-bold">{{ total_notifications }}</p>
+
+    <!-- Recent Audit Logs Section -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Recent Audit Logs</h3>
+        {% if recent_audit_logs %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left table-auto">
+                <thead>
+                    <tr class="bg-indigo-100 text-indigo-800">
+                        <th class="p-4 font-semibold">Timestamp</th>
+                        <th class="p-4 font-semibold">Application ID</th>
+                        <th class="p-4 font-semibold">User</th>
+                        <th class="p-4 font-semibold">Module</th>
+                        <th class="p-4 font-semibold">Step</th>
+                        <th class="p-4 font-semibold">Change Type</th>
+                        <th class="p-4 font-semibold">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_audit_logs %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-4">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td class="p-4">
+                            <a href="{{ url_for('admin.view_audit_logs', application_id=log.application_id) }}" class="text-blue-600 hover:underline">
+                                {{ log.application_id }}
+                            </a>
+                        </td>
+                        <td class="p-4">{{ log.user.username }}</td>
+                        <td class="p-4">{{ log.module_name|replace('_', ' ')|title }}</td>
+                        <td class="p-4">{{ log.step|replace('_', ' ')|title }}</td>
+                        <td class="p-4">{{ log.change_type|replace('_', ' ')|title }}</td>
+                        <td class="p-4">
+                            {% if log.change_type == 'field_update' %}
+                                <strong>Field:</strong> {{ log.change_details.field }}<br>
+                                <strong>Old:</strong> {{ (log.change_details.old_value | tojson | truncate(50)) if log.change_details.old_value else 'None' }}<br>
+                                <strong>New:</strong> {{ (log.change_details.new_value | tojson | truncate(50)) if log.change_details.new_value else 'None' }}
+                            {% elif log.change_type == 'file_upload' %}
+                                <strong>Field:</strong> {{ log.change_details.field }}<br>
+                                <strong>Filename:</strong> {{ log.change_details.filename | truncate(50) }}<br>
+                                <strong>Action:</strong> {{ log.change_details.action }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500">No recent audit logs found.</p>
+        {% endif %}
+        <p class="mt-4">
+            <a href="{{ url_for('admin.applications') }}" class="text-blue-600 hover:underline">View all applications</a>
+        </p>
     </div>
 </div>
 {% endblock %}

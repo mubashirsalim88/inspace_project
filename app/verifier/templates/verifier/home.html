@@ -32,38 +32,19 @@
                 <div class="bg-white p-4 rounded-lg shadow-md">
                     <h4 class="text-lg font-semibold text-gray-700">Total Applications</h4>
                     <p class="text-2xl font-bold text-indigo-600">
-                        {% set total_apps = 0 %}
-                        {% for apps in module_apps.values() %}
-                            {% set total_apps = total_apps + apps|length %}
-                        {% endfor %}
-                        {% for apps in completed_module_apps.values() %}
-                            {% set total_apps = total_apps + apps|length %}
-                        {% endfor %}
-                        {{ total_apps }}
+                        {{ total_apps if total_apps > 0 else '0 (No applications assigned)' }}
                     </p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-md">
                     <h4 class="text-lg font-semibold text-gray-700">Pending Reviews</h4>
                     <p class="text-2xl font-bold text-indigo-600">
-                        {% set pending_reviews = 0 %}
-                        {% for apps in module_apps.values() %}
-                            {% for app in apps %}
-                                {% if app.status == ('Under Review' if role == 'Primary Verifier' else 'Pending Secondary Approval') %}
-                                    {% set pending_reviews = pending_reviews + 1 %}
-                                {% endif %}
-                            {% endfor %}
-                        {% endfor %}
-                        {{ pending_reviews }}
+                        {{ pending_reviews if pending_reviews > 0 else '0 (No pending reviews)' }}
                     </p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-md">
                     <h4 class="text-lg font-semibold text-gray-700">Unread Messages</h4>
                     <p class="text-2xl font-bold text-indigo-600">
-                        {% set total_unread = 0 %}
-                        {% for count in unread_messages.values() %}
-                            {% set total_unread = total_unread + count %}
-                        {% endfor %}
-                        {{ total_unread }}
+                        {{ total_unread if total_unread > 0 else '0 (No unread messages)' }}
                     </p>
                 </div>
             </div>
@@ -170,10 +151,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% set completed_count = 0 %}
-                        {% for apps in completed_module_apps.values() %}
-                            {% set completed_count = completed_count + apps|length %}
-                        {% endfor %}
                         {% if completed_count > 0 %}
                             {% for module in fixed_modules %}
                                 {% for app in completed_module_apps[module]|sort(attribute='updated_at', reverse=True) %}

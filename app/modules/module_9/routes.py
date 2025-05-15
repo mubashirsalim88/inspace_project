@@ -1,4 +1,3 @@
-# app/modules/module_9/routes.py
 from flask import (
     Blueprint,
     render_template,
@@ -13,6 +12,7 @@ from flask import (
 from flask_login import login_required, current_user
 from app import db
 from app.models import Application, ModuleData, UploadedFile, ApplicationAssignment, EditRequest, Notification
+from app.utils import compare_form_data, log_file_upload
 from datetime import datetime
 import os
 import logging
@@ -93,6 +93,9 @@ def fill_step(step):
             ],
         }
 
+        # Capture old data for audit logging
+        old_data = module_data.data.copy() if module_data.data else {}
+
         if step in file_fields:
             for field in file_fields[step]:
                 files = request.files.getlist(field)
@@ -113,10 +116,12 @@ def fill_step(step):
                         )
                         db.session.add(uploaded_file)
                         file_paths.append(relative_path)
-                        logger.debug(f"Uploaded {field}: {f.filename} to {file_path}")
+                        # Log file upload
+                        log_file_upload(app_id, "module_9", step, field, f.filename)
+                        logger.debug(f"Logged file upload: {field}: {f.filename}")
                     form_data[field] = file_paths
                 else:
-                    form_data[field] = module_data.data.get(field, [])
+                    form_data[field] = old_data.get(field, [])
                     logger.debug(f"No new upload for {field}, retaining: {form_data[field]}")
 
         # Handle dynamic satellite names in satellite_owner_part1
@@ -130,9 +135,13 @@ def fill_step(step):
                     del form_data[name_key]
             form_data["satellite_names"] = satellite_names
 
+        # Update module data
         module_data.data = form_data
         module_data.completed = True
-        db.session.commit()
+
+        # Log field changes
+        compare_form_data(old_data, form_data, app_id, "module_9", step)
+        logger.debug(f"Logged field changes for step {step}, application {app_id}")
 
         # Ensure ModuleData exists for all steps before checking completion
         for s in STEPS:
@@ -306,8 +315,17 @@ def save_undertaking(application_id):
         )
         db.session.add(module_data)
 
+    # Capture old data for audit logging
+    old_data = module_data.data.copy() if module_data.data else {}
+
+    # Update module data
     module_data.data = form_data
     module_data.completed = True
+
+    # Log field changes
+    compare_form_data(old_data, form_data, application_id, "module_9", "undertaking")
+    logger.debug(f"Logged field changes for undertaking, application {application_id}")
+
     try:
         db.session.commit()
         logger.debug(f"Undertaking saved for application {application_id}")

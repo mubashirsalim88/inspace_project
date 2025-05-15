@@ -1,4 +1,3 @@
-# app/modules/module_1/routes.py
 from flask import (
     Blueprint,
     render_template,
@@ -12,6 +11,7 @@ from flask import (
 from flask_login import login_required, current_user
 from app import db
 from app.models import Application, ModuleData, UploadedFile, ApplicationAssignment, EditRequest, Notification
+from app.utils import compare_form_data, log_file_upload
 from datetime import datetime
 import os
 import re
@@ -111,6 +111,10 @@ def fill_step(step):
                     existing_files=existing_files,
                 )
 
+        # Get old data for comparison
+        old_data = module_data.data.copy() if module_data.data else {}
+
+        # Handle file uploads and log them
         if step in file_fields:
             for field in file_fields[step]:
                 files = request.files.getlist(field)
@@ -131,12 +135,19 @@ def fill_step(step):
                         )
                         db.session.add(uploaded_file)
                         file_paths.append(relative_path)
+                        # Log file upload
+                        log_file_upload(app_id, "module_1", step, field, f.filename)
                     form_data[field] = file_paths
                 else:
-                    form_data[field] = module_data.data.get(field, [])
+                    form_data[field] = old_data.get(field, [])
 
+        # Update module data
         module_data.data = form_data
         module_data.completed = True
+
+        # Log field changes
+        compare_form_data(old_data, form_data, app_id, "module_1", step)
+
         db.session.commit()
 
         next_step_idx = STEPS.index(step) + 1
@@ -215,6 +226,25 @@ def save_declarations(application_id):
         "authorization_submission_doc",
         "official_seal",
     ]
+
+    module_data = ModuleData.query.filter_by(
+        application_id=application_id,
+        module_name="module_1",
+        step="declarations_submission",
+    ).first()
+    if not module_data:
+        module_data = ModuleData(
+            application_id=application_id,
+            module_name="module_1",
+            step="declarations_submission",
+            data={},
+        )
+        db.session.add(module_data)
+
+    # Get old data for comparison
+    old_data = module_data.data.copy() if module_data.data else {}
+
+    # Handle file uploads
     for field in file_fields:
         files = request.files.getlist(field)
         if files and files[0].filename:
@@ -236,24 +266,13 @@ def save_declarations(application_id):
                 )
                 db.session.add(uploaded_file)
                 file_paths.append(relative_path)
+                # Log file upload
+                log_file_upload(application_id, "module_1", "declarations_submission", field, f.filename)
             form_data[field] = file_paths
         else:
-            form_data[field] = form_data.get(field, [])
+            form_data[field] = old_data.get(field, [])
 
-    module_data = ModuleData.query.filter_by(
-        application_id=application_id,
-        module_name="module_1",
-        step="declarations_submission",
-    ).first()
-    if not module_data:
-        module_data = ModuleData(
-            application_id=application_id,
-            module_name="module_1",
-            step="declarations_submission",
-            data={},
-        )
-        db.session.add(module_data)
-
+    # Update declarations
     for decl in [
         "compliance_laws",
         "accuracy_info",
@@ -263,8 +282,13 @@ def save_declarations(application_id):
     ]:
         form_data[decl] = decl in request.form
 
+    # Update module data
     module_data.data = form_data
     module_data.completed = True
+
+    # Log field changes
+    compare_form_data(old_data, form_data, application_id, "module_1", "declarations_submission")
+
     try:
         db.session.commit()
         return jsonify({"status": "success", "message": "Form saved successfully"})

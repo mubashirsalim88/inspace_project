@@ -1,32 +1,23 @@
-# app/admin/routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Application, ApplicationAssignment, ChatMessage, Notification
-from functools import wraps
+from app.models import User, Application, ApplicationAssignment, ChatMessage, Notification, AuditLog, EditRequest
+from app.utils import role_required
 from datetime import datetime
 
 admin = Blueprint("admin", __name__, template_folder="templates")
 
-def admin_required(f):
-    @wraps(f)
-    @login_required
-    def decorated_function(*args, **kwargs):
-        if current_user.role != "admin":
-            flash("You do not have permission to access this page.", "error")
-            return redirect(url_for("applicant.home"))
-        return f(*args, **kwargs)
-    return decorated_function
-
-# Overview/Dashboard
 @admin.route("/dashboard")
-@admin_required
+@login_required
+@role_required("admin")
 def dashboard():
     total_users = User.query.filter(User.role != "admin").count()
     total_applications = Application.query.count()
     total_assignments = ApplicationAssignment.query.count()
     total_messages = ChatMessage.query.count()
     total_notifications = Notification.query.count()
+    # Fetch 10 most recent audit logs
+    recent_audit_logs = AuditLog.query.order_by(AuditLog.timestamp.desc()).limit(10).all()
     
     return render_template(
         "admin/dashboard.html",
@@ -35,12 +26,13 @@ def dashboard():
         total_assignments=total_assignments,
         total_messages=total_messages,
         total_notifications=total_notifications,
-        current_time=datetime.utcnow()
+        current_time=datetime.utcnow(),
+        recent_audit_logs=recent_audit_logs
     )
 
-# Manage Users
 @admin.route("/users", methods=["GET", "POST"])
-@admin_required
+@login_required
+@role_required("admin")
 def manage_users():
     if request.method == "POST":
         user_id = request.form.get("user_id")
@@ -72,9 +64,9 @@ def manage_users():
     recent_users = User.query.order_by(User.id.desc()).limit(10).all()
     return render_template("admin/users.html", users=users, users_by_role=users_by_role, recent_users=recent_users)
 
-# Applications
 @admin.route("/applications")
-@admin_required
+@login_required
+@role_required("admin")
 def applications():
     applications = Application.query.order_by(Application.created_at.desc()).all()
     applications_by_status = {
@@ -86,23 +78,38 @@ def applications():
     }
     return render_template("admin/applications.html", applications=applications, applications_by_status=applications_by_status)
 
-# Assignments
 @admin.route("/assignments")
-@admin_required
+@login_required
+@role_required("admin")
 def assignments():
     assignments = ApplicationAssignment.query.order_by(ApplicationAssignment.id.desc()).all()
     return render_template("admin/assignments.html", assignments=assignments)
 
-# Chat Messages
 @admin.route("/chat")
-@admin_required
+@login_required
+@role_required("admin")
 def chat():
     messages = ChatMessage.query.order_by(ChatMessage.timestamp.desc()).all()
     return render_template("admin/chat.html", messages=messages)
 
-# Notifications
 @admin.route("/notifications")
-@admin_required
+@login_required
+@role_required("admin")
 def notifications():
     notifications = Notification.query.order_by(Notification.timestamp.desc()).all()
     return render_template("admin/notifications.html", notifications=notifications)
+
+@admin.route("/audit_logs/<int:application_id>")
+@login_required
+@role_required("admin")
+def view_audit_logs(application_id):
+    application = Application.query.get_or_404(application_id)
+    audit_logs = AuditLog.query.filter_by(application_id=application_id).order_by(AuditLog.timestamp.desc()).all()
+    edit_requests = EditRequest.query.filter_by(application_id=application_id).order_by(EditRequest.requested_at.desc()).all()
+    return render_template(
+        "admin/audit_logs.html",
+        audit_logs=audit_logs,
+        application=application,
+        application_id=application_id,
+        edit_requests=edit_requests
+    )

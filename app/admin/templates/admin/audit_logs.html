@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Audit Logs - IN-SPACe{% endblock %}
+{% block content %}
+<div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Audit Logs for Application #{{ application_id }}</h1>
+    <p class="mb-4"><a href="{{ url_for('admin.dashboard') }}" class="text-blue-600 hover:underline">Back to Dashboard</a></p>
+
+    <!-- Edit Requests Section -->
+    <div class="mb-8 bg-white shadow-lg rounded-lg p-6">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Edit Requests</h2>
+        {% if edit_requests %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left table-auto">
+                <thead>
+                    <tr class="bg-indigo-100 text-indigo-800">
+                        <th class="p-4 font-semibold">Requested At</th>
+                        <th class="p-4 font-semibold">Verifier</th>
+                        <th class="p-4 font-semibold">Comments</th>
+                        <th class="p-4 font-semibold">Deadline</th>
+                        <th class="p-4 font-semibold">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in edit_requests %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-4">{{ request.requested_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td class="p-4">{{ request.verifier.username }}</td>
+                        <td class="p-4">{{ request.comments }}</td>
+                        <td class="p-4">{{ request.deadline.strftime('%Y-%m-%d') }}</td>
+                        <td class="p-4">
+                            <span class="{% if request.status == 'Active' %}bg-yellow-200 text-yellow-800{% elif request.status == 'Completed' %}bg-green-200 text-green-800{% endif %} text-sm font-medium px-3 py-1 rounded-lg">
+                                {{ request.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500">No edit requests found for this application.</p>
+        {% endif %}
+    </div>
+
+    <!-- Audit Logs Section -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Audit Logs</h2>
+        {% if audit_logs %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left table-auto">
+                <thead>
+                    <tr class="bg-indigo-100 text-indigo-800">
+                        <th class="p-4 font-semibold">Timestamp</th>
+                        <th class="p-4 font-semibold">User</th>
+                        <th class="p-4 font-semibold">Module</th>
+                        <th class="p-4 font-semibold">Step</th>
+                        <th class="p-4 font-semibold">Change Type</th>
+                        <th class="p-4 font-semibold">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in audit_logs %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-4">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td class="p-4">{{ log.user.username }}</td>
+                        <td class="p-4">{{ log.module_name|replace('_', ' ')|title }}</td>
+                        <td class="p-4">{{ log.step|replace('_', ' ')|title }}</td>
+                        <td class="p-4">{{ log.change_type|replace('_', ' ')|title }}</td>
+                        <td class="p-4">
+                            {% if log.change_type == 'field_update' %}
+                                <strong>Field:</strong> {{ log.change_details.field }}<br>
+                                <strong>Old Value:</strong> {{ log.change_details.old_value | tojson }}<br>
+                                <strong>New Value:</strong> {{ log.change_details.new_value | tojson }}
+                            {% elif log.change_type == 'file_upload' %}
+                                <strong>Field:</strong> {{ log.change_details.field }}<br>
+                                <strong>Filename:</strong> {{ log.change_details.filename }}<br>
+                                <strong>Action:</strong> {{ log.change_details.action }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500">No audit logs found for this application.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

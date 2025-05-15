@@ -1,8 +1,8 @@
-# app/modules/module_4/routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models import Application, ModuleData, UploadedFile, EditRequest, ApplicationAssignment, Notification
+from app.utils import compare_form_data, log_file_upload
 from datetime import datetime
 import os
 import logging
@@ -70,6 +70,9 @@ def fill_step(step):
             "miscellaneous_and_declarations": ["official_seal"]
         }
 
+        # Capture old data for audit logging
+        old_data = module_data.data.copy() if module_data.data else {}
+
         if step in file_fields:
             for field in file_fields[step]:
                 files = request.files.getlist(field)
@@ -90,15 +93,23 @@ def fill_step(step):
                         )
                         db.session.add(uploaded_file)
                         file_paths.append(relative_path)
-                        logger.debug(f"Uploaded {field}: {f.filename} to {file_path}, stored as {relative_path}")
+                        # Log file upload
+                        log_file_upload(app_id, "module_4", step, field, f.filename)
+                        logger.debug(f"Logged file upload: {field}: {f.filename}")
                     form_data[field] = file_paths
                 else:
-                    form_data[field] = module_data.data.get(field, [])
+                    form_data[field] = old_data.get(field, [])
                     logger.debug(f"No new upload for {field}, retaining: {form_data[field]}")
             logger.debug(f"Step {step} form_data: {form_data}")
 
+        # Update module data
         module_data.data = form_data
         module_data.completed = True
+
+        # Log field changes
+        compare_form_data(old_data, form_data, app_id, "module_4", step)
+        logger.debug(f"Logged field changes for step {step}, application {app_id}")
+
         try:
             db.session.commit()
             logger.debug(f"Saved ModuleData for step {step}: {module_data.data}")
@@ -195,6 +206,15 @@ def save_miscellaneous_and_declarations(application_id):
 
     form_data = request.form.to_dict()
     file_fields = ["official_seal", "additional_documents"]
+
+    module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_4", step="miscellaneous_and_declarations").first()
+    if not module_data:
+        module_data = ModuleData(application_id=application_id, module_name="module_4", step="miscellaneous_and_declarations", data={})
+        db.session.add(module_data)
+
+    # Capture old data for audit logging
+    old_data = module_data.data.copy() if module_data.data else {}
+
     for field in file_fields:
         files = request.files.getlist(field)
         if files and files[0].filename:
@@ -214,22 +234,25 @@ def save_miscellaneous_and_declarations(application_id):
                 )
                 db.session.add(uploaded_file)
                 file_paths.append(relative_path)
-                logger.debug(f"Uploaded {field}: {f.filename} to {file_path}, stored as {relative_path}")
+                # Log file upload
+                log_file_upload(application_id, "module_4", "miscellaneous_and_declarations", field, f.filename)
+                logger.debug(f"Logged file upload: {field}: {f.filename}")
             form_data[field] = file_paths
         else:
-            form_data[field] = form_data.get(field, [])
+            form_data[field] = old_data.get(field, [])
             logger.debug(f"No new upload for {field}, retaining: {form_data[field]}")
 
     for decl in ['coord_agreement', 'cease_emission', 'dst_compliance', 'change_notification', 'gov_control', 'app_submission', 'compliance_affirmation']:
         form_data[decl] = decl in request.form
 
-    module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_4", step="miscellaneous_and_declarations").first()
-    if not module_data:
-        module_data = ModuleData(application_id=application_id, module_name="module_4", step="miscellaneous_and_declarations", data={})
-        db.session.add(module_data)
-
+    # Update module data
     module_data.data = form_data
     module_data.completed = True
+
+    # Log field changes
+    compare_form_data(old_data, form_data, application_id, "module_4", "miscellaneous_and_declarations")
+    logger.debug(f"Logged field changes for miscellaneous_and_declarations, application {application_id}")
+
     try:
         db.session.commit()
         logger.debug(f"Saved ModuleData for miscellaneous_and_declarations: {module_data.data}")

@@ -76,10 +76,82 @@
             </div>
         </div>
     </div>
+
+    <!-- Audit Logs Section -->
+    <div class="mt-8 bg-white shadow-lg rounded-lg p-6">
+        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Audit Logs for Edit Request</h3>
+        {% if edit_requests %}
+        <!-- Edit Request Selector -->
+        <div class="mb-4">
+            <label for="edit-request-selector" class="block text-gray-700 font-medium mb-1">Select Edit Request</label>
+            <select id="edit-request-selector" class="w-full p-3 border rounded-md bg-gray-50 focus:ring-2 focus:ring-blue-500">
+                {% for er in edit_requests %}
+                <option value="{{ er.id }}" {% if selected_edit_request and selected_edit_request.id == er.id %}selected{% endif %}>
+                    {{ er.requested_at.strftime('%Y-%m-%d %H:%M:%S') }} ({{ er.status }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if selected_edit_request %}
+        <p class="text-gray-600 mb-4">
+            Showing changes for edit request on {{ selected_edit_request.requested_at.strftime('%Y-%m-%d %H:%M:%S') }} by {{ selected_edit_request.verifier.username }} (Comments: {{ selected_edit_request.comments|truncate(100) }})
+            {% if selected_edit_request.status == 'Completed' or application.status != 'Pending' %}
+                until resubmission on {{ application.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}.
+            {% else %}
+                until deadline on {{ selected_edit_request.deadline.strftime('%Y-%m-%d %H:%M:%S') }}.
+            {% endif %}
+        </p>
+        {% if audit_logs %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left table-auto">
+                <thead>
+                    <tr class="bg-indigo-100 text-indigo-800">
+                        <th class="p-4 font-semibold">Timestamp</th>
+                        <th class="p-4 font-semibold">User</th>
+                        <th class="p-4 font-semibold">Module</th>
+                        <th class="p-4 font-semibold">Step</th>
+                        <th class="p-4 font-semibold">Change Type</th>
+                        <th class="p-4 font-semibold">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in audit_logs %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-4">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td class="p-4">{{ log.user.username }}</td>
+                        <td class="p-4">{{ log.module_name|replace('_', ' ')|title }}</td>
+                        <td class="p-4">{{ log.step|replace('_', ' ')|title }}</td>
+                        <td class="p-4">{{ log.change_type|replace('_', ' ')|title }}</td>
+                        <td class="p-4">
+                            {% if log.change_type == 'field_update' %}
+                                <strong>Field:</strong> {{ log.change_details.field }}<br>
+                                <strong>Old Value:</strong> {{ log.change_details.old_value | tojson }}<br>
+                                <strong>New Value:</strong> {{ log.change_details.new_value | tojson }}
+                            {% elif log.change_type == 'file_upload' %}
+                                <strong>Field:</strong> {{ log.change_details.field }}<br>
+                                <strong>Filename:</strong> {{ log.change_details.filename }}<br>
+                                <strong>Action:</strong> {{ log.change_details.action }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500">No changes made during this edit request.</p>
+        {% endif %}
+        {% else %}
+        <p class="text-gray-500">Selected edit request not found.</p>
+        {% endif %}
+        {% else %}
+        <p class="text-gray-500">No edit requests found for this application.</p>
+        {% endif %}
+    </div>
 </div>
 
 <!-- Enable Edit Modal -->
-<div id="enable-edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+<div id="enable-edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg p-6 w-full max-w-md">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Enable Edit for Applicant</h3>
         <form id="enable-edit-form">
@@ -91,7 +163,7 @@
             </div>
             <div class="flex justify-end space-x-2">
                 <button type="button" id="cancel-edit-btn" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Cancel</button>
-                <button type="submit" id="submit-edit-btn" class="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700">Confirm</button>
+                <button type="submit" id="submit-edit-btn" class="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-600">Confirm</button>
             </div>
         </form>
     </div>
@@ -104,13 +176,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
     const enableEditForm = document.getElementById('enable-edit-form');
     const submitEditBtn = document.getElementById('submit-edit-btn');
+    const editRequestSelector = document.getElementById('edit-request-selector');
 
     enableEditBtn.addEventListener('click', () => {
         enableEditModal.classList.remove('hidden');
+        enableEditModal.classList.add('flex');
     });
 
     cancelEditBtn.addEventListener('click', () => {
         enableEditModal.classList.add('hidden');
+        enableEditModal.classList.remove('flex');
         enableEditForm.reset();
     });
 
@@ -121,7 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
         submitEditBtn.textContent = 'Processing...';
 
         const formData = new FormData(enableEditForm);
-        // Include CSRF token in headers
         const csrfToken = formData.get('csrf_token');
 
         fetch(`/verifier/review/${applicationId}`, {
@@ -140,19 +214,17 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             console.log('Response data:', data);
             if (data.status === 'success') {
-                // Add flash message at the top
                 const flashDiv = document.createElement('div');
                 flashDiv.className = 'flash-message mb-4 p-4 rounded-lg text-white bg-green-500 animate__animated animate__fadeIn';
                 flashDiv.textContent = data.message;
                 const flashContainer = document.getElementById('flash-messages');
                 flashContainer.prepend(flashDiv);
-                // Update button state
                 enableEditBtn.disabled = true;
                 enableEditBtn.textContent = 'Edit Enabled';
                 enableEditBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                 enableEditBtn.classList.add('bg-gray-400');
-                // Close modal
                 enableEditModal.classList.add('hidden');
+                enableEditModal.classList.remove('flex');
                 enableEditForm.reset();
             } else {
                 alert(data.message);
@@ -167,6 +239,17 @@ document.addEventListener('DOMContentLoaded', () => {
             submitEditBtn.textContent = 'Confirm';
         });
     });
+
+    // Handle edit request selector change
+    if (editRequestSelector) {
+        editRequestSelector.addEventListener('change', () => {
+            const editRequestId = editRequestSelector.value;
+            const baseUrl = '{{ url_for("verifier.review", application_id=application.id) | tojson }}';
+            // Remove quotes from JSON string
+            const cleanBaseUrl = baseUrl.replace(/^"|"$/g, '');
+            window.location.href = `${cleanBaseUrl}?edit_request_id=${editRequestId}`;
+        });
+    }
 });
 </script>
 {% endblock %}

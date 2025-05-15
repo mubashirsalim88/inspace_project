@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from app import db, mail
-from app.models import Application, ApplicationAssignment, User, Notification, ModuleData, EditRequest, ChatMessage
+from app.models import Application, ApplicationAssignment, User, Notification, ModuleData, EditRequest, ChatMessage, AuditLog
 from app.utils import role_required
 from flask_mail import Message
 import logging
@@ -12,15 +12,18 @@ verifier = Blueprint("verifier", __name__, url_prefix="/verifier", template_fold
 
 logger = logging.getLogger(__name__)
 
-# Setup CSRF protection
 csrf = CSRFProtect()
 
 @verifier.route("/home")
 @login_required
 @role_required(["Primary Verifier", "Secondary Verifier"])
 def home():
+    logger.debug(f"Fetching home data for user {current_user.id}, role: {current_user.role}")
+    
+    # Fetch assignments for the current user
     assignments_as_primary = ApplicationAssignment.query.filter_by(primary_verifier_id=current_user.id).all()
     assignments_as_secondary = ApplicationAssignment.query.filter_by(secondary_verifier_id=current_user.id).all()
+    logger.debug(f"Found {len(assignments_as_primary)} primary assignments, {len(assignments_as_secondary)} secondary assignments")
     
     applications = []
     completed_applications = []
@@ -29,11 +32,11 @@ def home():
     unread_messages = {}
     app_has_secondary_verifier = {}
     
-    # Fetch applications and unread message counts
+    # Combine and deduplicate applications
     for assignment in assignments_as_primary + assignments_as_secondary:
         app = Application.query.get(assignment.application_id)
         if app and app.id not in app_ids and app.id not in completed_app_ids:
-            # Count unread messages for this application (from applicant or other verifier)
+            logger.debug(f"Processing application {app.id}, status: {app.status}")
             unread_count = ChatMessage.query.filter_by(
                 application_id=app.id,
                 receiver_id=current_user.id,
@@ -48,31 +51,50 @@ def home():
                 applications.append(app)
                 app_ids.add(app.id)
     
-    # Group applications by module (all ten modules)
+    logger.debug(f"Total applications: {len(applications)}, completed: {len(completed_applications)}")
+    
+    # Initialize module dictionaries
     module_apps = {f"module_{i}": [] for i in range(1, 11)}
     completed_module_apps = {f"module_{i}": [] for i in range(1, 11)}
     
+    # Categorize applications by module
     for app in applications:
         module_name = next((md.module_name for md in app.module_data if md.module_name in module_apps), None)
         if module_name:
             module_apps[module_name].append(app)
+            logger.debug(f"Added application {app.id} to {module_name}")
+        else:
+            logger.warning(f"No valid module found for application {app.id}")
     
     for app in completed_applications:
         module_name = next((md.module_name for md in app.module_data if md.module_name in completed_module_apps), None)
         if module_name:
             completed_module_apps[module_name].append(app)
-
-    # Define fixed module order
+            logger.debug(f"Added completed application {app.id} to {module_name}")
+        else:
+            logger.warning(f"No valid module found for completed application {app.id}")
+    
+    # Calculate summary metrics
+    total_apps = sum(len(apps) for apps in module_apps.values()) + sum(len(apps) for apps in completed_module_apps.values())
+    target_status = "Under Review" if current_user.role == "Primary Verifier" else "Pending Secondary Approval"
+    pending_reviews = sum(1 for apps in module_apps.values() for app in apps if app.status == target_status)
+    total_unread = sum(unread_messages.values())
+    completed_count = sum(len(apps) for apps in completed_module_apps.values())
+    
+    logger.debug(f"Summary: total_apps={total_apps}, pending_reviews={pending_reviews}, total_unread={total_unread}, completed_count={completed_count}")
+    
     fixed_modules = [f"module_{i}" for i in range(1, 11)]
-
-    # Identify modules with actionable applications updated in the last 7 days
     actionable_statuses = ["Under Review"] if current_user.role == "Primary Verifier" else ["Pending Secondary Approval"]
     recent_actionable_modules = set()
+    
+    # Identify modules with recent actionable applications
     for module in module_apps:
         for app in module_apps[module]:
             if app.status in actionable_statuses and (datetime.now() - app.updated_at).days <= 7:
                 recent_actionable_modules.add(module)
-
+                logger.debug(f"Found recent actionable application {app.id} in {module}")
+    
+    logger.debug(f"Rendering home.html with {len(module_apps)} modules, {len(unread_messages)} apps with messages")
     return render_template(
         "verifier/home.html",
         module_apps=module_apps,
@@ -83,7 +105,11 @@ def home():
         datetime=datetime,
         csrf_token=generate_csrf,
         unread_messages=unread_messages,
-        app_has_secondary_verifier=app_has_secondary_verifier
+        app_has_secondary_verifier=app_has_secondary_verifier,
+        total_apps=total_apps,
+        pending_reviews=pending_reviews,
+        total_unread=total_unread,
+        completed_count=completed_count
     )
 
 @verifier.route("/review/<int:application_id>", methods=["GET", "POST"])
@@ -99,7 +125,6 @@ def review(application_id):
         flash("You are not authorized to review this application.", "error")
         return redirect(url_for("verifier.home"))
 
-    # Allow review only if status is actionable for the current verifier
     actionable_statuses = ["Under Review"] if current_user.role == "Primary Verifier" else ["Pending Secondary Approval"]
     if application.status not in actionable_statuses:
         logger.warning(f"Application {application_id} not reviewable, status: {application.status}")
@@ -120,7 +145,6 @@ def review(application_id):
     
     pdf_download_url = url_for(f"{module_name}_pdf.download_pdf", application_id=application_id, _external=True)
 
-    # Compute unread messages for this application
     unread_messages = {}
     unread_count = ChatMessage.query.filter_by(
         application_id=application.id,
@@ -129,9 +153,29 @@ def review(application_id):
     ).count()
     unread_messages[application.id] = unread_count
 
+    # Fetch all edit requests for the application
+    edit_requests = EditRequest.query.filter_by(application_id=application_id).order_by(EditRequest.requested_at.desc()).all()
+    
+    # Get selected edit request ID from query parameter, default to most recent
+    selected_edit_request_id = request.args.get('edit_request_id', type=int)
+    if selected_edit_request_id:
+        selected_edit_request = EditRequest.query.filter_by(id=selected_edit_request_id, application_id=application_id).first()
+    else:
+        selected_edit_request = edit_requests[0] if edit_requests else None
+
+    audit_logs = []
+    if selected_edit_request:
+        # Determine the end of the edit period: either deadline or resubmission time (updated_at)
+        end_time = min(selected_edit_request.deadline, application.updated_at) if application.status != "Pending" else selected_edit_request.deadline
+        # Filter audit logs within the edit request timeframe
+        audit_logs = AuditLog.query.filter(
+            AuditLog.application_id == application_id,
+            AuditLog.timestamp >= selected_edit_request.requested_at,
+            AuditLog.timestamp <= end_time
+        ).order_by(AuditLog.timestamp.desc()).all()
+
     if request.method == "POST":
         logger.debug(f"Processing POST request for application {application_id}, content-type: {request.content_type}")
-        # Try form data first, fallback to JSON
         form_data = request.form
         if not form_data and request.is_json:
             form_data = request.json or {}
@@ -164,7 +208,7 @@ def review(application_id):
             application.comments = comments
 
             if decision == "approve":
-                if not assignment.secondary_verifier_id:  # Only one verifier
+                if not assignment.secondary_verifier_id:
                     application.status = "Pending Director Approval"
                     flash("Application approved. Awaiting Director approval.", "success")
                     notification = Notification(
@@ -173,7 +217,6 @@ def review(application_id):
                         timestamp=datetime.utcnow()
                     )
                     db.session.add(notification)
-                    # Notify all Directors
                     directors = User.query.filter_by(role="Director").all()
                     for director in directors:
                         notification = Notification(
@@ -183,7 +226,7 @@ def review(application_id):
                         )
                         db.session.add(notification)
                     logger.info(f"Application {application_id} approved, awaiting Director, notifications sent")
-                else:  # Two verifiers
+                else:
                     if current_user.role == "Primary Verifier" and application.status == "Under Review":
                         application.status = "Pending Secondary Approval"
                         flash("Approval submitted. Awaiting Secondary Verifier.", "success")
@@ -204,7 +247,6 @@ def review(application_id):
                             timestamp=datetime.utcnow()
                         )
                         db.session.add(notification)
-                        # Notify all Directors
                         directors = User.query.filter_by(role="Director").all()
                         for director in directors:
                             notification = Notification(
@@ -221,7 +263,7 @@ def review(application_id):
                             )
                             db.session.add(notification)
                             logger.info(f"Application {application_id} verified, notifications sent to Directors and Primary Verifier")
-            else:  # Reject
+            else:
                 application.status = "Rejected"
                 flash(f"Application rejected. Comments: {comments}", "success")
                 notification = Notification(
@@ -259,7 +301,6 @@ def review(application_id):
                 logger.warning(f"Enable edit failed for application {application_id}: Comments are required")
                 return jsonify({"status": "error", "message": "Comments are required when enabling edit."}), 400
 
-            # Check if application is already in Pending or has an active edit request
             if application.status == "Pending":
                 logger.warning(f"Enable edit failed for application {application_id}: Application is already editable")
                 return jsonify({"status": "error", "message": "Application is already editable."}), 400
@@ -271,7 +312,6 @@ def review(application_id):
                 logger.warning(f"Enable edit failed for application {application_id}: Active edit request exists (ID: {active_edit_request.id})")
                 return jsonify({"status": "error", "message": "An active edit request already exists."}), 400
 
-            # Verify verifier_id and user_id exist
             verifier = User.query.get(current_user.id)
             if not verifier:
                 logger.error(f"Enable edit failed for application {application_id}: Verifier user {current_user.id} not found")
@@ -283,11 +323,9 @@ def review(application_id):
                 return jsonify({"status": "error", "message": "Invalid applicant user."}), 400
 
             try:
-                # Set deadline (7 days from now)
                 deadline = datetime.utcnow() + timedelta(days=7)
                 logger.debug(f"Setting edit deadline for application {application_id} to {deadline}")
 
-                # Create edit request
                 edit_request = EditRequest(
                     application_id=application_id,
                     verifier_id=current_user.id,
@@ -299,12 +337,10 @@ def review(application_id):
                 db.session.add(edit_request)
                 logger.debug(f"Created EditRequest for application {application_id}")
 
-                # Update application status and editable flag
                 application.status = "Pending"
                 application.editable = True
                 logger.debug(f"Updated application {application_id} status to Pending and editable to True")
 
-                # Create notification
                 notification = Notification(
                     user_id=application.user_id,
                     content=f"Application ID {application_id} ({module_name.replace('_', ' ').title()}) is now editable. Reason: {comments}. Please complete edits by {deadline.strftime('%B %d, %Y')}.",
@@ -314,7 +350,6 @@ def review(application_id):
                 db.session.add(notification)
                 logger.debug(f"Created notification for user {application.user_id}")
 
-                # Prepare email
                 msg = Message(
                     "Application Edit Requested - IN-SPACe Portal",
                     sender="noreply@inspace.gov.in",
@@ -331,11 +366,9 @@ def review(application_id):
                 )
                 logger.debug(f"Prepared email for {application.user.email}")
 
-                # Commit database changes before sending email
                 db.session.commit()
                 logger.info(f"Database committed for application {application_id}")
 
-                # Skip email sending for testing
                 logger.debug("Email sending skipped for testing")
                 # mail.send(msg)
                 # logger.info(f"Email sent successfully to {application.user.email} for application {application_id}")
@@ -359,5 +392,8 @@ def review(application_id):
         pdf_download_url=pdf_download_url,
         role=current_user.role,
         csrf_token=generate_csrf,
-        unread_messages=unread_messages
+        unread_messages=unread_messages,
+        audit_logs=audit_logs,
+        edit_requests=edit_requests,
+        selected_edit_request=selected_edit_request
     )
