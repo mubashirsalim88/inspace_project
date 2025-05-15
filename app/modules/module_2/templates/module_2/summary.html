@@ -1,3 +1,4 @@
+<!-- module 2 summary -->
 <!-- app/modules/module_2/templates/module_2/summary.html -->
 <!DOCTYPE html>
 <html lang="en">
@@ -33,6 +34,13 @@
             font-weight: 500;
             color: #374151;
             margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .module-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-top: 2rem;
             margin-bottom: 1rem;
         }
         .section {
@@ -95,7 +103,38 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        {% for md in all_module_data %}
+
+        <!-- Module 1 Data -->
+        <div class="module-title">Module 1 - Basic Details</div>
+        {% if all_module_1_data %}
+            {% for md in all_module_1_data %}
+            <div class="section">
+                <h2>{{ md.step.replace('_', ' ').title() }}</h2>
+                {% for key, value in md.data.items() %}
+                {% if key not in ['documents', 'document_names'] and value %}
+                <div class="field">
+                    <span class="field-label">{{ key.replace('_', ' ').title() }}:</span>
+                    <span class="field-value">
+                        {% if value is iterable and value is not string %}
+                            {{ value|join(', ') }}
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="section">
+                <p class="field-value">No completed Module 1 data available.</p>
+            </div>
+        {% endif %}
+
+        <!-- Module 2 Data -->
+        <div class="module-title">Module 2 - Satellite Details</div>
+        {% for md in all_module_2_data %}
         <div class="section">
             <h2>{{ md.step.replace('_', ' ').title() }}</h2>
             {% for key, value in md.data.items() %}
@@ -114,6 +153,7 @@
             {% endfor %}
         </div>
         {% endfor %}
+
         {% if application.status == 'Submitted' %}
         <a href="{{ url_for('module_2_pdf.download_pdf', application_id=application_id) }}" class="download-btn">Download PDF</a>
         {% endif %}

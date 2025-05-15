@@ -1,7 +1,23 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, jsonify
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    send_file,
+    jsonify,
+)
 from flask_login import login_required, current_user
 from app import db
-from app.models import Application, ModuleData, UploadedFile, EditRequest, ApplicationAssignment, Notification
+from app.models import (
+    Application,
+    ModuleData,
+    UploadedFile,
+    EditRequest,
+    ApplicationAssignment,
+    Notification,
+)
 from app.utils import compare_form_data, log_file_upload
 from datetime import datetime
 import os
@@ -10,7 +26,9 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-module_3 = Blueprint("module_3", __name__, url_prefix="/module_3", template_folder="templates")
+module_3 = Blueprint(
+    "module_3", __name__, url_prefix="/module_3", template_folder="templates"
+)
 
 STEPS = [
     "renewal_and_provisioning",
@@ -19,12 +37,15 @@ STEPS = [
     "ground_segment",
     "itu_and_regulatory",
     "launch_and_regulatory",
-    "misc_and_declarations"
+    "misc_and_declarations",
 ]
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Uploads")
+UPLOAD_FOLDER = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "Uploads"
+)
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
 
 @module_3.route("/fill_step/<step>", methods=["GET", "POST"])
 @login_required
@@ -40,28 +61,50 @@ def fill_step(step):
 
     application = Application.query.get_or_404(app_id)
     if application.user_id != current_user.id or (
-        application.status != "Pending" and not application.editable and step != "summary"
+        application.status != "Pending"
+        and not application.editable
+        and step != "summary"
     ):
-        logger.warning(f"Unauthorized access or invalid status for user {current_user.id}, app {app_id}")
+        logger.warning(
+            f"Unauthorized access or invalid status for user {current_user.id}, app {app_id}"
+        )
         return "Unauthorized or invalid application", 403
 
-    module_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_3", step=step).first()
+    module_data = ModuleData.query.filter_by(
+        application_id=app_id, module_name="module_3", step=step
+    ).first()
     if not module_data:
-        module_data = ModuleData(application_id=app_id, module_name="module_3", step=step, data={})
+        module_data = ModuleData(
+            application_id=app_id, module_name="module_3", step=step, data={}
+        )
         db.session.add(module_data)
         db.session.commit()
 
-    existing_files = UploadedFile.query.filter_by(application_id=app_id, module_name="module_3", step=step).all()
-    logger.debug(f"Step: {step}, Existing Files: {[f.filename for f in existing_files]}")
+    existing_files = UploadedFile.query.filter_by(
+        application_id=app_id, module_name="module_3", step=step
+    ).all()
+    logger.debug(
+        f"Step: {step}, Existing Files: {[f.filename for f in existing_files]}"
+    )
 
     if request.method == "POST" and step != "misc_and_declarations":
         form_data = request.form.to_dict()
         file_fields = {
-            "satellite_constellation_details": ["relationship_evidence", "lease_contract"],
-            "payload_details": ["hosted_payload_agreement", "hosted_payload_authorization"],
-            "itu_and_regulatory": ["foreign_admin_approval", "interference_analysis", "license_copy"],
+            "satellite_constellation_details": [
+                "relationship_evidence",
+                "lease_contract",
+            ],
+            "payload_details": [
+                "hosted_payload_agreement",
+                "hosted_payload_authorization",
+            ],
+            "itu_and_regulatory": [
+                "foreign_admin_approval",
+                "interference_analysis",
+                "license_copy",
+            ],
             "launch_and_regulatory": ["dot_license_copies"],
-            "misc_and_declarations": ["official_seal"]
+            "misc_and_declarations": ["official_seal"],
         }
 
         # Capture old data for audit logging
@@ -83,7 +126,7 @@ def fill_step(step):
                             step=step,
                             field_name=field,
                             filename=f.filename,
-                            filepath=relative_path
+                            filepath=relative_path,
                         )
                         db.session.add(uploaded_file)
                         file_paths.append(relative_path)
@@ -93,7 +136,9 @@ def fill_step(step):
                     form_data[field] = file_paths
                 else:
                     form_data[field] = old_data.get(field, [])
-                    logger.debug(f"No new upload for {field}, retaining: {form_data[field]}")
+                    logger.debug(
+                        f"No new upload for {field}, retaining: {form_data[field]}"
+                    )
 
         # Update module data
         module_data.data = form_data
@@ -107,37 +152,95 @@ def fill_step(step):
 
         next_step_idx = STEPS.index(step) + 1
         if next_step_idx < len(STEPS):
-            return redirect(url_for("module_3.fill_step", step=STEPS[next_step_idx], application_id=app_id))
-        return redirect(url_for("module_3.fill_step", step="summary", application_id=app_id))
+            return redirect(
+                url_for(
+                    "module_3.fill_step",
+                    step=STEPS[next_step_idx],
+                    application_id=app_id,
+                )
+            )
+        return redirect(
+            url_for("module_3.fill_step", step="summary", application_id=app_id)
+        )
 
     if step == "summary":
-        all_module_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_3").all()
-        processed_module_data = []
-        for md in all_module_data:
+        # Fetch Module 3 data
+        all_module_3_data = ModuleData.query.filter_by(
+            application_id=app_id, module_name="module_3"
+        ).all()
+        processed_module_3_data = []
+        for md in all_module_3_data:
             data_copy = md.data.copy()
             for key, value in data_copy.items():
                 if isinstance(value, list) and all(isinstance(v, str) for v in value):
                     data_copy[key] = [os.path.basename(doc) for doc in value]
-            processed_module_data.append({"step": md.step, "data": data_copy, "completed": md.completed})
+            processed_module_3_data.append(
+                {"step": md.step, "data": data_copy, "completed": md.completed}
+            )
+
+        # Fetch latest completed Module 1 data
+        all_user_apps = Application.query.filter_by(user_id=current_user.id).all()
+        required_module_1_steps = [
+            "applicant_identity",
+            "entity_details",
+            "management_ownership",
+            "financial_credentials",
+            "operational_contact",
+            "declarations_submission",
+        ]
+        latest_module_1_data = []
+        latest_app_id = None
+        latest_submission_date = None
+
+        for app in all_user_apps:
+            module_1_data = ModuleData.query.filter_by(
+                application_id=app.id, module_name="module_1"
+            ).all()
+            if all(
+                any(md.step == rs and md.completed for md in module_1_data)
+                for rs in required_module_1_steps
+            ):
+                if (
+                    not latest_submission_date
+                    or app.created_at > latest_submission_date
+                ):
+                    latest_submission_date = app.created_at
+                    latest_app_id = app.id
+                    latest_module_1_data = module_1_data
+
+        # Process Module 1 data
+        processed_module_1_data = []
+        for md in latest_module_1_data:
+            data_copy = md.data.copy()
+            for key, value in data_copy.items():
+                if isinstance(value, list) and all(isinstance(v, str) for v in value):
+                    data_copy[key] = [os.path.basename(doc) for doc in value]
+            processed_module_1_data.append(
+                {"step": md.step, "data": data_copy, "completed": md.completed}
+            )
+
         return render_template(
             "module_3/summary.html",
-            all_module_data=processed_module_data,
+            all_module_1_data=processed_module_1_data,
+            all_module_3_data=processed_module_3_data,
             application_id=app_id,
-            application=application
+            application=application,
         )
 
-    all_module_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_3").all()
+    all_module_data = ModuleData.query.filter_by(
+        application_id=app_id, module_name="module_3"
+    ).all()
     processed_module_data = []
     for md in all_module_data:
         data_copy = md.data.copy()
         for key, value in data_copy.items():
             if isinstance(value, list) and all(isinstance(v, str) for v in value):
                 data_copy[key] = [os.path.basename(doc) for doc in value]
-        processed_module_data.append({"step": md.step, "data": data_copy, "completed": md.completed})
+        processed_module_data.append(
+            {"step": md.step, "data": data_copy, "completed": md.completed}
+        )
 
-    template_map = {
-        "misc_and_declarations": "module_3/misc_and_declarations.html"
-    }
+    template_map = {"misc_and_declarations": "module_3/misc_and_declarations.html"}
     return render_template(
         template_map.get(step, f"module_3/{step}.html"),
         form_data=module_data.data,
@@ -146,22 +249,37 @@ def fill_step(step):
         steps=STEPS,
         all_module_data=processed_module_data,
         application=application,
-        existing_files=existing_files
+        existing_files=existing_files,
     )
+
 
 @module_3.route("/save_misc_and_declarations/<int:application_id>", methods=["POST"])
 @login_required
 def save_misc_and_declarations(application_id):
     application = Application.query.get_or_404(application_id)
     if application.user_id != current_user.id or application.status != "Pending":
-        return jsonify({"status": "error", "message": "Unauthorized or already submitted"}), 403
+        return (
+            jsonify(
+                {"status": "error", "message": "Unauthorized or already submitted"}
+            ),
+            403,
+        )
 
     form_data = request.form.to_dict()
     file_fields = ["official_seal"]
 
-    module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_3", step="misc_and_declarations").first()
+    module_data = ModuleData.query.filter_by(
+        application_id=application_id,
+        module_name="module_3",
+        step="misc_and_declarations",
+    ).first()
     if not module_data:
-        module_data = ModuleData(application_id=application_id, module_name="module_3", step="misc_and_declarations", data={})
+        module_data = ModuleData(
+            application_id=application_id,
+            module_name="module_3",
+            step="misc_and_declarations",
+            data={},
+        )
         db.session.add(module_data)
 
     # Capture old data for audit logging
@@ -173,7 +291,9 @@ def save_misc_and_declarations(application_id):
         if files and files[0].filename:
             file_paths = []
             for f in files:
-                filename = f"{application_id}_misc_and_declarations_{field}_{f.filename}"
+                filename = (
+                    f"{application_id}_misc_and_declarations_{field}_{f.filename}"
+                )
                 file_path = os.path.join(UPLOAD_FOLDER, filename)
                 f.save(file_path)
                 relative_path = os.path.join("Uploads", filename)
@@ -183,19 +303,34 @@ def save_misc_and_declarations(application_id):
                     step="misc_and_declarations",
                     field_name=field,
                     filename=f.filename,
-                    filepath=relative_path
+                    filepath=relative_path,
                 )
                 db.session.add(uploaded_file)
                 file_paths.append(relative_path)
                 # Log file upload
-                log_file_upload(application_id, "module_3", "misc_and_declarations", field, f.filename)
+                log_file_upload(
+                    application_id,
+                    "module_3",
+                    "misc_and_declarations",
+                    field,
+                    f.filename,
+                )
                 logger.debug(f"Logged file upload: {field}: {f.filename}")
             form_data[field] = file_paths
         else:
             form_data[field] = old_data.get(field, [])
 
     # Update declarations
-    for decl in ['auth_by_operator', 'coord_agreement', 'cease_emission', 'change_notification', 'national_security', 'auth_validity', 'app_submission', 'compliance_affirmation']:
+    for decl in [
+        "auth_by_operator",
+        "coord_agreement",
+        "cease_emission",
+        "change_notification",
+        "national_security",
+        "auth_validity",
+        "app_submission",
+        "compliance_affirmation",
+    ]:
         form_data[decl] = decl in request.form
 
     # Update module data
@@ -203,8 +338,12 @@ def save_misc_and_declarations(application_id):
     module_data.completed = True
 
     # Log field changes
-    compare_form_data(old_data, form_data, application_id, "module_3", "misc_and_declarations")
-    logger.debug(f"Logged field changes for misc_and_declarations, application {application_id}")
+    compare_form_data(
+        old_data, form_data, application_id, "module_3", "misc_and_declarations"
+    )
+    logger.debug(
+        f"Logged field changes for misc_and_declarations, application {application_id}"
+    )
 
     try:
         db.session.commit()
@@ -212,6 +351,7 @@ def save_misc_and_declarations(application_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @module_3.route("/submit_application/<int:application_id>", methods=["POST"])
 @login_required
@@ -224,17 +364,29 @@ def submit_application(application_id):
         flash("Application already submitted.", "warning")
         return redirect(url_for("applicant.home"))
 
-    all_module_data = ModuleData.query.filter_by(application_id=application_id, module_name="module_3").all()
+    all_module_data = ModuleData.query.filter_by(
+        application_id=application_id, module_name="module_3"
+    ).all()
     required_steps = STEPS
     completed_steps = [md.step for md in all_module_data if md.completed]
     if not all(step in completed_steps for step in required_steps):
         flash("Please complete all required steps.", "error")
-        return redirect(url_for("module_3.fill_step", step="misc_and_declarations", application_id=application_id))
+        return redirect(
+            url_for(
+                "module_3.fill_step",
+                step="misc_and_declarations",
+                application_id=application_id,
+            )
+        )
 
     try:
         # Check for EditRequest and ApplicationAssignment
-        edit_request = EditRequest.query.filter_by(application_id=application_id, status="Active").first()
-        assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first()
+        edit_request = EditRequest.query.filter_by(
+            application_id=application_id, status="Active"
+        ).first()
+        assignment = ApplicationAssignment.query.filter_by(
+            application_id=application_id
+        ).first()
 
         if edit_request and assignment:
             # Reuse existing assignment
@@ -250,7 +402,7 @@ def submit_application(application_id):
             notification = Notification(
                 user_id=primary_verifier_id,
                 content=f"Application #{application_id} (Module 3) has been resubmitted after edits. Please review.",
-                timestamp=datetime.utcnow()
+                timestamp=datetime.utcnow(),
             )
             db.session.add(notification)
 
@@ -258,7 +410,7 @@ def submit_application(application_id):
                 notification = Notification(
                     user_id=secondary_verifier_id,
                     content=f"Application #{application_id} (Module 3) has been resubmitted after edits. Please review.",
-                    timestamp=datetime.utcnow()
+                    timestamp=datetime.utcnow(),
                 )
                 db.session.add(notification)
 
@@ -270,11 +422,20 @@ def submit_application(application_id):
             flash("Application submitted for verification.", "success")
 
         db.session.commit()
-        return redirect(url_for("module_3.fill_step", step="summary", application_id=application_id))
+        return redirect(
+            url_for("module_3.fill_step", step="summary", application_id=application_id)
+        )
     except Exception as e:
         db.session.rollback()
         flash(f"Error submitting application: {str(e)}", "error")
-        return redirect(url_for("module_3.fill_step", step="misc_and_declarations", application_id=application_id))
+        return redirect(
+            url_for(
+                "module_3.fill_step",
+                step="misc_and_declarations",
+                application_id=application_id,
+            )
+        )
+
 
 @module_3.route("/download_file/<int:file_id>")
 @login_required
@@ -283,10 +444,15 @@ def download_file(file_id):
     application = Application.query.get_or_404(uploaded_file.application_id)
     if application.user_id != current_user.id:
         return "Unauthorized", 403
-    full_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", uploaded_file.filepath)
+    full_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", uploaded_file.filepath
+    )
     if not os.path.exists(full_path):
         return f"File not found: {full_path}", 404
-    return send_file(full_path, as_attachment=True, download_name=uploaded_file.filename)
+    return send_file(
+        full_path, as_attachment=True, download_name=uploaded_file.filename
+    )
+
 
 @module_3.route("/start_application", methods=["GET", "POST"])
 @login_required
@@ -295,5 +461,7 @@ def start_application():
         application = Application(user_id=current_user.id, status="Pending")
         db.session.add(application)
         db.session.commit()
-        return redirect(url_for("module_3.fill_step", step=STEPS[0], application_id=application.id))
+        return redirect(
+            url_for("module_3.fill_step", step=STEPS[0], application_id=application.id)
+        )
     return render_template("module_3/start_application.html")

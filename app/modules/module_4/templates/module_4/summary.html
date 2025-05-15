@@ -34,6 +34,13 @@
             margin-top: 1.5rem;
             margin-bottom: 1rem;
         }
+        .module-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
         .section {
             border-bottom: 1px solid #e5e7eb;
             padding-bottom: 1rem;
@@ -80,14 +87,6 @@
             text-align: center;
             max-width: 600px;
         }
-        .uploaded-files-list {
-            list-style-type: disc;
-            padding-left: 1.5rem;
-            color: #6b7280;
-        }
-        .uploaded-files-list li {
-            margin-bottom: 0.5rem;
-        }
     </style>
 </head>
 <body>
@@ -102,7 +101,38 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        {% for md in all_module_data %}
+
+        <!-- Module 1 Data -->
+        <div class="module-title">Module 1 - Basic Details</div>
+        {% if all_module_1_data %}
+            {% for md in all_module_1_data %}
+            <div class="section">
+                <h2>{{ md.step.replace('_', ' ').title() }}</h2>
+                {% for key, value in md.data.items() %}
+                {% if key not in ['documents', 'document_names'] and value %}
+                <div class="field">
+                    <span class="field-label">{{ key.replace('_', ' ').title() }}:</span>
+                    <span class="field-value">
+                        {% if value is iterable and value is not string %}
+                            {{ value|join(', ') }}
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="section">
+                <p class="field-value">No completed Module 1 data available.</p>
+            </div>
+        {% endif %}
+
+        <!-- Module 4 Data -->
+        <div class="module-title">Module 4 - Additional Satellite Form</div>
+        {% for md in all_module_4_data %}
         <div class="section">
             <h2>{{ md.step.replace('_', ' ').title() }}</h2>
             {% for key, value in md.data.items() %}
@@ -121,18 +151,22 @@
             {% endfor %}
         </div>
         {% endfor %}
+
+        <!-- Uploaded Documents (Module 4) -->
+        <div class="module-title">Uploaded Documents (Module 4)</div>
         <div class="section">
-            <h2>Uploaded Documents</h2>
             {% if uploaded_files %}
-            <ul class="uploaded-files-list">
                 {% for file in uploaded_files %}
-                <li>{{ file.field.replace('_', ' ').title() }}: {{ file.filename }} (Step: {{ file.step.replace('_', ' ').title() }})</li>
+                <div class="field">
+                    <span class="field-label">{{ file.field.replace('_', ' ').title() }} (Step: {{ file.step.replace('_', ' ').title() }}):</span>
+                    <span class="field-value">{{ file.filename }}</span>
+                </div>
                 {% endfor %}
-            </ul>
             {% else %}
-            <p class="field-value">No documents uploaded.</p>
+                <p class="field-value">No documents uploaded.</p>
             {% endif %}
         </div>
+
         {% if application.status == 'Submitted' %}
         <a href="{{ url_for('module_4_pdf.download_pdf', application_id=application_id) }}" class="download-btn">Download PDF</a>
         {% endif %}
