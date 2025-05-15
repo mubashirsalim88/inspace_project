@@ -11,7 +11,7 @@
                     {% for module in ['module_1', 'module_2', 'module_3', 'module_4', 'module_5', 'module_6', 'module_7', 'module_8', 'module_9', 'module_10'] %}
                     <li class="flex items-center group">
                         <button class="sidebar-link flex-1 text-left py-2 px-4 rounded-lg hover:bg-teal-600 transition-all duration-300 {% if loop.first %}bg-teal-600{% endif %}" data-tab="{{ module }}">
-                            {{ module|replace('_', ' ')|title }}
+                            {{ MODULE_NAME_MAPPING[module] }}
                         </button>
                         {% if module in recent_modules %}
                             <span class="w-3 h-3 bg-lime-400 rounded-full ml-2 group-hover:scale-125 transition-transform"></span>
@@ -34,7 +34,7 @@
             <div class="space-y-8">
                 <!-- Submitted Applications -->
                 <div class="bg-white rounded-xl shadow-lg p-6 border border-teal-100">
-                    <h3 class="text-2xl font-semibold text-teal-800 mb-4">{{ module|replace('_', ' ')|title }} - Submitted Applications</h3>
+                    <h3 class="text-2xl font-semibold text-teal-800 mb-4">{{ MODULE_NAME_MAPPING[module] }} - Submitted Applications</h3>
                     {% set submitted_apps = module_apps[module] | selectattr('status', 'equalto', 'Submitted') | list %}
                     {% if submitted_apps %}
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -51,13 +51,13 @@
                         {% endfor %}
                     </div>
                     {% else %}
-                    <p class="text-gray-500 text-center py-4">No submitted {{ module|replace('_', ' ')|title }} applications.</p>
+                    <p class="text-gray-500 text-center py-4">No submitted {{ MODULE_NAME_MAPPING[module] }} applications.</p>
                     {% endif %}
                 </div>
 
                 <!-- Assigned Applications -->
                 <div class="bg-white rounded-xl shadow-lg p-6 border border-teal-100">
-                    <h3 class="text-2xl font-semibold text-teal-800 mb-4">{{ module|replace('_', ' ')|title }} - Assigned Applications</h3>
+                    <h3 class="text-2xl font-semibold text-teal-800 mb-4">{{ MODULE_NAME_MAPPING[module] }} - Assigned Applications</h3>
                     {% set assigned_apps = assigned_module_apps[module] %}
                     {% if assigned_apps %}
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -76,7 +76,7 @@
                         {% endfor %}
                     </div>
                     {% else %}
-                    <p class="text-gray-500 text-center py-4">No assigned {{ module|replace('_', ' ')|title }} applications.</p>
+                    <p class="text-gray-500 text-center py-4">No assigned {{ MODULE_NAME_MAPPING[module] }} applications.</p>
                     {% endif %}
                 </div>
             </div>

@@ -12,7 +12,7 @@
             {% for module in fixed_modules %}
                 <li>
                     <a href="#" class="flex items-center justify-between p-2 rounded hover:bg-indigo-50 text-indigo-600 module-filter transition-colors duration-200" data-module="{{ module }}">
-                        <span>{{ module|replace('_', ' ')|title }}</span>
+                        <span>{{ MODULE_NAME_MAPPING[module] }}</span>
                         {% set actionable_count = module_apps[module]|selectattr('status', 'in', ['Under Review', 'Pending Secondary Approval'])|selectattr('status', 'equalto', 'Under Review' if role == 'Primary Verifier' else 'Pending Secondary Approval')|list|length %}
                         {% if actionable_count > 0 %}
                             <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-white bg-red-600 rounded-full">{{ actionable_count }}</span>
@@ -101,7 +101,7 @@
                                 {% set app = item.app %}
                                 {% set is_actionable = app.status in ['Under Review', 'Pending Secondary Approval'] and (app.status == 'Under Review' and role == 'Primary Verifier' or app.status == 'Pending Secondary Approval' and role == 'Secondary Verifier') %}
                                 <tr class="border-b hover:bg-gray-50 module-row transition-all duration-200" data-module="{{ item.module }}">
-                                    <td class="p-4">{{ item.module|replace('_', ' ')|title }}</td>
+                                    <td class="p-4">{{ MODULE_NAME_MAPPING[item.module] }}</td>
                                     <td class="p-4">{{ app.id }}</td>
                                     <td class="p-4">{{ app.user.username }}</td>
                                     <td class="p-4">
@@ -155,7 +155,7 @@
                             {% for module in fixed_modules %}
                                 {% for app in completed_module_apps[module]|sort(attribute='updated_at', reverse=True) %}
                                     <tr class="border-b hover:bg-gray-50 module-row transition-all duration-200" data-module="{{ module }}">
-                                        <td class="p-4">{{ module|replace('_', ' ')|title }}</td>
+                                        <td class="p-4">{{ MODULE_NAME_MAPPING[module] }}</td>
                                         <td class="p-4">{{ app.id }}</td>
                                         <td class="p-4">{{ app.user.username }}</td>
                                         <td class="p-4">

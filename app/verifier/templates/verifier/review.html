@@ -5,7 +5,17 @@
     <h2 class="text-3xl font-bold text-gray-800 mb-6">Review Application #{{ application.id }} ({{ role }})</h2>
     
     <!-- Flash Message Container -->
-    <div id="flash-messages" class="mb-4"></div>
+    <div id="flash-messages" class="mb-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message mb-4 p-4 rounded-lg text-white {% if category == 'error' %}bg-red-500{% elif category == 'success' %}bg-green-500{% else %}bg-blue-500{% endif %} animate__animated animate__fadeIn">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white shadow-lg rounded-lg p-6">
         <!-- Left Column: Details -->
@@ -18,7 +28,7 @@
                 <h3 class="text-lg font-semibold text-gray-700">Module</h3>
                 <p class="text-gray-600">
                     {% for md in application.module_data %}
-                        {% if loop.first %}{{ md.module_name|replace('_', ' ')|title }}{% endif %}
+                        {% if loop.first %}{{ MODULE_NAME_MAPPING[md.module_name] }}{% endif %}
                     {% endfor %}
                 </p>
             </div>
@@ -51,7 +61,7 @@
             <!-- Review Form -->
             <form method="POST" class="space-y-4">
                 <input type="hidden" name="action" value="review">
-                <input type="hidden" name="csrf_token" value="{% if csrf_token is callable %}{{ csrf_token() }}{% else %}{{ csrf_token }}{% endif %}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div>
                     <label class="block text-gray-700 font-medium mb-1">Decision</label>
                     <select name="decision" class="w-full p-3 border rounded-md bg-gray-50 focus:ring-2 focus:ring-blue-500" required>
@@ -119,7 +129,7 @@
                     <tr class="border-b hover:bg-gray-50">
                         <td class="p-4">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                         <td class="p-4">{{ log.user.username }}</td>
-                        <td class="p-4">{{ log.module_name|replace('_', ' ')|title }}</td>
+                        <td class="p-4">{{ MODULE_NAME_MAPPING[log.module_name] }}</td>
                         <td class="p-4">{{ log.step|replace('_', ' ')|title }}</td>
                         <td class="p-4">{{ log.change_type|replace('_', ' ')|title }}</td>
                         <td class="p-4">
@@ -151,24 +161,27 @@
 </div>
 
 <!-- Enable Edit Modal -->
-<div id="enable-edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center">
-    <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Enable Edit for Applicant</h3>
-        <form id="enable-edit-form">
-            <input type="hidden" name="csrf_token" value="{% if csrf_token is callable %}{{ csrf_token() }}{% else %}{{ csrf_token }}{% endif %}">
-            <input type="hidden" name="action" value="enable_edit">
-            <div class="mb-4">
-                <label class="block text-gray-700 font-medium mb-1">Comments (Required)</label>
-                <textarea name="comments" class="w-full p-3 border rounded-md bg-gray-50 focus:ring-2 focus:ring-blue-500" rows="4" placeholder="Explain what needs to be edited" required></textarea>
-            </div>
-            <div class="flex justify-end space-x-2">
-                <button type="button" id="cancel-edit-btn" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Cancel</button>
-                <button type="submit" id="submit-edit-btn" class="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-600">Confirm</button>
-            </div>
-        </form>
+<div id="enable-edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Enable Edit for Applicant</h3>
+            <form id="enable-edit-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="action" value="enable_edit">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-1">Comments (Required)</label>
+                    <textarea name="comments" class="w-full p-3 border rounded-md bg-gray-50 focus:ring-2 focus:ring-blue-500" rows="4" placeholder="Explain what needs to be edited" required></textarea>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" id="cancel-edit-btn" class="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Cancel</button>
+                    <button type="submit" id="submit-edit-btn" class="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-600">Confirm</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const enableEditBtn = document.getElementById('enable-edit-btn');
@@ -180,12 +193,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     enableEditBtn.addEventListener('click', () => {
         enableEditModal.classList.remove('hidden');
-        enableEditModal.classList.add('flex');
     });
 
     cancelEditBtn.addEventListener('click', () => {
         enableEditModal.classList.add('hidden');
-        enableEditModal.classList.remove('flex');
         enableEditForm.reset();
     });
 
@@ -201,38 +212,48 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`/verifier/review/${applicationId}`, {
             method: 'POST',
             headers: {
-                'X-CSRF-Token': csrfToken
+                'X-CSRFToken': csrfToken,
+                'Accept': 'application/json'
             },
             body: formData
         })
-        .then(response => {
-            console.log('Response status:', response.status);
-            return response.json().catch(err => {
-                throw new Error(`Failed to parse JSON: ${err.message}`);
-            });
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Response data:', data);
             if (data.status === 'success') {
-                const flashDiv = document.createElement('div');
-                flashDiv.className = 'flash-message mb-4 p-4 rounded-lg text-white bg-green-500 animate__animated animate__fadeIn';
-                flashDiv.textContent = data.message;
-                const flashContainer = document.getElementById('flash-messages');
-                flashContainer.prepend(flashDiv);
-                enableEditBtn.disabled = true;
-                enableEditBtn.textContent = 'Edit Enabled';
-                enableEditBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                enableEditBtn.classList.add('bg-gray-400');
-                enableEditModal.classList.add('hidden');
-                enableEditModal.classList.remove('flex');
-                enableEditForm.reset();
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonColor: '#3085d6'
+                }).then(() => {
+                    const flashDiv = document.createElement('div');
+                    flashDiv.className = 'flash-message mb-4 p-4 rounded-lg text-white bg-green-500 animate__animated animate__fadeIn';
+                    flashDiv.textContent = data.message;
+                    document.getElementById('flash-messages').prepend(flashDiv);
+                    enableEditBtn.disabled = true;
+                    enableEditBtn.textContent = 'Edit Enabled';
+                    enableEditBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    enableEditBtn.classList.add('bg-gray-400');
+                    enableEditModal.classList.add('hidden');
+                    enableEditForm.reset();
+                });
             } else {
-                alert(data.message);
+                Swal.fire({
+                    title: 'Error!',
+                    text: data.message,
+                    icon: 'error',
+                    confirmButtonColor: '#d33'
+                });
             }
         })
         .catch(error => {
             console.error('Error enabling edit:', error);
-            alert('Failed to enable edit. Please try again.');
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to enable edit. Please try again.',
+                icon: 'error',
+                confirmButtonColor: '#d33'
+            });
         })
         .finally(() => {
             submitEditBtn.disabled = false;
@@ -240,14 +261,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Handle edit request selector change
     if (editRequestSelector) {
         editRequestSelector.addEventListener('change', () => {
             const editRequestId = editRequestSelector.value;
-            const baseUrl = '{{ url_for("verifier.review", application_id=application.id) | tojson }}';
-            // Remove quotes from JSON string
-            const cleanBaseUrl = baseUrl.replace(/^"|"$/g, '');
-            window.location.href = `${cleanBaseUrl}?edit_request_id=${editRequestId}`;
+            window.location.href = `{{ url_for('verifier.review', application_id=application.id) }}?edit_request_id=${editRequestId}`;
         });
     }
 });

@@ -4,6 +4,7 @@ from app import db
 from app.models import Application, ApplicationAssignment, User
 from app.utils import role_required
 from datetime import datetime, timedelta
+from app.__init__ import MODULE_NAME_MAPPING
 
 assigner = Blueprint("assigner", __name__, url_prefix="/assigner", template_folder="templates")
 
@@ -11,11 +12,9 @@ assigner = Blueprint("assigner", __name__, url_prefix="/assigner", template_fold
 @login_required
 @role_required("Assigner")
 def home():
-    # Fetch all applications, grouped by status
     applications = Application.query.all()
     assigned_applications = Application.query.join(ApplicationAssignment).filter(ApplicationAssignment.assigner_id == current_user.id).all()
     
-    # Group applications by module (all ten modules)
     module_apps = {f"module_{i}": [] for i in range(1, 11)}
     assigned_module_apps = {f"module_{i}": [] for i in range(1, 11)}
     
@@ -29,7 +28,6 @@ def home():
         if module_name:
             assigned_module_apps[module_name].append(app)
 
-    # Identify modules with unassigned submitted applications updated in the last 7 days
     recent_modules = set()
     for module in module_apps:
         for app in module_apps[module]:
@@ -41,7 +39,8 @@ def home():
         module_apps=module_apps,
         assigned_module_apps=assigned_module_apps,
         recent_modules=recent_modules,
-        datetime=datetime
+        datetime=datetime,
+        MODULE_NAME_MAPPING=MODULE_NAME_MAPPING
     )
 
 @assigner.route("/assign/<int:application_id>", methods=["GET", "POST"])

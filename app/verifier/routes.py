@@ -7,6 +7,7 @@ from app.utils import role_required
 from flask_mail import Message
 import logging
 from datetime import datetime, timedelta
+from app.__init__ import MODULE_NAME_MAPPING
 
 verifier = Blueprint("verifier", __name__, url_prefix="/verifier", template_folder="templates")
 
@@ -20,7 +21,6 @@ csrf = CSRFProtect()
 def home():
     logger.debug(f"Fetching home data for user {current_user.id}, role: {current_user.role}")
     
-    # Fetch assignments for the current user
     assignments_as_primary = ApplicationAssignment.query.filter_by(primary_verifier_id=current_user.id).all()
     assignments_as_secondary = ApplicationAssignment.query.filter_by(secondary_verifier_id=current_user.id).all()
     logger.debug(f"Found {len(assignments_as_primary)} primary assignments, {len(assignments_as_secondary)} secondary assignments")
@@ -32,7 +32,6 @@ def home():
     unread_messages = {}
     app_has_secondary_verifier = {}
     
-    # Combine and deduplicate applications
     for assignment in assignments_as_primary + assignments_as_secondary:
         app = Application.query.get(assignment.application_id)
         if app and app.id not in app_ids and app.id not in completed_app_ids:
@@ -53,11 +52,9 @@ def home():
     
     logger.debug(f"Total applications: {len(applications)}, completed: {len(completed_applications)}")
     
-    # Initialize module dictionaries
     module_apps = {f"module_{i}": [] for i in range(1, 11)}
     completed_module_apps = {f"module_{i}": [] for i in range(1, 11)}
     
-    # Categorize applications by module
     for app in applications:
         module_name = next((md.module_name for md in app.module_data if md.module_name in module_apps), None)
         if module_name:
@@ -74,7 +71,6 @@ def home():
         else:
             logger.warning(f"No valid module found for completed application {app.id}")
     
-    # Calculate summary metrics
     total_apps = sum(len(apps) for apps in module_apps.values()) + sum(len(apps) for apps in completed_module_apps.values())
     target_status = "Under Review" if current_user.role == "Primary Verifier" else "Pending Secondary Approval"
     pending_reviews = sum(1 for apps in module_apps.values() for app in apps if app.status == target_status)
@@ -87,7 +83,6 @@ def home():
     actionable_statuses = ["Under Review"] if current_user.role == "Primary Verifier" else ["Pending Secondary Approval"]
     recent_actionable_modules = set()
     
-    # Identify modules with recent actionable applications
     for module in module_apps:
         for app in module_apps[module]:
             if app.status in actionable_statuses and (datetime.now() - app.updated_at).days <= 7:
@@ -109,7 +104,8 @@ def home():
         total_apps=total_apps,
         pending_reviews=pending_reviews,
         total_unread=total_unread,
-        completed_count=completed_count
+        completed_count=completed_count,
+        MODULE_NAME_MAPPING=MODULE_NAME_MAPPING
     )
 
 @verifier.route("/review/<int:application_id>", methods=["GET", "POST"])
@@ -153,10 +149,8 @@ def review(application_id):
     ).count()
     unread_messages[application.id] = unread_count
 
-    # Fetch all edit requests for the application
     edit_requests = EditRequest.query.filter_by(application_id=application_id).order_by(EditRequest.requested_at.desc()).all()
     
-    # Get selected edit request ID from query parameter, default to most recent
     selected_edit_request_id = request.args.get('edit_request_id', type=int)
     if selected_edit_request_id:
         selected_edit_request = EditRequest.query.filter_by(id=selected_edit_request_id, application_id=application_id).first()
@@ -165,9 +159,7 @@ def review(application_id):
 
     audit_logs = []
     if selected_edit_request:
-        # Determine the end of the edit period: either deadline or resubmission time (updated_at)
         end_time = min(selected_edit_request.deadline, application.updated_at) if application.status != "Pending" else selected_edit_request.deadline
-        # Filter audit logs within the edit request timeframe
         audit_logs = AuditLog.query.filter(
             AuditLog.application_id == application_id,
             AuditLog.timestamp >= selected_edit_request.requested_at,
@@ -341,59 +333,41 @@ def review(application_id):
                 application.editable = True
                 logger.debug(f"Updated application {application_id} status to Pending and editable to True")
 
+                # Notify the applicant
                 notification = Notification(
                     user_id=application.user_id,
-                    content=f"Application ID {application_id} ({module_name.replace('_', ' ').title()}) is now editable. Reason: {comments}. Please complete edits by {deadline.strftime('%B %d, %Y')}.",
-                    timestamp=datetime.utcnow(),
-                    read=False
+                    content=f"Your application #{application.id} has been returned for edits by {verifier.username}. Please make the required changes by {deadline.strftime('%Y-%m-%d %H:%M:%S')} UTC. Comments: {comments}",
+                    timestamp=datetime.utcnow()
                 )
                 db.session.add(notification)
-                logger.debug(f"Created notification for user {application.user_id}")
-
-                msg = Message(
-                    "Application Edit Requested - IN-SPACe Portal",
-                    sender="noreply@inspace.gov.in",
-                    recipients=[application.user.email]
-                )
-                msg.body = (
-                    f"Dear {application.user.name},\n\n"
-                    f"Your application (ID: {application_id}, Module: {module_name.replace('_', ' ').title()}) requires edits.\n"
-                    f"Verifier Comments: {comments}\n"
-                    f"Please complete the necessary changes and resubmit by {deadline.strftime('%B %d, %Y')}.\n\n"
-                    f"Edit Application: {url_for('applicant.home', module=module_name, _external=True)}\n"
-                    f"Login: {url_for('auth.login', _external=True)}\n\n"
-                    f"Regards,\nIN-SPACe Team"
-                )
-                logger.debug(f"Prepared email for {application.user.email}")
+                logger.debug(f"Notification added for applicant {application.user_id} for application {application_id}")
 
                 db.session.commit()
-                logger.info(f"Database committed for application {application_id}")
+                logger.info(f"Database committed for enable_edit action on application {application_id}")
 
-                logger.debug("Email sending skipped for testing")
-                # mail.send(msg)
-                # logger.info(f"Email sent successfully to {application.user.email} for application {application_id}")
-
-                return jsonify({"status": "success", "message": "Edit enabled for applicant. Applicant has been notified."})
+                return jsonify({
+                    "status": "success",
+                    "message": "Edit request enabled successfully. Applicant has been notified."
+                })
             except Exception as e:
-                logger.error(f"Enable edit failed for application {application_id}: {str(e)}", exc_info=True)
+                logger.error(f"Database commit failed for enable_edit action on application {application_id}: {str(e)}", exc_info=True)
                 db.session.rollback()
-                return jsonify({"status": "error", "message": "Failed to enable edit. Please try again."}), 500
-        else:
-            logger.warning(f"Invalid action for application {application_id}: {action}")
-            return jsonify({"status": "error", "message": f"Invalid action: {action}"}), 400
+                return jsonify({
+                    "status": "error",
+                    "message": "An error occurred while enabling edit. Please try again."
+                }), 500
 
-    logger.debug(f"Rendering review.html with csrf_token callable: {callable(generate_csrf)}")
+    # GET request: Render the review template
     return render_template(
         "verifier/review.html",
         application=application,
-        assignment=assignment,
         primary_verifier=primary_verifier,
         secondary_verifier=secondary_verifier,
         pdf_download_url=pdf_download_url,
-        role=current_user.role,
-        csrf_token=generate_csrf,
         unread_messages=unread_messages,
-        audit_logs=audit_logs,
         edit_requests=edit_requests,
-        selected_edit_request=selected_edit_request
+        selected_edit_request=selected_edit_request,
+        audit_logs=audit_logs,
+        role=current_user.role,
+        MODULE_NAME_MAPPING=MODULE_NAME_MAPPING
     )
