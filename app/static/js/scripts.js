@@ -1,4 +1,30 @@
 document.addEventListener("DOMContentLoaded", function () {
+    // Sidebar Toggle
+    const sidebar = document.getElementById('sidebar');
+    const toggleButton = document.getElementById('sidebar-toggle');
+    if (sidebar && toggleButton) {
+        toggleButton.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+    }
+
+    // Notification Unread Count
+    function updateUnreadCount() {
+        const unreadCountElement = document.getElementById('unread-count');
+        if (unreadCountElement) {
+            fetch('/notification/unread_count')
+                .then(response => response.json())
+                .then(data => {
+                    unreadCountElement.textContent = data.unread_count;
+                    unreadCountElement.classList.toggle('hidden', data.unread_count === 0);
+                })
+                .catch(error => console.error('Error fetching unread count:', error));
+        }
+    }
+    updateUnreadCount();
+    setInterval(updateUnreadCount, 10000);
+    document.addEventListener('messageRead', updateUnreadCount);
+
     // Three.js Starfield for login/signup
     const canvas = document.getElementById("bgCanvas");
     if (canvas) {

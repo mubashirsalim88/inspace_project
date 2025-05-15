@@ -1,0 +1,56 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Edit Requests - IN-SPACe{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-2xl font-semibold text-gray-800">Edit Requests</h1>
+    <div class="card">
+        <div class="overflow-x-auto">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Application</th>
+                        <th>Verifier</th>
+                        <th>Comments</th>
+                        <th>Requested</th>
+                        <th>Deadline</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in edit_requests %}
+                    <tr>
+                        <td>{{ req.application_id }}</td>
+                        <td>{{ req.verifier.username }}</td>
+                        <td>{{ req.comments|truncate(50) }}</td>
+                        <td>{{ req.requested_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ req.deadline.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ req.status }}</td>
+                        <td class="flex space-x-2">
+                            {% if req.status == "Active" %}
+                            <form action="{{ url_for('admin.edit_requests') }}" method="POST">
+                                <input type="hidden" name="edit_request_id" value="{{ req.id }}">
+                                <input type="hidden" name="action" value="approve">
+                                <button type="submit" class="text-green-600 hover:underline">Approve</button>
+                            </form>
+                            <form action="{{ url_for('admin.edit_requests') }}" method="POST">
+                                <input type="hidden" name="edit_request_id" value="{{ req.id }}">
+                                <input type="hidden" name="action" value="reject">
+                                <button type="submit" class="text-red-600 hover:underline">Reject</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-gray-500">No edit requests found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

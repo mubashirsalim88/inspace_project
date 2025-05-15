@@ -1,30 +1,39 @@
-{% extends "admin/base_admin.html" %}
-{% block title %}Chat Messages{% endblock %}
-{% block content %}
-<h2 class="text-2xl font-bold mb-6">Chat Messages</h2>
+{% extends "base_admin.html" %}
 
-<div class="overflow-x-auto">
-    <table class="w-full border-collapse bg-white shadow rounded-lg">
-        <thead>
-            <tr class="bg-gray-200">
-                <th class="p-3 text-left">Application ID</th>
-                <th class="p-3 text-left">Sender</th>
-                <th class="p-3 text-left">Receiver</th>
-                <th class="p-3 text-left">Message</th>
-                <th class="p-3 text-left">Timestamp</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for msg in messages %}
-                <tr class="hover:bg-gray-50">
-                    <td class="p-3 border-t">{{ msg.application_id }}</td>
-                    <td class="p-3 border-t">{{ msg.sender.username }}</td>
-                    <td class="p-3 border-t">{{ msg.receiver.username }}</td>
-                    <td class="p-3 border-t">{{ msg.message|truncate(50) }}</td>
-                    <td class="p-3 border-t">{{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+{% block title %}Chat Messages - IN-SPACe{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-2xl font-semibold text-gray-800">Chat Messages</h1>
+    <div class="card">
+        <div class="overflow-x-auto">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Application</th>
+                        <th>Sender</th>
+                        <th>Receiver</th>
+                        <th>Message</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for message in messages %}
+                    <tr>
+                        <td>{{ message.application_id }}</td>
+                        <td>{{ message.sender.username }}</td>
+                        <td>{{ message.receiver.username }}</td>
+                        <td>{{ message.message|truncate(50) }}</td>
+                        <td>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-gray-500">No messages found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}

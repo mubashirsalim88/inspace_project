@@ -1,0 +1,32 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Assign Application - IN-SPACe{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-2xl font-semibold text-gray-800">Assign Application #{{ application.id }}</h1>
+    <div class="card">
+        <form action="{{ url_for('admin.assign_application', application_id=application.id) }}" method="POST" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Primary Verifier</label>
+                <select name="primary_verifier_id" class="mt-1 block w-full border rounded p-2 text-sm" required>
+                    <option value="">Select Primary Verifier</option>
+                    {% for verifier in primary_verifiers %}
+                    <option value="{{ verifier.id }}">{{ verifier.username }} ({{ verifier.role }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Secondary Verifier (Optional)</label>
+                <select name="secondary_verifier_id" class="mt-1 block w-full border rounded p-2 text-sm">
+                    <option value="">None</option>
+                    {% for verifier in secondary_verifiers %}
+                    <option value="{{ verifier.id }}">{{ verifier.username }} ({{ verifier.role }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="py-2 px-4 rounded bg-blue-900 text-white hover:bg-blue-800">Assign Application</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

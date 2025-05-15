@@ -1,35 +1,98 @@
-/* app/static/css/style.css */
-@font-face {
-    font-family: 'Poppins';
-    src: url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
-}
+/* Import Poppins font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 
 body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f3f4f6; /* Light gray background for consistency */
+    background-color: #f3f4f6; /* Light gray background */
 }
 
-/* Navbar */
-.navbar {
-    background-color: #ffffff; /* White */
-    border-bottom: 1px solid #e5e7eb; /* Light gray border for definition */
+/* Navbar/Header */
+.navbar, header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
 }
-.navbar a, .navbar button {
-    color: #1f2937; /* Dark gray for links/buttons to contrast with white */
+.navbar a, .navbar button, header a, header button {
+    color: #1f2937;
 }
-.navbar .text-gray-800 {
-    color: #1f2937; /* Dark gray for welcome text */
+.navbar .text-gray-800, header .text-gray-800 {
+    color: #1f2937;
 }
-.navbar .bg-gray-500 {
-    background-color: #6b7280; /* Keep avatar background gray */
+.navbar .bg-gray-500, header .bg-gray-500 {
+    background-color: #6b7280;
 }
-.navbar .bg-red-500 {
-    background-color: #ef4444; /* Red for logout button */
+.navbar .bg-red-500, header .bg-red-500 {
+    background-color: #ef4444;
 }
-.navbar .bg-blue-600 {
-    background-color: #2563eb; /* Blue for login button */
+.navbar .bg-blue-600, header .bg-blue-600 {
+    background-color: #2563eb;
+}
+
+/* Sidebar */
+aside {
+    background-color: #1e3a8a; /* IN-SPACe blue */
+    color: #ffffff;
+}
+.sidebar-link {
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+.sidebar-link:hover, .sidebar-link.bg-blue-700 {
+    background-color: #1e40af; /* Lighter blue on hover/active */
+}
+
+/* Cards */
+.card {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: box-shadow 0.3s ease;
+}
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Tables */
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+th, td {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem;
+    text-align: left;
+}
+thead {
+    background-color: #f9fafb;
+    color: #1f2937;
+}
+tr:hover {
+    background-color: #f9fafb;
+}
+.overflow-x-auto {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Forms */
+select, button {
+    transition: all 0.3s ease;
+}
+select {
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+}
+button:hover {
+    transform: translateY(-1px);
+}
+
+/* Flash Messages */
+.flash-message {
+    animation: fadeIn 0.5s ease-in-out;
 }
 
 /* Login/Signup and Forms */
@@ -109,86 +172,6 @@ canvas {
     margin: 0.5rem 0;
 }
 
-/* Dashboard */
-.font-poppins { 
-    font-family: 'Poppins', sans-serif; 
-}
-
-/* Flash Messages */
-.flash-message {
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-/* Assigner Dashboard */
-aside {
-    background-color: #1e3a8a; /* Deep blue for IN-SPACe branding */
-    color: #ffffff;
-}
-.sidebar-link {
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: background-color 0.3s ease;
-}
-.sidebar-link:hover, .sidebar-link.bg-blue-700 {
-    background-color: #1e40af; /* Slightly lighter blue on hover/active */
-}
-.tab-content {
-    transition: opacity 0.3s ease-in-out;
-}
-.tab-content.hidden {
-    opacity: 0;
-    display: none;
-}
-.card {
-    background-color: #eff6ff; /* Light blue card background */
-    border: 1px solid #bfdbfe;
-    border-radius: 8px;
-    padding: 1rem;
-    transition: box-shadow 0.3s ease;
-}
-.card:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Verifier Dashboard */
-.collapsible-section {
-    border-radius: 8px;
-    overflow: hidden;
-    transition: box-shadow 0.3s ease;
-}
-.collapsible-section:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-.collapsible-header {
-    background-color: #ecfdf5; /* Light green background */
-    color: #047857; /* Dark green text */
-    padding: 1.25rem;
-    transition: background-color 0.3s ease;
-}
-.collapsible-header:hover {
-    background-color: #d1fae5; /* Lighter green on hover */
-}
-.collapsible-content {
-    background-color: #ffffff;
-    padding: 1.5rem;
-}
-.collapsible-header svg {
-    transition: transform 0.3s ease;
-}
-table {
-    border-collapse: separate;
-    border-spacing: 0;
-    width: 100%;
-}
-th, td {
-    border-bottom: 1px solid #e5e7eb;
-    padding: 1rem;
-}
-thead {
-    background-color: #ecfdf5; /* Light green background */
-    color: #047857; /* Dark green text */
-}
-
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; }
@@ -197,21 +180,15 @@ thead {
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
+    .md\:ml-64 {
+        margin-left: 0;
+    }
     aside {
         width: 100%;
         max-width: 200px;
     }
     .sidebar-link {
         font-size: 0.85rem;
-    }
-    .collapsible-section {
-        font-size: 0.9rem;
-    }
-    .collapsible-header {
-        padding: 1rem;
-    }
-    .collapsible-content {
-        padding: 1rem;
     }
     table {
         font-size: 0.85rem;
