@@ -22,6 +22,7 @@ def home():
     if current_user.role != "user":
         return redirect(url_for("index"))
     active_module = request.args.get("module", "module_1")
+    show_modules = request.args.get("show_modules", "false").lower() == "true"
     applications = Application.query.filter_by(user_id=current_user.id).all()
     module_tabs = {f"module_{i}": {"steps": {}, "completed": False} for i in range(1, 11)}
     incomplete_apps = []
@@ -31,6 +32,11 @@ def home():
         "module_9": [], "module_10": []
     }
 
+    # Calculate statistics
+    total_applications = Application.query.filter_by(user_id=current_user.id).count()
+    approved_applications = Application.query.filter_by(user_id=current_user.id, status="Approved").count()
+    pending_applications = Application.query.filter_by(user_id=current_user.id, status="Pending").count()
+
     for app in applications:
         module_1_completed = False
         module_data_by_module = {
@@ -39,23 +45,24 @@ def home():
             "module_9": [], "module_10": []
         }
         for md in app.module_data:
-            module_tabs[md.module_name]["steps"][md.step] = {"completed": md.completed}
-            module_data_by_module[md.module_name].append(md)
-            if md.module_name == "module_1":
-                required_steps = [
-                    "applicant_identity", "entity_details", "management_ownership",
-                    "financial_credentials", "operational_contact", "declarations_submission"
-                ]
-                if all(any(md2.step == rs and md2.completed for md2 in app.module_data) for rs in required_steps):
-                    module_1_completed = True
-                    module_tabs["module_1"]["completed"] = True
+            if not md.abandoned:
+                module_tabs[md.module_name]["steps"][md.step] = {"completed": md.completed}
+                module_data_by_module[md.module_name].append(md)
+                if md.module_name == "module_1":
+                    required_steps = [
+                        "applicant_identity", "entity_details", "management_ownership",
+                        "financial_credentials", "operational_contact", "declarations_submission"
+                    ]
+                    if all(any(md2.step == rs and md2.completed for md2 in app.module_data if not md2.abandoned) for rs in required_steps):
+                        module_1_completed = True
+                        module_tabs["module_1"]["completed"] = True
 
         for module in ["module_1", "module_2", "module_3", "module_4", "module_5", 
                        "module_6", "module_7", "module_8", "module_9", "module_10"]:
             if module_data_by_module[module] and app not in module_apps[module]:
                 module_apps[module].append(app)
 
-        if not module_1_completed and app not in incomplete_apps:
+        if not module_1_completed and app not in incomplete_apps and any(md.module_name == "module_1" for md in app.module_data if not md.abandoned):
             incomplete_apps.append(app)
 
     return render_template(
@@ -65,7 +72,12 @@ def home():
         incomplete_apps=incomplete_apps,
         module_apps=module_apps,
         active_module=active_module,
-        MODULE_NAME_MAPPING=MODULE_NAME_MAPPING
+        show_modules=show_modules,
+        active_tab="modules" if show_modules else "home",
+        MODULE_NAME_MAPPING=MODULE_NAME_MAPPING,
+        total_applications=total_applications,
+        approved_applications=approved_applications,
+        pending_applications=pending_applications
     )
 
 @applicant.route("/start_application")
@@ -75,14 +87,6 @@ def start_application():
         return redirect(url_for("index"))
     module = request.args.get("module", "module_1")
     
-    # Abandon any existing pending application for this module
-    pending_app = Application.query.filter_by(user_id=current_user.id, status="Pending").join(ModuleData).filter(
-        ModuleData.module_name == module, ModuleData.abandoned == False).first()
-    if pending_app:
-        for md in pending_app.module_data:
-            md.abandoned = True
-        db.session.commit()
-
     # Create new application
     new_app = Application(user_id=current_user.id, status="Pending")
     db.session.add(new_app)
@@ -101,7 +105,7 @@ def start_application():
         steps = globals()[f"MODULE_{module.split('_')[1]}_STEPS"]
         all_user_apps = Application.query.filter_by(user_id=current_user.id).all()
         module_1_complete = any(
-            all(any(md.step == rs and md.completed for md in
+            all(any(md.step == rs and md.completed and not md.abandoned for md in
                     ModuleData.query.filter_by(application_id=app.id, module_name="module_1").all())
                 for rs in ["applicant_identity", "entity_details", "management_ownership", 
                            "financial_credentials", "operational_contact", "declarations_submission"])
@@ -109,7 +113,7 @@ def start_application():
         )
         if not module_1_complete:
             flash(f"Please complete Module 1 (Basic Details) for at least one application before starting {module_name_display}.", "error")
-            redirect_url = url_for("applicant.home", module="module_1")
+            redirect_url = url_for("applicant.home", module="module_1", show_modules=True)
             success = False
         else:
             redirect_url = url_for(f"{module}.fill_step", step=steps[0], application_id=new_app.id)
@@ -147,7 +151,7 @@ def edit_application(application_id):
 
     # Find the module associated with the application
     module_name = next(
-        (md.module_name for md in application.module_data if md.module_name in [f"module_{i}" for i in range(1, 11)]),
+        (md.module_name for md in application.module_data if md.module_name in [f"module_{i}" for i in range(1, 11)] and not md.abandoned),
         None
     )
     if not module_name:
@@ -180,3 +184,26 @@ def edit_application(application_id):
         return redirect(url_for("applicant.home"))
 
     return redirect(redirect_url)
+
+@applicant.route("/abandon_application/<int:application_id>", methods=["POST"])
+@login_required
+def abandon_application(application_id):
+    if current_user.role != "user":
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("index"))
+    
+    application = Application.query.get_or_404(application_id)
+    if application.user_id != current_user.id:
+        flash("You are not authorized to modify this application.", "error")
+        return redirect(url_for("applicant.home"))
+    
+    if application.status != "Pending":
+        flash("Only pending applications can be abandoned.", "error")
+        return redirect(url_for("applicant.home"))
+
+    for md in application.module_data:
+        md.abandoned = True
+    db.session.commit()
+    
+    flash("Application abandoned successfully.", "success")
+    return jsonify({"success": True, "message": "Application abandoned successfully."})
