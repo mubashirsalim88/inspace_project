@@ -10,10 +10,10 @@
     <script src="{{ url_for('static', filename='js/scripts.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/tailwind.js') }}"></script>
 </head>
-<body class="flex h-screen bg-gray-100 m-0 p-0">
-    <div class="flex w-full">
+<body class="flex min-h-screen bg-gray-100 m-0 p-0">
+    <div class="flex w-full flex-col">
         <div id="main-content" class="flex-1 bg-white">
-            <div class="navbar shadow-md p-4 flex justify-between items-center w-full bg-white border-b">
+            <div class="navbar shadow-md p-4 flex justify-between items-center w-full bg-white border-b sticky top-0 z-30">
                 <div class="flex items-center space-x-4">
                     <a href="{{ url_for('applicant.home') if current_user.is_authenticated else url_for('auth.login') }}">
                         <img src="{{ url_for('static', filename='images/IN-SPACe_Logo.png') }}" alt="Logo" class="h-8">

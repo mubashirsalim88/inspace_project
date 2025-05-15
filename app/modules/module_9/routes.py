@@ -1,13 +1,5 @@
 from flask import (
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    jsonify,
-    send_file,
-    flash,
-    abort,
+    Blueprint, render_template, request, redirect, url_for, jsonify, send_file, flash
 )
 from flask_login import login_required, current_user
 from app import db
@@ -16,6 +8,7 @@ from app.utils import compare_form_data, log_file_upload
 from datetime import datetime
 import os
 import logging
+import re
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -39,6 +32,23 @@ UPLOAD_FOLDER = os.path.join(
 )
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+def clean_filename(filename):
+    """Convert raw filename to a clean display name."""
+    name = os.path.splitext(filename)[0]
+    name = re.sub(r'^\d+_?', '', name)
+    name = re.sub(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_?', '', name)
+    parts = name.split('_')
+    if len(parts) > 2:
+        step = ' '.join(word.capitalize() for word in parts[0].split('_'))
+        field = ' '.join(word.capitalize() for word in '_'.join(parts[1:-1]).split('_'))
+        filename_part = ' '.join(word.capitalize() for word in parts[-1].split('_'))
+        name = f"{step} {field} {filename_part}"
+    else:
+        name = ' '.join(word.capitalize() for word in name.split('_'))
+    if len(name) > 80:
+        name = name[:77] + "..."
+    return name
 
 @module_9.route("/fill_step/<step>", methods=["GET", "POST"])
 @login_required
@@ -93,7 +103,6 @@ def fill_step(step):
             ],
         }
 
-        # Capture old data for audit logging
         old_data = module_data.data.copy() if module_data.data else {}
 
         if step in file_fields:
@@ -116,7 +125,6 @@ def fill_step(step):
                         )
                         db.session.add(uploaded_file)
                         file_paths.append(relative_path)
-                        # Log file upload
                         log_file_upload(app_id, "module_9", step, field, f.filename)
                         logger.debug(f"Logged file upload: {field}: {f.filename}")
                     form_data[field] = file_paths
@@ -124,7 +132,6 @@ def fill_step(step):
                     form_data[field] = old_data.get(field, [])
                     logger.debug(f"No new upload for {field}, retaining: {form_data[field]}")
 
-        # Handle dynamic satellite names in satellite_owner_part1
         if step == "satellite_owner_part1":
             num_satellites = int(form_data.get("num_satellites", 0))
             satellite_names = []
@@ -135,15 +142,11 @@ def fill_step(step):
                     del form_data[name_key]
             form_data["satellite_names"] = satellite_names
 
-        # Update module data
         module_data.data = form_data
         module_data.completed = True
-
-        # Log field changes
         compare_form_data(old_data, form_data, app_id, "module_9", step)
         logger.debug(f"Logged field changes for step {step}, application {app_id}")
 
-        # Ensure ModuleData exists for all steps before checking completion
         for s in STEPS:
             md = ModuleData.query.filter_by(
                 application_id=app_id, module_name="module_9", step=s
@@ -160,7 +163,6 @@ def fill_step(step):
                 db.session.add(md)
         db.session.commit()
 
-        # Check if all steps are completed and set application status
         all_completed = all(
             ModuleData.query.filter_by(
                 application_id=app_id, module_name="module_9", step=s
@@ -169,18 +171,15 @@ def fill_step(step):
         )
         if all_completed:
             try:
-                # Check for EditRequest and ApplicationAssignment
                 edit_request = EditRequest.query.filter_by(application_id=app_id, status="Active").first()
                 assignment = ApplicationAssignment.query.filter_by(application_id=app_id).first()
 
                 if edit_request and assignment:
-                    # Reuse existing assignment
                     application.status = "Under Review"
                     application.editable = False
                     edit_request.status = "Completed"
                     edit_request.completed_at = datetime.utcnow()
 
-                    # Notify original verifiers
                     primary_verifier_id = assignment.primary_verifier_id
                     secondary_verifier_id = assignment.secondary_verifier_id
 
@@ -201,7 +200,6 @@ def fill_step(step):
 
                     flash("Application resubmitted successfully!", "success")
                 else:
-                    # New submission
                     application.status = "Submitted"
                     application.editable = False
                     flash("Application submitted for verification.", "success")
@@ -227,23 +225,78 @@ def fill_step(step):
         )
 
     if step == "summary":
-        all_module_data = ModuleData.query.filter_by(
-            application_id=app_id, module_name="module_9"
-        ).all()
-        processed_module_data = []
-        for md in all_module_data:
-            data_copy = md.data.copy()
-            for key, value in data_copy.items():
-                if isinstance(value, list) and all(isinstance(v, str) for v in value):
-                    data_copy[key] = [os.path.basename(doc) for doc in value]
-            processed_module_data.append(
-                {"step": md.step, "data": data_copy, "completed": md.completed}
-            )
+        # Fetch Module 9 data
+        module_9_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_9").all()
+        
+        # Fetch latest completed Module 1 data
+        all_user_apps = Application.query.filter_by(user_id=application.user_id).all()
+        latest_module_1_data = []
+        latest_app_id = None
+        latest_submission_date = None
+        required_module_1_steps = [
+            "applicant_identity", "entity_details", "management_ownership",
+            "financial_credentials", "operational_contact", "declarations_submission"
+        ]
+        for app in all_user_apps:
+            module_1_data = ModuleData.query.filter_by(application_id=app.id, module_name="module_1").all()
+            if all(
+                any(md.step == rs and md.completed for md in module_1_data)
+                for rs in required_module_1_steps
+            ):
+                if not latest_submission_date or app.created_at > latest_submission_date:
+                    latest_submission_date = app.created_at
+                    latest_app_id = app.id
+                    latest_module_1_data = module_1_data
+
+        # Combine Module 1 and Module 9 data
+        all_module_data = []
+        for md in latest_module_1_data:
+            if md.step.lower() != "summary":
+                data_copy = md.data.copy()
+                for key, value in data_copy.items():
+                    if isinstance(value, list) and all(isinstance(v, str) for v in value):
+                        data_copy[key] = [
+                            {"display_name": clean_filename(os.path.basename(doc)), "file_path": doc}
+                            for doc in value
+                        ]
+                all_module_data.append({
+                    "module_name": "module_1",
+                    "step": md.step,
+                    "data": data_copy,
+                    "completed": md.completed
+                })
+
+        for md in module_9_data:
+            if md.step.lower() != "summary":
+                data_copy = md.data.copy()
+                for key, value in data_copy.items():
+                    if isinstance(value, list) and all(isinstance(v, str) for v in value):
+                        data_copy[key] = [
+                            {"display_name": clean_filename(os.path.basename(doc)), "file_path": doc}
+                            for doc in value
+                        ]
+                all_module_data.append({
+                    "module_name": "module_9",
+                    "step": md.step,
+                    "data": data_copy,
+                    "completed": md.completed
+                })
+
+        # Fetch uploaded files for both modules
+        uploaded_files = []
+        if latest_app_id:
+            uploaded_files += UploadedFile.query.filter_by(application_id=latest_app_id, module_name="module_1").all()
+        uploaded_files += UploadedFile.query.filter_by(application_id=app_id, module_name="module_9").all()
+        file_id_map = {clean_filename(f.filename): f.id for f in uploaded_files}
+        file_path_map = {clean_filename(f.filename): f.filepath for f in uploaded_files}
+
         return render_template(
             "module_9/summary.html",
-            all_module_data=processed_module_data,
+            all_module_data=all_module_data,
             application_id=app_id,
             application=application,
+            file_id_map=file_id_map,
+            file_path_map=file_path_map
         )
 
     all_module_data = ModuleData.query.filter_by(
@@ -254,7 +307,10 @@ def fill_step(step):
         data_copy = md.data.copy()
         for key, value in data_copy.items():
             if isinstance(value, list) and all(isinstance(v, str) for v in value):
-                data_copy[key] = [os.path.basename(doc) for doc in value]
+                data_copy[key] = [
+                    {"display_name": clean_filename(os.path.basename(doc)), "file_path": doc}
+                    for doc in value
+                ]
         processed_module_data.append(
             {"step": md.step, "data": data_copy, "completed": md.completed}
         )
@@ -285,7 +341,6 @@ def save_undertaking(application_id):
         )
 
     form_data = request.form.to_dict()
-    # Convert checkbox values to booleans
     for decl in [
         "authorization_affirmation",
         "compliance_laws",
@@ -315,14 +370,9 @@ def save_undertaking(application_id):
         )
         db.session.add(module_data)
 
-    # Capture old data for audit logging
     old_data = module_data.data.copy() if module_data.data else {}
-
-    # Update module data
     module_data.data = form_data
     module_data.completed = True
-
-    # Log field changes
     compare_form_data(old_data, form_data, application_id, "module_9", "undertaking")
     logger.debug(f"Logged field changes for undertaking, application {application_id}")
 
@@ -367,18 +417,15 @@ def submit_application(application_id):
         )
 
     try:
-        # Check for EditRequest and ApplicationAssignment
         edit_request = EditRequest.query.filter_by(application_id=application_id, status="Active").first()
         assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first()
 
         if edit_request and assignment:
-            # Reuse existing assignment
             application.status = "Under Review"
             application.editable = False
             edit_request.status = "Completed"
             edit_request.completed_at = datetime.utcnow()
 
-            # Notify original verifiers
             primary_verifier_id = assignment.primary_verifier_id
             secondary_verifier_id = assignment.secondary_verifier_id
 
@@ -399,7 +446,6 @@ def submit_application(application_id):
 
             flash("Application resubmitted successfully!", "success")
         else:
-            # New submission
             application.status = "Submitted"
             application.editable = False
             flash("Application submitted for verification.", "success")
@@ -430,7 +476,6 @@ def start_application():
         db.session.commit()
         logger.debug(f"New application started: {application.id}")
         
-        # Initialize ModuleData for all steps
         for step in STEPS:
             module_data = ModuleData.query.filter_by(
                 application_id=application.id, module_name="module_9", step=step
@@ -457,7 +502,6 @@ def download_file(file_id):
     uploaded_file = UploadedFile.query.get_or_404(file_id)
     application = Application.query.get_or_404(uploaded_file.application_id)
 
-    # Allow Applicant or Verifiers assigned to the application
     assignment = ApplicationAssignment.query.filter_by(
         application_id=application.id
     ).first()

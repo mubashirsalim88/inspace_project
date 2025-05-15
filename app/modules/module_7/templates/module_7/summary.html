@@ -1,10 +1,9 @@
-<!-- app/modules/module_7/templates/module_7/summary.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Module 7 - Application Summary</title>
+    <title>Application Summary</title>
     <script src="{{ url_for('static', filename='js/tailwind.js') }}"></script>
     <style>
         body {
@@ -103,35 +102,75 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        {% for md in all_module_data %}
+
+        <!-- Module 1: Basic Details -->
         <div class="section">
-            <h2>{{ md.step.replace('_', ' ').title() }}</h2>
-            {% for key, value in md.data.items() %}
-            {% if key not in ['documents', 'document_names'] and value %}
-            <div class="field">
-                <span class="field-label">{{ key.replace('_', ' ').title() }}:</span>
-                <span class="field-value">
-                    {% if value is iterable and value is not string %}
-                        {% for item in value %}
-                            {% if item is mapping and 'display_name' in item %}
-                                {% if file_id_map[item.display_name] is defined %}
-                                    <a href="{{ url_for('module_7.download_file', file_id=file_id_map[item.display_name]) }}" class="document-link">{{ item.display_name }}</a>{% if not loop.last %}, {% endif %}
+            <h2>Basic Details (Module 1)</h2>
+            {% for md in all_module_data if md.module_name == 'module_1' %}
+            <div class="section">
+                <h3>{{ md.step.replace('_', ' ').title() }}</h3>
+                {% for key, value in md.data.items() %}
+                {% if key not in ['documents', 'document_names'] and value %}
+                <div class="field">
+                    <span class="field-label">{{ key.replace('_', ' ').title() }}:</span>
+                    <span class="field-value">
+                        {% if value is iterable and value is not string %}
+                            {% for item in value %}
+                                {% if item is mapping and 'display_name' in item %}
+                                    {% if file_id_map[item.display_name] is defined %}
+                                        <a href="{{ url_for('module_7.download_file', file_id=file_id_map[item.display_name]) }}" class="document-link">{{ item.display_name }}</a>{% if not loop.last %}, {% endif %}
+                                    {% else %}
+                                        {{ item.display_name }}{% if not loop.last %}, {% endif %}
+                                    {% endif %}
                                 {% else %}
-                                    {{ item.display_name }}{% if not loop.last %}, {% endif %}
+                                    {{ item }}{% if not loop.last %}, {% endif %}
                                 {% endif %}
-                            {% else %}
-                                {{ item }}{% if not loop.last %}, {% endif %}
-                            {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        {{ value }}
-                    {% endif %}
-                </span>
+                            {% endfor %}
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
+                {% endfor %}
             </div>
-            {% endif %}
             {% endfor %}
         </div>
-        {% endfor %}
+
+        <!-- Module 7: Launch Authorization Details -->
+        <div class="section">
+            <h2>Module 7: Launch Authorization Details</h2>
+            {% for md in all_module_data if md.module_name == 'module_7' %}
+            <div class="section">
+                <h3>{{ md.step.replace('_', ' ').title() }}</h3>
+                {% for key, value in md.data.items() %}
+                {% if key not in ['documents', 'document_names'] and value %}
+                <div class="field">
+                    <span class="field-label">{{ key.replace('_', ' ').title() }}:</span>
+                    <span class="field-value">
+                        {% if value is iterable and value is not string %}
+                            {% for item in value %}
+                                {% if item is mapping and 'display_name' in item %}
+                                    {% if file_id_map[item.display_name] is defined %}
+                                        <a href="{{ url_for('module_7.download_file', file_id=file_id_map[item.display_name]) }}" class="document-link">{{ item.display_name }}</a>{% if not loop.last %}, {% endif %}
+                                    {% else %}
+                                        {{ item.display_name }}{% if not loop.last %}, {% endif %}
+                                    {% endif %}
+                                {% else %}
+                                    {{ item }}{% if not loop.last %}, {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+
         {% if application.status == 'Submitted' %}
         <a href="{{ url_for('module_7_pdf.download_pdf', application_id=application_id) }}" class="download-btn">Download PDF</a>
         {% endif %}

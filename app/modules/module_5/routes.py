@@ -47,9 +47,49 @@ def fill_step(step):
 
     # Fetch the application and validate user access
     application = Application.query.get_or_404(app_id)
-    if application.user_id != current_user.id or (application.status != "Pending" and step != "summary"):
+    if application.user_id != current_user.id or (
+        application.status != "Pending" and not application.editable and step != "summary"
+    ):
         flash("Unauthorized access or application not editable.", "error")
         return redirect(url_for("applicant.home"))
+
+    # Check Module 1 completion
+    all_user_apps = Application.query.filter_by(user_id=current_user.id).all()
+    module_1_complete = False
+    required_module_1_steps = [
+        "applicant_identity",
+        "entity_details",
+        "management_ownership",
+        "financial_credentials",
+        "operational_contact",
+        "declarations_submission",
+    ]
+    for app in all_user_apps:
+        module_1_data = ModuleData.query.filter_by(
+            application_id=app.id, module_name="module_1"
+        ).all()
+        if all(
+            any(md.step == rs and md.completed for md in module_1_data)
+            for rs in required_module_1_steps
+        ):
+            module_1_complete = True
+            break
+
+    if not module_1_complete:
+        flash(
+            "Please complete Module 1 (Basic Details) for at least one application before starting Module 5.",
+            "error",
+        )
+        logger.info(f"User {current_user.id} redirected to Module 1 due to incomplete Module 1 data")
+        existing_module_5_data = ModuleData.query.filter_by(
+            application_id=app_id, module_name="module_5"
+        ).first()
+        if existing_module_5_data and not existing_module_5_data.completed:
+            db.session.delete(existing_module_5_data)
+            db.session.commit()
+        return redirect(
+            url_for("module_1.fill_step", step="applicant_identity", application_id=app_id)
+        )
 
     # Fetch or create module data for the current step
     module_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_5", step=step).first()
@@ -129,17 +169,46 @@ def fill_step(step):
 
     # Render the summary page if the step is "summary"
     if step == "summary":
-        all_module_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_5").all()
-        processed_module_data = []
-        for md in all_module_data:
+        # Fetch Module 5 data
+        all_module_5_data = ModuleData.query.filter_by(application_id=app_id, module_name="module_5").all()
+        processed_module_5_data = []
+        for md in all_module_5_data:
             data_copy = md.data.copy()
             for key, value in data_copy.items():
                 if isinstance(value, list) and all(isinstance(v, str) for v in value):
                     data_copy[key] = [os.path.basename(doc) for doc in value]
-            processed_module_data.append({"step": md.step, "data": data_copy, "completed": md.completed})
+            processed_module_5_data.append({"step": md.step, "data": data_copy, "completed": md.completed})
+
+        # Fetch latest completed Module 1 data
+        latest_module_1_data = []
+        latest_app_id = None
+        latest_submission_date = None
+        for app in all_user_apps:
+            module_1_data = ModuleData.query.filter_by(
+                application_id=app.id, module_name="module_1"
+            ).all()
+            if all(
+                any(md.step == rs and md.completed for md in module_1_data)
+                for rs in required_module_1_steps
+            ):
+                if not latest_submission_date or app.created_at > latest_submission_date:
+                    latest_submission_date = app.created_at
+                    latest_app_id = app.id
+                    latest_module_1_data = module_1_data
+
+        # Process Module 1 data
+        processed_module_1_data = []
+        for md in latest_module_1_data:
+            data_copy = md.data.copy()
+            for key, value in data_copy.items():
+                if isinstance(value, list) and all(isinstance(v, str) for v in value):
+                    data_copy[key] = [os.path.basename(doc) for doc in value]
+            processed_module_1_data.append({"step": md.step, "data": data_copy, "completed": md.completed})
+
         return render_template(
             "module_5/summary.html",
-            all_module_data=processed_module_data,
+            all_module_1_data=processed_module_1_data,
+            all_module_5_data=processed_module_5_data,
             application_id=app_id,
             application=application
         )
