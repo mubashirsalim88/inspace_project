@@ -52,15 +52,21 @@ def chat_view(application_id):
     application = Application.query.get_or_404(application_id)
     assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first_or_404()
 
+    # Define allowed users: Applicant, Primary Verifier, Secondary Verifier, and Directors (if Pending Director Approval)
     allowed_users = [application.user_id, assignment.primary_verifier_id]
     if assignment.secondary_verifier_id:
         allowed_users.append(assignment.secondary_verifier_id)
+    if application.status == "Pending Director Approval":
+        directors = User.query.filter_by(role="Director").all()
+        for director in directors:
+            if director.id not in allowed_users:
+                allowed_users.append(director.id)
 
     if current_user.id not in allowed_users:
         logger.warning(
             f"Unauthorized access attempt by user {current_user.id} to chat for application {application_id}")
         flash("Unauthorized access.", "error")
-        return redirect(url_for("applicant.home" if current_user.role == "user" else "verifier.home"))
+        return redirect(url_for("applicant.home" if current_user.role == "user" else "verifier.home" if current_user.role in ["Primary Verifier", "Secondary Verifier"] else "director.home"))
 
     message_id = request.args.get("message_id", type=int)
     if message_id:
@@ -152,7 +158,7 @@ def chat_view(application_id):
     messages = ChatMessage.query.filter_by(application_id=application_id).filter(
         ((ChatMessage.sender_id == current_user.id) & (ChatMessage.receiver_id.in_(allowed_users))) |
         ((ChatMessage.sender_id.in_(allowed_users)) & (ChatMessage.receiver_id == current_user.id))
-    ).order_by(ChatMessage.timestamp.asc()).all()
+    ).filter(ChatMessage.message != '', ChatMessage.message.isnot(None)).order_by(ChatMessage.timestamp.asc()).all()
 
     for msg in messages:
         if msg.image_path:
@@ -162,16 +168,27 @@ def chat_view(application_id):
     primary_verifier = User.query.get(assignment.primary_verifier_id)
     secondary_verifier = User.query.get(assignment.secondary_verifier_id) if assignment.secondary_verifier_id else None
     applicant = User.query.get(application.user_id)
+    directors = User.query.filter_by(role="Director").all()
 
     recipients = []
-    if current_user.id != applicant.id:
-        recipients.append({"id": applicant.id, "username": applicant.username, "role": "Applicant"})
-    if current_user.id != primary_verifier.id:
-        recipients.append(
-            {"id": primary_verifier.id, "username": primary_verifier.username, "role": "Primary Verifier"})
-    if secondary_verifier and current_user.id != secondary_verifier.id:
-        recipients.append(
-            {"id": secondary_verifier.id, "username": secondary_verifier.username, "role": "Secondary Verifier"})
+    if current_user.role == "Director":
+        # Director can only chat with verifiers
+        if current_user.id != primary_verifier.id:
+            recipients.append({"id": primary_verifier.id, "username": primary_verifier.username, "role": "Primary Verifier"})
+        if secondary_verifier and current_user.id != secondary_verifier.id:
+            recipients.append({"id": secondary_verifier.id, "username": secondary_verifier.username, "role": "Secondary Verifier"})
+    else:
+        # Applicant and verifiers can chat with each other, and verifiers can chat with directors if Pending Director Approval
+        if current_user.id != applicant.id:
+            recipients.append({"id": applicant.id, "username": applicant.username, "role": "Applicant"})
+        if current_user.id != primary_verifier.id:
+            recipients.append({"id": primary_verifier.id, "username": primary_verifier.username, "role": "Primary Verifier"})
+        if secondary_verifier and current_user.id != secondary_verifier.id:
+            recipients.append({"id": secondary_verifier.id, "username": secondary_verifier.username, "role": "Secondary Verifier"})
+        if application.status == "Pending Director Approval":
+            for director in directors:
+                if current_user.id != director.id:
+                    recipients.append({"id": director.id, "username": director.username, "role": "Director"})
 
     logger.info(f"Rendering chat.html for application {application_id}")
     return render_template(
@@ -183,7 +200,8 @@ def chat_view(application_id):
         applicant=applicant,
         assignment=assignment,
         message_id=message_id,
-        recipients=recipients
+        recipients=recipients,
+        role=current_user.role
     )
 
 @chat.route('/uploads/<filename>')

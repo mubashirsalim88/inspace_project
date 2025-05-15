@@ -53,9 +53,10 @@
                                 {% endif %}
                             </td>
                             <td class="p-4">{{ app.updated_at.strftime('%B %d, %Y') }}</td>
-                            <td class="p-4">
+                            <td class="p-4 flex space-x-2">
                                 {% if is_actionable %}
                                     <a href="{{ url_for('director.review', application_id=app.id) }}" class="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-semibold">Review Now</a>
+                                    <a href="{{ url_for('director.chat', application_id=app.id) }}" class="py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-semibold">Chat</a>
                                 {% else %}
                                     <span class="text-gray-500 text-sm">No Action</span>
                                 {% endif %}

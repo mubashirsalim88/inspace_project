@@ -11,7 +11,10 @@
 
         <!-- Application Details -->
         <div class="bg-white p-6 rounded-lg shadow-lg border border-blue-200 mb-6">
-            <h3 class="text-xl font-semibold text-blue-800 mb-4">Application Details</h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-blue-800">Application Details</h3>
+                <a href="{{ url_for('director.chat', application_id=application.id) }}" class="py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-semibold">Chat with Verifiers</a>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <p class="text-gray-700"><strong>Applicant:</strong> {{ application.user.username }}</p>

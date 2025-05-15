@@ -1,9 +1,14 @@
 {% extends "chat_base.html" %}
 {% block title %}Chat - Application #{{ application.id }} - IN-SPACe{% endblock %}
 {% block chat_header %}
-<div class="bg-gradient-to-r from-indigo-600 to-blue-500 p-4 flex justify-between items-center">
+<div class="bg-gradient-to-r {% if current_user.role == 'Director' %}from-indigo-600 to-blue-500{% else %}from-indigo-600 to-blue-500{% endif %} p-4 flex justify-between items-center">
     <h2 class="text-xl font-semibold text-white">Chat for Application #{{ application.id }}</h2>
-    <a href="{{ url_for('verifier.review' if current_user.role in ['Primary Verifier', 'Secondary Verifier'] else 'applicant.home', application_id=application.id) }}" class="text-white hover:text-gray-200 text-sm font-medium flex items-center">
+    <a href="{{ url_for(
+        'director.review' if current_user.role == 'Director' else
+        'verifier.review' if current_user.role in ['Primary Verifier', 'Secondary Verifier'] else
+        'applicant.home',
+        application_id=application.id
+    ) }}" class="text-white hover:text-gray-200 text-sm font-medium flex items-center">
         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
         </svg>
@@ -12,7 +17,7 @@
 </div>
 {% endblock %}
 {% block chat_messages %}
-<div id="chat-messages" class="space-y-4" data-current-user-id="{{ current_user.id }}">
+<div id="chat-messages" class="flex-1 p-6 overflow-y-auto space-y-4 {% if current_user.role == 'Director' %}bg-blue-50{% else %}bg-gray-50{% endif %}" data-current-user-id="{{ current_user.id }}">
     {% for msg in messages %}
         <div class="flex {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}" data-message-id="{{ msg.id }}">
             <div class="flex items-start space-x-2 max-w-md">
@@ -23,17 +28,22 @@
                 {% endif %}
                 <div class="{% if msg.sender_id == current_user.id %}bg-indigo-500 text-white{% else %}bg-gray-100 text-gray-800{% endif %} p-4 rounded-lg shadow-md">
                     <p class="font-semibold text-sm">
-                        {{ msg.sender.username }} ({{ 'Applicant' if msg.sender_id == applicant.id else 'Primary Verifier' if msg.sender_id == primary_verifier.id else 'Secondary Verifier' }})
+                        {{ msg.sender.username }} ({{ 
+                            'Applicant' if msg.sender_id == applicant.id else 
+                            'Primary Verifier' if msg.sender_id == primary_verifier.id else 
+                            'Secondary Verifier' if secondary_verifier and msg.sender_id == secondary_verifier.id else 
+                            'Director'
+                        }})
                     </p>
                     {% if msg.image_path %}
                         {% if msg.is_image %}
-                            <img src="{{ url_for('chat.serve_uploaded_file', filename=msg.image_path) }}" class="mt-2 max-w-full h-auto rounded object-contain chat-image" alt="{{ msg.image_path }}">
+                            <img src="{{ url_for('chat.serve_uploaded_file', filename=msg.image_path) }}" class="mt-2 max-w-full h-auto rounded object-contain max-h-48" alt="{{ msg.image_path }}">
                         {% else %}
                             <a href="{{ url_for('chat.serve_uploaded_file', filename=msg.image_path) }}" target="_blank" class="mt-2 inline-block text-blue-500 hover:underline">
                                 <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m-9 6h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                 </svg>
-                                {{ msg.image_path }}
+                                {{ msg.image_path|basename }}
                             </a>
                         {% endif %}
                     {% endif %}
@@ -53,10 +63,10 @@
 </div>
 {% endblock %}
 {% block chat_input %}
-<div class="bg-white p-4 shadow-inner">
+<div class="bg-white p-4 shadow-inner border-t border-gray-200">
     <form id="chat-form" method="POST" enctype="multipart/form-data" class="flex flex-col space-y-4">
         <div class="flex space-x-4">
-            <textarea name="message" class="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" rows="3" placeholder="Type your message..."></textarea>
+            <textarea name="message" class="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-gray-50" rows="3" placeholder="Type your message..."></textarea>
             <select name="receiver_id" class="p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white min-w-[150px]" required>
                 <option value="" disabled selected>Select recipient</option>
                 {% for recipient in recipients %}
@@ -64,258 +74,270 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="flex items-center space-x-4">
-            <label class="cursor-pointer flex items-center">
-                <input type="file" id="file-input" name="file" class="hidden" accept="*/*">
-                <svg class="w-6 h-6 text-gray-600 hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-                <span class="ml-2 text-sm text-gray-600">Attach File</span>
-            </label>
-            <div id="file-preview" class="flex items-center space-x-2 hidden">
-                <div class="relative">
-                    <img id="preview-img" src="" class="w-48 h-48 object-contain rounded" alt="Selected file" style="display: none;">
-                    <div id="annotation-canvas" class="absolute top-0 left-0 w-48 h-48" style="display: none;"></div>
-                </div>
-                <span id="preview-filename" class="text-sm text-gray-600 truncate max-w-xs"></span>
-                <button type="button" id="clear-file" class="text-red-500 hover:text-red-700">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        {% if current_user.role != 'Director' %}
+            <div class="flex items-center space-x-4">
+                <label class="cursor-pointer flex items-center">
+                    <input type="file" id="file-input" name="file" class="hidden" accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx,.txt">
+                    <svg class="w-6 h-6 text-gray-600 hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
-                </button>
-                <button type="button" id="annotate-btn" class="bg-indigo-600 text-white px-2 py-1 rounded text-sm hover:bg-indigo-700 hidden">Draw</button>
+                    <span class="ml-2 text-sm text-gray-600">Attach File</span>
+                </label>
+                <div id="file-preview" class="items-center space-x-2" style="display: none;">
+                    <div class="relative">
+                        <img id="preview-img" src="" class="w-48 h-48 object-contain rounded" alt="Selected file" style="display: none;">
+                        <div id="annotation-canvas" class="absolute top-0 left-0 w-48 h-48" style="display: none;"></div>
+                    </div>
+                    <span id="preview-filename" class="text-sm text-gray-600 truncate max-w-xs"></span>
+                    <button type="button" id="clear-file" class="text-red-500 hover:text-red-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    <button type="button" id="annotate-btn" class="bg-indigo-600 text-white px-2 py-1 rounded text-sm hover:bg-indigo-700" style="display: none;">Draw</button>
+                </div>
+                <button type="submit" id="submit-btn" class="py-2 px-6 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold">Send</button>
             </div>
-            <button type="submit" class="py-2 px-6 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Send</button>
-        </div>
+        {% else %}
+            <div class="flex items-center space-x-4">
+                <button type="submit" id="submit-btn" class="py-2 px-6 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold">Send</button>
+            </div>
+        {% endif %}
     </form>
 </div>
 {% endblock %}
 {% block content %}
     {{ super() }}
-    <script src="https://cdn.jsdelivr.net/npm/konva@8.4.3/konva.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof Konva === 'undefined') {
-                console.error('Konva.js library failed to load from CDN.');
-                return;
-            }
-            console.log('Konva.js library loaded successfully');
+    {% if current_user.role != 'Director' %}
+        <script src="https://cdn.jsdelivr.net/npm/konva@8.4.3/konva.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof Konva === 'undefined') {
+                    console.error('Konva.js library failed to load from CDN.');
+                    return;
+                }
+                console.log('Konva.js library loaded successfully');
 
-            const fileInput = document.getElementById('file-input');
-            const filePreview = document.getElementById('file-preview');
-            const previewImg = document.getElementById('preview-img');
-            const previewFilename = document.getElementById('preview-filename');
-            const clearFileBtn = document.getElementById('clear-file');
-            const annotateBtn = document.getElementById('annotate-btn');
-            const chatForm = document.getElementById('chat-form');
-            const canvasContainer = document.getElementById('annotation-canvas');
-            let stage = null;
-            let layer = null;
-            let isDrawing = false;
-            let lastLine = null;
-            let originalWidth = 48;
-            let originalHeight = 48;
-            let currentScale = 1;
+                const fileInput = document.getElementById('file-input');
+                const filePreview = document.getElementById('file-preview');
+                const previewImg = document.getElementById('preview-img');
+                const previewFilename = document.getElementById('preview-filename');
+                const clearFileBtn = document.getElementById('clear-file');
+                const annotateBtn = document.getElementById('annotate-btn');
+                const chatForm = document.getElementById('chat-form');
+                const canvasContainer = document.getElementById('annotation-canvas');
+                let stage = null;
+                let layer = null;
+                let isDrawing = false;
+                let lastLine = null;
+                let originalWidth = 48;
+                let originalHeight = 48;
+                let currentScale = 1;
 
-            fileInput.addEventListener('change', () => {
-                if (fileInput.files && fileInput.files[0]) {
-                    const file = fileInput.files[0];
-                    previewFilename.textContent = file.name;
-                    const fileType = file.type.split('/')[0];
-                    if (fileType === 'image') {
-                        filePreview.classList.remove('hidden');
-                        previewImg.style.display = 'block';
-                        canvasContainer.style.display = 'block';
-                        annotateBtn.classList.remove('hidden');
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            previewImg.src = e.target.result;
-                            previewImg.onload = () => {
-                                console.log('Image fully loaded, initializing Konva.js stage');
-                                if (stage) {
-                                    stage.destroy();
-                                }
-                                originalWidth = 48;
-                                originalHeight = 48;
-                                stage = new Konva.Stage({
-                                    container: 'annotation-canvas',
-                                    width: originalWidth,
-                                    height: originalHeight
-                                });
-                                layer = new Konva.Layer();
-                                stage.add(layer);
-                                currentScale = 1;
-                                console.log('Konva.js stage initialized successfully');
+                fileInput.addEventListener('change', () => {
+                    if (fileInput.files && fileInput.files[0]) {
+                        const file = fileInput.files[0];
+                        previewFilename.textContent = file.name;
+                        filePreview.style.display = 'flex';
+                        if (file.type.startsWith('image/')) {
+                            previewImg.style.display = 'block';
+                            canvasContainer.style.display = 'block';
+                            annotateBtn.style.display = 'inline-block';
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                previewImg.src = e.target.result;
+                                previewImg.onload = () => {
+                                    console.log('Image fully loaded, initializing Konva.js stage');
+                                    if (stage) {
+                                        stage.destroy();
+                                    }
+                                    originalWidth = 48;
+                                    originalHeight = 48;
+                                    stage = new Konva.Stage({
+                                        container: 'annotation-canvas',
+                                        width: originalWidth,
+                                        height: originalHeight
+                                    });
+                                    layer = new Konva.Layer();
+                                    stage.add(layer);
+                                    currentScale = 1;
+                                    console.log('Konva.js stage initialized successfully');
+                                };
                             };
-                        };
-                        reader.readAsDataURL(file);
-                    } else {
-                        filePreview.classList.remove('hidden');
-                        previewImg.style.display = 'none';
-                        canvasContainer.style.display = 'none';
-                        annotateBtn.classList.add('hidden');
-                    }
-                }
-            });
-
-            clearFileBtn.addEventListener('click', () => {
-                fileInput.value = '';
-                filePreview.classList.add('hidden');
-                previewImg.src = '';
-                previewImg.style.display = 'none';
-                canvasContainer.style.display = 'none';
-                previewFilename.textContent = '';
-                annotateBtn.classList.add('hidden');
-                if (stage) {
-                    stage.destroy();
-                    stage = null;
-                    layer = null;
-                }
-            });
-
-            annotateBtn.addEventListener('click', () => {
-                console.log('Draw button clicked');
-                if (stage && previewImg.style.display !== 'none') {
-                    isDrawing = !isDrawing;
-                    if (isDrawing) {
-                        const viewportWidth = window.innerWidth - 40;
-                        const viewportHeight = window.innerHeight - 300;
-                        const aspectRatio = previewImg.naturalWidth / previewImg.naturalHeight;
-                        let newWidth = viewportWidth;
-                        let newHeight = newWidth / aspectRatio;
-
-                        if (newHeight > viewportHeight) {
-                            newHeight = viewportHeight;
-                            newWidth = newHeight * aspectRatio;
+                            reader.readAsDataURL(file);
+                        } else {
+                            previewImg.style.display = 'none';
+                            canvasContainer.style.display = 'none';
+                            annotateBtn.style.display = 'none';
                         }
-
-                        previewImg.style.width = `${newWidth}px`;
-                        previewImg.style.height = `${newHeight}px`;
-                        canvasContainer.style.width = `${newWidth}px`;
-                        canvasContainer.style.height = `${newHeight}px`;
-                        currentScale = newWidth / previewImg.naturalWidth;
-                        stage.width(newWidth);
-                        stage.height(newHeight);
-                        layer.scale({ x: currentScale, y: currentScale });
-                        stage.batchDraw();
-                        annotateBtn.textContent = 'Finish Drawing';
-                        console.log(`Drawing mode enabled, canvas expanded to ${newWidth}x${newHeight}, scale: ${currentScale}`);
-
-                        stage.on('mousedown touchstart', (e) => {
-                            if (!isDrawing) return;
-                            const pos = stage.getPointerPosition();
-                            lastLine = new Konva.Line({
-                                stroke: 'red',
-                                strokeWidth: 2,
-                                globalCompositeOperation: 'source-over',
-                                lineCap: 'round',
-                                lineJoin: 'round',
-                                points: [pos.x / currentScale, pos.y / currentScale, pos.x / currentScale, pos.y / currentScale]
-                            });
-                            layer.add(lastLine);
-                        });
-
-                        stage.on('mousemove touchmove', (e) => {
-                            if (!isDrawing || !lastLine) return;
-                            const pos = stage.getPointerPosition();
-                            const newPoints = lastLine.points().concat([pos.x / currentScale, pos.y / currentScale]);
-                            lastLine.points(newPoints);
-                            layer.batchDraw();
-                        });
-
-                        stage.on('mouseup touchend', () => {
-                            if (!isDrawing) return;
-                            lastLine = null;
-                        });
-                    } else {
-                        previewImg.style.width = `${originalWidth}px`;
-                        previewImg.style.height = `${originalHeight}px`;
-                        canvasContainer.style.width = `${originalWidth}px`;
-                        canvasContainer.style.height = `${originalHeight}px`;
-                        currentScale = originalWidth / previewImg.naturalWidth;
-                        stage.width(originalWidth);
-                        stage.height(originalHeight);
-                        layer.scale({ x: currentScale, y: currentScale });
-                        stage.batchDraw();
-                        annotateBtn.textContent = 'Draw';
-                        console.log(`Drawing mode disabled, canvas reverted to ${originalWidth}x${originalHeight}, scale: ${currentScale}`);
-
-                        stage.off('mousedown touchstart');
-                        stage.off('mousemove touchmove');
-                        stage.off('mouseup touchend');
                     }
-                } else {
-                    console.error('Stage not available or image not visible');
-                }
-            });
+                });
 
-            chatForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-
-                if (fileInput.files && fileInput.files[0] && stage && layer.children.length > 0 && previewImg.style.display !== 'none') {
-                    const tempCanvas = document.createElement('canvas');
-                    const ctx = tempCanvas.getContext('2d');
-                    tempCanvas.width = previewImg.naturalWidth;
-                    tempCanvas.height = previewImg.naturalHeight;
-
-                    const img = new Image();
-                    img.src = previewImg.src;
-                    ctx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
-
-                    layer.scale({ x: 1, y: 1 });
-                    stage.width(previewImg.naturalWidth);
-                    stage.height(previewImg.naturalHeight);
-                    stage.batchDraw();
-                    const dataURL = stage.toDataURL({ pixelRatio: 1 });
-                    const annotationsImg = new Image();
-                    annotationsImg.src = dataURL;
-
-                    const finalizeSubmission = () => {
-                        ctx.drawImage(annotationsImg, 0, 0, tempCanvas.width, tempCanvas.height);
-                        const combinedDataURL = tempCanvas.toDataURL('image/png');
-                        const annotatedFileInput = document.createElement('input');
-                        annotatedFileInput.type = 'hidden';
-                        annotatedFileInput.name = 'annotated_image';
-                        annotatedFileInput.value = combinedDataURL;
-                        chatForm.appendChild(annotatedFileInput);
-                        console.log('Annotated image data URL added to form');
-
-                        filePreview.classList.add('hidden');
-                        previewImg.src = '';
-                        previewImg.style.display = 'none';
-                        canvasContainer.style.display = 'none';
-                        previewFilename.textContent = '';
-                        annotateBtn.classList.add('hidden');
-                        if (stage) {
-                            stage.destroy();
-                            stage = null;
-                            layer = null;
-                        }
-
-                        chatForm.submit();
-                    };
-
-                    if (annotationsImg.complete) {
-                        finalizeSubmission();
-                    } else {
-                        annotationsImg.onload = finalizeSubmission;
-                    }
-                } else {
-                    filePreview.classList.add('hidden');
+                clearFileBtn.addEventListener('click', () => {
+                    fileInput.value = '';
+                    filePreview.style.display = 'none';
                     previewImg.src = '';
                     previewImg.style.display = 'none';
                     canvasContainer.style.display = 'none';
                     previewFilename.textContent = '';
-                    annotateBtn.classList.add('hidden');
+                    annotateBtn.style.display = 'none';
                     if (stage) {
                         stage.destroy();
                         stage = null;
                         layer = null;
                     }
-                    chatForm.submit();
-                }
-            });
+                });
 
+                annotateBtn.addEventListener('click', () => {
+                    console.log('Draw button clicked');
+                    if (stage && previewImg.style.display !== 'none') {
+                        isDrawing = !isDrawing;
+                        if (isDrawing) {
+                            const viewportWidth = window.innerWidth - 40;
+                            const viewportHeight = window.innerHeight - 300;
+                            const aspectRatio = previewImg.naturalWidth / previewImg.naturalHeight;
+                            let newWidth = viewportWidth;
+                            let newHeight = newWidth / aspectRatio;
+
+                            if (newHeight > viewportHeight) {
+                                newHeight = viewportHeight;
+                                newWidth = newHeight * aspectRatio;
+                            }
+
+                            previewImg.style.width = `${newWidth}px`;
+                            previewImg.style.height = `${newHeight}px`;
+                            canvasContainer.style.width = `${newWidth}px`;
+                            canvasContainer.style.height = `${newHeight}px`;
+                            currentScale = newWidth / previewImg.naturalWidth;
+                            stage.width(newWidth);
+                            stage.height(newHeight);
+                            layer.scale({ x: currentScale, y: currentScale });
+                            stage.batchDraw();
+                            annotateBtn.textContent = 'Finish Drawing';
+                            console.log(`Drawing mode enabled, canvas expanded to ${newWidth}x${newHeight}, scale: ${currentScale}`);
+
+                            stage.on('mousedown touchstart', (e) => {
+                                if (!isDrawing) return;
+                                const pos = stage.getPointerPosition();
+                                lastLine = new Konva.Line({
+                                    stroke: 'red',
+                                    strokeWidth: 2,
+                                    globalCompositeOperation: 'source-over',
+                                    lineCap: 'round',
+                                    lineJoin: 'round',
+                                    points: [pos.x / currentScale, pos.y / currentScale, pos.x / currentScale, pos.y / currentScale]
+                                });
+                                layer.add(lastLine);
+                            });
+
+                            stage.on('mousemove touchmove', (e) => {
+                                if (!isDrawing || !lastLine) return;
+                                const pos = stage.getPointerPosition();
+                                const newPoints = lastLine.points().concat([pos.x / currentScale, pos.y / currentScale]);
+                                lastLine.points(newPoints);
+                                layer.batchDraw();
+                            });
+
+                            stage.on('mouseup touchend', () => {
+                                if (!isDrawing) return;
+                                lastLine = null;
+                            });
+                        } else {
+                            previewImg.style.width = `${originalWidth}px`;
+                            previewImg.style.height = `${originalHeight}px`;
+                            canvasContainer.style.width = `${originalWidth}px`;
+                            canvasContainer.style.height = `${originalHeight}px`;
+                            currentScale = originalWidth / previewImg.naturalWidth;
+                            stage.width(originalWidth);
+                            stage.height(originalHeight);
+                            layer.scale({ x: currentScale, y: currentScale });
+                            stage.batchDraw();
+                            annotateBtn.textContent = 'Draw';
+                            console.log(`Drawing mode disabled, canvas reverted to ${originalWidth}x${originalHeight}, scale: ${currentScale}`);
+
+                            stage.off('mousedown touchstart');
+                            stage.off('mousemove touchmove');
+                            stage.off('mouseup touchend');
+                        }
+                    } else {
+                        console.error('Stage not available or image not visible');
+                    }
+                });
+
+                chatForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const submitBtn = document.getElementById('submit-btn');
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Sending...';
+
+                    if (fileInput && fileInput.files && fileInput.files[0] && stage && layer.children.length > 0 && previewImg.style.display !== 'none') {
+                        const tempCanvas = document.createElement('canvas');
+                        const ctx = tempCanvas.getContext('2d');
+                        tempCanvas.width = previewImg.naturalWidth;
+                        tempCanvas.height = previewImg.naturalHeight;
+
+                        const img = new Image();
+                        img.src = previewImg.src;
+                        ctx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                        layer.scale({ x: 1, y: 1 });
+                        stage.width(previewImg.naturalWidth);
+                        stage.height(previewImg.naturalHeight);
+                        stage.batchDraw();
+                        const dataURL = stage.toDataURL({ pixelRatio: 1 });
+                        const annotationsImg = new Image();
+                        annotationsImg.src = dataURL;
+
+                        const finalizeSubmission = () => {
+                            ctx.drawImage(annotationsImg, 0, 0, tempCanvas.width, tempCanvas.height);
+                            const combinedDataURL = tempCanvas.toDataURL('image/png');
+                            const annotatedFileInput = document.createElement('input');
+                            annotatedFileInput.type = 'hidden';
+                            annotatedFileInput.name = 'annotated_image';
+                            annotatedFileInput.value = combinedDataURL;
+                            chatForm.appendChild(annotatedFileInput);
+                            console.log('Annotated image data URL added to form');
+
+                            filePreview.style.display = 'none';
+                            previewImg.src = '';
+                            previewImg.style.display = 'none';
+                            canvasContainer.style.display = 'none';
+                            previewFilename.textContent = '';
+                            annotateBtn.style.display = 'none';
+                            if (stage) {
+                                stage.destroy();
+                                stage = null;
+                                layer = null;
+                            }
+
+                            chatForm.submit();
+                        };
+
+                        if (annotationsImg.complete) {
+                            finalizeSubmission();
+                        } else {
+                            annotationsImg.onload = finalizeSubmission;
+                        }
+                    } else {
+                        filePreview.style.display = 'none';
+                        if (previewImg) previewImg.src = '';
+                        if (previewImg) previewImg.style.display = 'none';
+                        if (canvasContainer) canvasContainer.style.display = 'none';
+                        previewFilename.textContent = '';
+                        annotateBtn.style.display = 'none';
+                        if (stage) {
+                            stage.destroy();
+                            stage = null;
+                            layer = null;
+                        }
+                        chatForm.submit();
+                    }
+                });
+            });
+        </script>
+    {% endif %}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
             const chatMessages = document.getElementById('chat-messages');
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
@@ -324,7 +346,7 @@
             messages.forEach(msg => {
                 const messageId = msg.dataset.messageId;
                 if (msg.querySelector('.bg-gray-100')) {
-                    fetch(`/chat/mark_notification_read/${messageId}`, {
+                    fetch(`/notification/mark_notification_read/${messageId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' }
                     })
@@ -351,68 +373,48 @@
             pointer-events: none;
         }
         #file-preview {
-            pointer-events: auto;
             max-height: 70vh;
             overflow: visible;
             position: relative;
         }
-        .chat-image {
-            max-width: 200px;
-            max-height: 200px;
+        .max-h-48 {
+            max-height: 12rem;
         }
-        /* Revised styles to span the full screen and improve chat visibility */
-        html, body {
-            height: 100vh !important;
-            width: 100vw !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: hidden !important;
+        .min-h-screen {
+            min-height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
         }
-        body > div {
-            width: 100vw !important;
-            height: 100vh !important;
-        }
-        #main-content {
-            min-height: 100vh !important;
-            min-width: 100vw !important;
-            height: 100vh !important;
-            width: 100vw !important;
-            padding: 0 !important; /* Remove padding to use full space */
-        }
-        .main {
-            min-height: calc(100vh - 8rem) !important; /* Adjust for navbar (4rem) and flash messages/padding (4rem) */
-            height: auto !important;
-            padding: 0 !important; /* Remove padding to maximize space */
-        }
-        #content {
-            min-height: 100vh !important;
-            min-width: 100vw !important;
-            height: 100vh !important;
-            width: 100vw !important;
-            display: flex !important;
-            flex-direction: column !important;
-            box-sizing: border-box !important;
-            padding: 0 !important; /* Remove padding to use full space */
-        }
-        #content > div {
-            flex: 0 0 auto !important; /* Header and input fixed height */
+        .flex-col {
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
         }
         #chat-messages {
-            flex: 1 1 auto !important; /* Grow to fill available space */
-            width: 100% !important;
-            padding: 1.5rem !important; /* Increased padding for better visibility */
-            overflow-y: auto !important; /* Allow scrolling for messages */
-            box-sizing: border-box !important;
+            width: 100%;
+            padding: 1.5rem;
+            overflow-y: auto;
+            box-sizing: border-box;
         }
         #chat-messages > div {
-            width: 100% !important; /* Ensure messages stretch to full width */
+            width: 100%;
         }
         #chat-messages p {
-            font-size: 1.1rem !important; /* Slightly larger font for readability */
+            font-size: 1.1rem;
+            line-height: 1.5;
         }
-        #chat-input {
-            flex: 0 0 auto !important; /* Fixed size for input area */
-            width: 100% !important;
+        @media (max-width: 640px) {
+            #chat-messages {
+                padding: 1rem;
+            }
+            .max-w-md {
+                max-width: 90%;
+            }
+            .min-w-\[150px\] {
+                min-width: 120px;
+            }
         }
     </style>
 {% endblock %}

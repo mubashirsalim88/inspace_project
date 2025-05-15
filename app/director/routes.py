@@ -1,9 +1,8 @@
-# app/director/routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from app import db, mail
-from app.models import Application, ApplicationAssignment, User, Notification
+from app.models import Application, ApplicationAssignment, User, Notification, ChatMessage
 from app.utils import role_required
 from flask_mail import Message
 import logging
@@ -203,3 +202,14 @@ def review(application_id):
         role=current_user.role,
         csrf_token=generate_csrf
     )
+
+@director.route("/chat/<int:application_id>")
+@login_required
+@role_required("Director")
+def chat(application_id):
+    logger.info(f"Director {current_user.id} accessing chat for application {application_id}")
+    application = Application.query.get_or_404(application_id)
+    assignment = ApplicationAssignment.query.filter_by(application_id=application_id).first_or_404()
+
+    # Redirect to the chat blueprint's chat_view, which handles the chat interface
+    return redirect(url_for("chat.chat_view", application_id=application_id))
